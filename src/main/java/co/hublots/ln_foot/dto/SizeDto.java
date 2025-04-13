@@ -17,10 +17,17 @@ public class SizeDto {
     @NotBlank(message = "Size name is required")
     private String name;
 
-    public static SizeDto from(Size size) {
+    public static SizeDto fromEntity(Size size) {
         return SizeDto.builder()
                 .id(size.getId())
                 .name(size.getName())
+                .build();
+    }
+
+    public Size toEntity() {
+        return Size.builder()
+                .id(id)
+                .name(name)
                 .build();
     }
 } 

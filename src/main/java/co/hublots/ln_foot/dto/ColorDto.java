@@ -17,10 +17,17 @@ public class ColorDto {
     @NotBlank(message = "Color name is required")
     private String name;
 
-    public static ColorDto from(Color color) {
+    public static ColorDto fromEntity(Color color) {
         return ColorDto.builder()
                 .id(color.getId())
                 .name(color.getName())
+                .build();
+    }
+
+    public Color toEntity() {
+        return Color.builder()
+                .id(id)
+                .name(name)
                 .build();
     }
 }

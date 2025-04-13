@@ -24,7 +24,7 @@ public class CategoryController {
     public List<CategoryDto> getAllCategories() {
         List<Category> categories = categoryService.getAllCategories();
         return categories.stream()
-                .map(CategoryDto::from)
+                .map(CategoryDto::fromEntity)
                 .collect(Collectors.toList());
     }
 
@@ -32,7 +32,7 @@ public class CategoryController {
     public ResponseEntity<CategoryDto> getCategoryById(@PathVariable Long id) {
         try {
             Category category = categoryService.getCategoryById(id);
-            return new ResponseEntity<>(CategoryDto.from(category), HttpStatus.OK);
+            return new ResponseEntity<>(CategoryDto.fromEntity(category), HttpStatus.OK);
         } catch (NoSuchElementException e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
@@ -40,21 +40,17 @@ public class CategoryController {
 
     @PostMapping
     public ResponseEntity<CategoryDto> createCategory(@Valid @RequestBody CategoryDto categoryDto) {
-        Category category = Category.builder()
-                .name(categoryDto.getName())
-                .build();
+        Category category = categoryDto.toEntity();
         Category createdCategory = categoryService.createCategory(category);
-        return new ResponseEntity<>(CategoryDto.from(createdCategory), HttpStatus.CREATED);
+        return new ResponseEntity<>(CategoryDto.fromEntity(createdCategory), HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<CategoryDto> updateCategory(@PathVariable Long id, @Valid @RequestBody CategoryDto categoryDto) {
         try {
-            Category category = Category.builder()
-                    .name(categoryDto.getName())
-                    .build();
+            Category category = categoryDto.toEntity();
             Category updatedCategory = categoryService.updateCategory(id, category);
-            return new ResponseEntity<>(CategoryDto.from(updatedCategory), HttpStatus.OK);
+            return new ResponseEntity<>(CategoryDto.fromEntity(updatedCategory), HttpStatus.OK);
         } catch (NoSuchElementException e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }

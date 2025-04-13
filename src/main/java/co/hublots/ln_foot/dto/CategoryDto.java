@@ -17,10 +17,17 @@ public class CategoryDto {
     @NotBlank(message = "Category name is required")
     private String name;
 
-    public static CategoryDto from(Category category) {
+    public static CategoryDto fromEntity(Category category) {
         return CategoryDto.builder()
                 .id(category.getId())
                 .name(category.getName())
+                .build();
+    }
+
+    public Category toEntity() {
+        return Category.builder()
+                .id(id)
+                .name(name)
                 .build();
     }
 } 

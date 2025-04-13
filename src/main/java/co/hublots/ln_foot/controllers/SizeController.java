@@ -24,7 +24,7 @@ public class SizeController {
     public List<SizeDto> getAllSizes() {
         List<Size> sizes = sizeService.getAllSizes();
         return sizes.stream()
-                .map(SizeDto::from)
+                .map(SizeDto::fromEntity)
                 .collect(Collectors.toList());
     }
 
@@ -32,7 +32,7 @@ public class SizeController {
     public ResponseEntity<SizeDto> getSizeById(@PathVariable Long id) {
         try {
             Size size = sizeService.getSizeById(id);
-            return new ResponseEntity<>(SizeDto.from(size), HttpStatus.OK);
+            return new ResponseEntity<>(SizeDto.fromEntity(size), HttpStatus.OK);
         } catch (NoSuchElementException e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
@@ -40,21 +40,17 @@ public class SizeController {
 
     @PostMapping
     public ResponseEntity<SizeDto> createSize(@Valid @RequestBody SizeDto sizeDto) {
-        Size size = Size.builder()
-                .name(sizeDto.getName())
-                .build();
+        Size size = sizeDto.toEntity();
         Size createdSize = sizeService.createSize(size);
-        return new ResponseEntity<>(SizeDto.from(createdSize), HttpStatus.CREATED);
+        return new ResponseEntity<>(SizeDto.fromEntity(createdSize), HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<SizeDto> updateSize(@PathVariable Long id, @Valid @RequestBody SizeDto sizeDto) {
         try {
-            Size size = Size.builder()
-                    .name(sizeDto.getName())
-                    .build();
+            Size size = sizeDto.toEntity();
             Size updatedSize = sizeService.updateSize(id, size);
-            return new ResponseEntity<>(SizeDto.from(updatedSize), HttpStatus.OK);
+            return new ResponseEntity<>(SizeDto.fromEntity(updatedSize), HttpStatus.OK);
         } catch (NoSuchElementException e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }

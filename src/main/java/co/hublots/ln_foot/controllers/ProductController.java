@@ -36,7 +36,7 @@ public class ProductController {
     public List<ProductDto> getAllProducts() {
         List<Product> products = productService.getAllProducts();
         return products.stream()
-                .map(ProductDto::from)
+                .map(ProductDto::fromEntity)
                 .collect(Collectors.toList());
     }
 
@@ -44,7 +44,7 @@ public class ProductController {
     public ResponseEntity<ProductDto> getProductById(@PathVariable Long id) {
         try {
             Product product = productService.getProductById(id);
-            return new ResponseEntity<>(ProductDto.from(product), HttpStatus.OK);
+            return new ResponseEntity<>(ProductDto.fromEntity(product), HttpStatus.OK);
         } catch (NoSuchElementException e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
@@ -52,17 +52,17 @@ public class ProductController {
 
     @PostMapping
     public ResponseEntity<ProductDto> createProduct(@Valid @RequestBody ProductDto productDto) {
-        Product product = convertToEntity(productDto);
+        Product product = productDto.toEntity(categoryService, sizeService, colorService);
         Product createdProduct = productService.createProduct(product);
-        return new ResponseEntity<>(ProductDto.from(createdProduct), HttpStatus.CREATED);
+        return new ResponseEntity<>(ProductDto.fromEntity(createdProduct), HttpStatus.CREATED);
     }
 
     @PatchMapping("/{id}")
     public ResponseEntity<ProductDto> updateProduct(@PathVariable Long id, @Valid @RequestBody ProductDto productDto) {
         try {
-            Product product = convertToEntity(productDto);
+            Product product = productDto.toEntity(categoryService, sizeService, colorService);
             Product updatedProduct = productService.updateProduct(id, product);
-            return new ResponseEntity<>(ProductDto.from(updatedProduct), HttpStatus.OK);
+            return new ResponseEntity<>(ProductDto.fromEntity(updatedProduct), HttpStatus.OK);
         } catch (NoSuchElementException e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
@@ -72,21 +72,5 @@ public class ProductController {
     public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
         productService.deleteProduct(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-    }
-
-    private Product convertToEntity(ProductDto productDto) {
-        Product product = Product.from(productDto);
-        Optional.ofNullable(productDto.getCategoryIds()).ifPresent(ids -> product.setCategories(ids.stream()
-                .map(id -> categoryService.getCategoryById(id))
-                .collect(Collectors.toList())));
-
-        Optional.ofNullable(productDto.getSizeIds()).ifPresent(ids -> product.setSizes(ids.stream()
-                .map(id -> sizeService.getSizeById(id))
-                .collect(Collectors.toList())));
-
-        Optional.ofNullable(productDto.getColorIds()).ifPresent(ids -> product.setColors(ids.stream()
-                .map(id -> colorService.getColorById(id))
-                .collect(Collectors.toList())));
-        return product;
     }
 }

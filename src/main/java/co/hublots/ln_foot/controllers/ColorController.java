@@ -24,7 +24,7 @@ public class ColorController {
     public List<ColorDto> getAllColors() {
         List<Color> colors = colorService.getAllColors();
         return colors.stream()
-                .map(ColorDto::from)
+                .map(ColorDto::fromEntity)
                 .collect(Collectors.toList());
     }
 
@@ -32,7 +32,7 @@ public class ColorController {
     public ResponseEntity<ColorDto> getColorById(@PathVariable Long id) {
         try {
             Color color = colorService.getColorById(id);
-            return new ResponseEntity<>(ColorDto.from(color), HttpStatus.OK);
+            return new ResponseEntity<>(ColorDto.fromEntity(color), HttpStatus.OK);
         } catch (NoSuchElementException e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
@@ -40,21 +40,17 @@ public class ColorController {
 
     @PostMapping
     public ResponseEntity<ColorDto> createColor(@Valid @RequestBody ColorDto colorDto) {
-        Color color = Color.builder()
-                .name(colorDto.getName())
-                .build();
+        Color color = colorDto.toEntity();
         Color createdColor = colorService.createColor(color);
-        return new ResponseEntity<>(ColorDto.from(createdColor), HttpStatus.CREATED);
+        return new ResponseEntity<>(ColorDto.fromEntity(createdColor), HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<ColorDto> updateColor(@PathVariable Long id, @Valid @RequestBody ColorDto colorDto) {
         try {
-            Color color = Color.builder()
-                    .name(colorDto.getName())
-                    .build();
+            Color color = colorDto.toEntity();
             Color updatedColor = colorService.updateColor(id, color);
-            return new ResponseEntity<>(ColorDto.from(updatedColor), HttpStatus.OK);
+            return new ResponseEntity<>(ColorDto.fromEntity(updatedColor), HttpStatus.OK);
         } catch (NoSuchElementException e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
