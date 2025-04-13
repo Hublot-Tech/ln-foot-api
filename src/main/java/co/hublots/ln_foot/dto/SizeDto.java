@@ -1,0 +1,26 @@
+package co.hublots.ln_foot.dto;
+
+import co.hublots.ln_foot.models.Size;
+import jakarta.validation.constraints.NotBlank;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class SizeDto {
+    private Long id;
+
+    @NotBlank(message = "Size name is required")
+    private String name;
+
+    public static SizeDto from(Size size) {
+        return SizeDto.builder()
+                .id(size.getId())
+                .name(size.getName())
+                .build();
+    }
+} 
