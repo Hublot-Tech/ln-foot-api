@@ -1,17 +1,26 @@
 package co.hublots.ln_foot.controllers;
 
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.stream.Collectors;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import co.hublots.ln_foot.dto.SizeDto;
 import co.hublots.ln_foot.models.Size;
 import co.hublots.ln_foot.services.SizeService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
@@ -39,6 +48,7 @@ public class SizeController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<SizeDto> createSize(@Valid @RequestBody SizeDto sizeDto) {
         Size size = sizeDto.toEntity();
         Size createdSize = sizeService.createSize(size);
@@ -46,6 +56,7 @@ public class SizeController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<SizeDto> updateSize(@PathVariable Long id, @Valid @RequestBody SizeDto sizeDto) {
         try {
             Size size = sizeDto.toEntity();
@@ -57,6 +68,7 @@ public class SizeController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteSize(@PathVariable Long id) {
         try {
             sizeService.deleteSize(id);

@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: ln-foot
+  datasource:
+    url: jdbc:postgresql://10.206.168.85:5432/lnfootdb
+    username: postgres
+    password: mysecretpassword
+  jpa:
+    hibernate:
+      ddl-auto: create
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://10.206.168.85:8080/realms/ln-foot
+

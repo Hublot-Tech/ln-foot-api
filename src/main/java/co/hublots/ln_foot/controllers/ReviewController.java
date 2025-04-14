@@ -1,17 +1,26 @@
 package co.hublots.ln_foot.controllers;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import co.hublots.ln_foot.dto.ReviewDto;
 import co.hublots.ln_foot.models.Product;
 import co.hublots.ln_foot.models.Review;
 import co.hublots.ln_foot.repositories.ProductRepository;
 import co.hublots.ln_foot.repositories.ReviewRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/reviews")
@@ -39,6 +48,7 @@ public class ReviewController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ReviewDto> createReview(@RequestBody ReviewDto reviewDto) {
         Product product = productRepository.findById(reviewDto.getProductId())
                 .orElse(null);
@@ -54,6 +64,7 @@ public class ReviewController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ReviewDto> updateReview(@PathVariable Long id, @RequestBody ReviewDto reviewDto) {
         return reviewRepository.findById(id)
                 .map(existingReview -> {
@@ -75,6 +86,7 @@ public class ReviewController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<Void> deleteReview(@PathVariable Long id) {
         if (!reviewRepository.existsById(id)) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);

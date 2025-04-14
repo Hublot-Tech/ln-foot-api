@@ -3,6 +3,7 @@ package co.hublots.ln_foot.controllers;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -14,8 +15,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import co.hublots.ln_foot.dto.PromotionDto;
 import co.hublots.ln_foot.models.Promotion;
-import co.hublots.ln_foot.repositories.PromotionRepository;
 import co.hublots.ln_foot.repositories.ProductRepository;
+import co.hublots.ln_foot.repositories.PromotionRepository;
 import jakarta.validation.Valid;
 
 @RestController
@@ -39,12 +40,14 @@ public class PromotionController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public Promotion createPromotion(@Valid @RequestBody PromotionDto promotionDto) {
         Promotion promotion = promotionDto.toEntity(productRepository);
         return promotionRepository.save(promotion);
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public Promotion updatePromotion(@PathVariable Long id, @Valid @RequestBody PromotionDto promotionDto) {
         Promotion promotion = promotionDto.toEntity(productRepository);
         promotion.setId(id);
@@ -52,6 +55,7 @@ public class PromotionController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public void deletePromotion(@PathVariable Long id) {
         promotionRepository.deleteById(id);
     }
