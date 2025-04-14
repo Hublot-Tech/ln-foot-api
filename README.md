@@ -62,3 +62,21 @@ The application uses basic authentication. The default username and password are
 *   Password: `admin123`
 
 **Warning:** It is highly recommended to change these default credentials in a production environment.
+
+## Accessing the API Documentation (Swagger UI)
+
+The API documentation can be accessed through the Swagger UI at the following URL:
+
+```
+http://localhost:8080/swagger-ui/index.html
+```
+
+or
+
+```
+http://localhost:8080/v3/api-docs
+```
+
+**Note:** Replace `localhost:8080` with the actual host and port your application is running on if it's different.
+
+The first URL provides an interactive UI for exploring the API, while the second URL provides the OpenAPI definition in JSON format.
