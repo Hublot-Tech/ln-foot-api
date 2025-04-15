@@ -19,6 +19,8 @@ import org.springframework.web.bind.annotation.RestController;
 import co.hublots.ln_foot.dto.ColorDto;
 import co.hublots.ln_foot.models.Color;
 import co.hublots.ln_foot.services.ColorService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -49,6 +51,9 @@ public class ColorController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(
+        security = { @SecurityRequirement(name = "bearerAuth") }
+    )
     public ResponseEntity<ColorDto> createColor(@Valid @RequestBody ColorDto colorDto) {
         Color color = colorDto.toEntity();
         Color createdColor = colorService.createColor(color);
@@ -57,6 +62,9 @@ public class ColorController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(
+        security = { @SecurityRequirement(name = "bearerAuth") }
+    )
     public ResponseEntity<ColorDto> updateColor(@PathVariable Long id, @Valid @RequestBody ColorDto colorDto) {
         try {
             Color color = colorDto.toEntity();
@@ -69,6 +77,9 @@ public class ColorController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(
+        security = { @SecurityRequirement(name = "bearerAuth") }
+    )
     public ResponseEntity<Void> deleteColor(@PathVariable Long id) {
         try {
             colorService.deleteColor(id);

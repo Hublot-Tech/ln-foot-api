@@ -28,4 +28,5 @@ public class Review {
 
     private int rating;
     private String comment;
+    private String keycloakUserId;
 }

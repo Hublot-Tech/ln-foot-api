@@ -17,6 +17,8 @@ import co.hublots.ln_foot.dto.PromotionDto;
 import co.hublots.ln_foot.models.Promotion;
 import co.hublots.ln_foot.repositories.ProductRepository;
 import co.hublots.ln_foot.repositories.PromotionRepository;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 
 @RestController
@@ -41,6 +43,9 @@ public class PromotionController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(
+        security = { @SecurityRequirement(name = "bearerAuth") }
+    )
     public Promotion createPromotion(@Valid @RequestBody PromotionDto promotionDto) {
         Promotion promotion = promotionDto.toEntity(productRepository);
         return promotionRepository.save(promotion);
@@ -48,6 +53,9 @@ public class PromotionController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(
+        security = { @SecurityRequirement(name = "bearerAuth") }
+    )
     public Promotion updatePromotion(@PathVariable Long id, @Valid @RequestBody PromotionDto promotionDto) {
         Promotion promotion = promotionDto.toEntity(productRepository);
         promotion.setId(id);
@@ -56,6 +64,9 @@ public class PromotionController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(
+        security = { @SecurityRequirement(name = "bearerAuth") }
+    )
     public void deletePromotion(@PathVariable Long id) {
         promotionRepository.deleteById(id);
     }

@@ -23,6 +23,8 @@ import co.hublots.ln_foot.services.CategoryService;
 import co.hublots.ln_foot.services.ColorService;
 import co.hublots.ln_foot.services.ProductService;
 import co.hublots.ln_foot.services.SizeService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -60,6 +62,9 @@ public class ProductController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(
+        security = { @SecurityRequirement(name = "bearerAuth") }
+    )
     public ResponseEntity<ProductDto> createProduct(@Valid @RequestBody ProductDto productDto) {
         Product product = productDto.toEntity(categoryService, sizeService, colorService);
         Product createdProduct = productService.createProduct(product);
@@ -68,6 +73,9 @@ public class ProductController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(
+        security = { @SecurityRequirement(name = "bearerAuth") }
+    )
     public ResponseEntity<ProductDto> updateProduct(@PathVariable Long id, @Valid @RequestBody ProductDto productDto) {
         try {
             Product product = productDto.toEntity(categoryService, sizeService, colorService);
@@ -80,6 +88,9 @@ public class ProductController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(
+        security = { @SecurityRequirement(name = "bearerAuth") }
+    )
     public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
         productService.deleteProduct(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);

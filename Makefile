@@ -27,10 +27,10 @@ docker-run:
 
 # Docker Compose commands
 docker-compose-up:
-	docker compose up -d
+	docker compose up --wait
 
 docker-compose-down:
-	docker compose down
+	docker compose down -v
 
 # Combined commands
 all: build test docker-build

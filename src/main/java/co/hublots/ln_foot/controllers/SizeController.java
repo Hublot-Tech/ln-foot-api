@@ -19,6 +19,8 @@ import org.springframework.web.bind.annotation.RestController;
 import co.hublots.ln_foot.dto.SizeDto;
 import co.hublots.ln_foot.models.Size;
 import co.hublots.ln_foot.services.SizeService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -49,6 +51,9 @@ public class SizeController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(
+        security = { @SecurityRequirement(name = "bearerAuth") }
+    )
     public ResponseEntity<SizeDto> createSize(@Valid @RequestBody SizeDto sizeDto) {
         Size size = sizeDto.toEntity();
         Size createdSize = sizeService.createSize(size);
@@ -57,6 +62,9 @@ public class SizeController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(
+        security = { @SecurityRequirement(name = "bearerAuth") }
+    )
     public ResponseEntity<SizeDto> updateSize(@PathVariable Long id, @Valid @RequestBody SizeDto sizeDto) {
         try {
             Size size = sizeDto.toEntity();
@@ -69,6 +77,9 @@ public class SizeController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(
+        security = { @SecurityRequirement(name = "bearerAuth") }
+    )
     public ResponseEntity<Void> deleteSize(@PathVariable Long id) {
         try {
             sizeService.deleteSize(id);

@@ -16,11 +16,15 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import co.hublots.ln_foot.annotations.KeycloakUserId;
 import co.hublots.ln_foot.dto.ReviewDto;
 import co.hublots.ln_foot.models.Product;
 import co.hublots.ln_foot.models.Review;
 import co.hublots.ln_foot.repositories.ProductRepository;
 import co.hublots.ln_foot.repositories.ReviewRepository;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/reviews")
@@ -49,7 +53,11 @@ public class ReviewController {
 
     @PostMapping
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<ReviewDto> createReview(@RequestBody ReviewDto reviewDto) {
+    @GetMapping("/protected")
+    @Operation(
+        security = { @SecurityRequirement(name = "bearerAuth") }
+    )
+    public ResponseEntity<ReviewDto> createReview(@KeycloakUserId String userId, @Valid @RequestBody ReviewDto reviewDto) {
         Product product = productRepository.findById(reviewDto.getProductId())
                 .orElse(null);
 
@@ -58,13 +66,16 @@ public class ReviewController {
         }
 
         Review review = reviewDto.toEntity(productRepository);
-
+        review.setKeycloakUserId(userId);
         Review savedReview = reviewRepository.save(review);
         return new ResponseEntity<>(ReviewDto.fromEntity(savedReview), HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('USER')")
+    @Operation(
+        security = { @SecurityRequirement(name = "bearerAuth") }
+    )
     public ResponseEntity<ReviewDto> updateReview(@PathVariable Long id, @RequestBody ReviewDto reviewDto) {
         return reviewRepository.findById(id)
                 .map(existingReview -> {
@@ -87,6 +98,9 @@ public class ReviewController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    @Operation(
+        security = { @SecurityRequirement(name = "bearerAuth") }
+    )
     public ResponseEntity<Void> deleteReview(@PathVariable Long id) {
         if (!reviewRepository.existsById(id)) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);

@@ -19,6 +19,8 @@ import org.springframework.web.bind.annotation.RestController;
 import co.hublots.ln_foot.dto.CategoryDto;
 import co.hublots.ln_foot.models.Category;
 import co.hublots.ln_foot.services.CategoryService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -49,6 +51,9 @@ public class CategoryController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(
+        security = { @SecurityRequirement(name = "bearerAuth") }
+    )
     public ResponseEntity<CategoryDto> createCategory(@Valid @RequestBody CategoryDto categoryDto) {
         Category category = categoryDto.toEntity();
         Category createdCategory = categoryService.createCategory(category);
@@ -57,6 +62,9 @@ public class CategoryController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(
+        security = { @SecurityRequirement(name = "bearerAuth") }
+    )
     public ResponseEntity<CategoryDto> updateCategory(@PathVariable Long id, @Valid @RequestBody CategoryDto categoryDto) {
         try {
             Category category = categoryDto.toEntity();
@@ -69,6 +77,9 @@ public class CategoryController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(
+        security = { @SecurityRequirement(name = "bearerAuth") }
+    )
     public ResponseEntity<Void> deleteCategory(@PathVariable Long id) {
         try {
             categoryService.deleteCategory(id);
