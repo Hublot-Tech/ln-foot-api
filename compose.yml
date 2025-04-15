@@ -1,0 +1,44 @@
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:${KC_VERSION}
+    command:
+      - "start-dev"
+      - "--import-realm"
+      - "--spi-theme-static-max-age=-1"
+      - "--spi-theme-cache-themes=false"
+      - "--spi-theme-cache-templates=false"
+    restart: unless-stopped
+    environment:
+      KC_LOG_LEVEL: ${KC_LOG_LEVEL}
+      KC_REALM_NAME: ${KC_REALM_NAME}
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+    ports:
+      - ${KC_PORT}:8080
+    volumes:
+      - ./.docker/keycloak-config/:/opt/keycloak/data/import/:ro
+      # - ./themes/:/opt/keycloak/themes/kd-marc-tm-01:ro
+
+  postgres:
+    image: postgres:alpine
+    ports:
+      - ${PG_PORT}:5432
+    environment:
+      POSTGRES_PASSWORD: ${PG_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data/pgdata
+
+  ln-foot:
+    image: ln-foot:${LN_FOOT_VERSION}
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - ${LN_FOOT_PORT}:8080
+    depends_on:
+      - keycloak
+    environment:
+      KC_ISSUER_URI: ${KC_ISSUER_URI}
+
+volumes:
+  pgdata:

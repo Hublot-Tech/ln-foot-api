@@ -1,0 +1,61 @@
+{
+    "id": "ln-foot-01",
+    "realm": "ln-foot-01",
+    "displayName": "LNF 01",
+    "displayNameHtml": "<b>LNF</b> 01",
+    "registrationAllowed": false,
+    "registrationEmailAsUsername": true,
+    "rememberMe": false,
+    "loginWithEmailAllowed": true,
+    "resetPasswordAllowed": false,
+    "enabled": true,
+    "loginTheme": "ln-foot-01",
+    "roles": {
+        "realm": [
+            {
+                "name": "admin",
+                "description": "Administrator role with full access"
+            },
+            {
+                "name": "user",
+                "description": "Regular user role with limited access"
+            }
+        ]
+    },
+    "identityProviders": [
+      {
+        "alias": "google",
+        "displayName": "Google",
+        "providerId": "google",
+        "enabled": true,
+        "config": {
+          "clientId": "${GOOGLE_CLIENT_ID}",
+          "clientSecret": "${GOOGLE_CLIENT_SECRET}",
+          "defaultProvider": true,
+          "hideOnLoginPage": false,
+          "trustEmail": true,
+          "useUserInfoProvider": true,
+          "authenticateByDefault": true,
+          "defaultRole": "user"
+        }
+      }
+    ],
+    "users": [
+      {
+        "email": "${KEYCLOAK_ADMIN}@hublots.co",
+        "username": "${KEYCLOAK_ADMIN}",
+        "firstName": "LNF",
+        "lastName": "Hublots",
+        "enabled": true,
+        "emailVerified": true,
+        "credentials": [
+          {
+            "temporary": false,
+            "type": "password",
+            "value": "${KEYCLOAK_ADMIN_PASSWORD}"
+          }
+        ],
+        "realmRoles": ["admin"]
+      }
+    ]
+}

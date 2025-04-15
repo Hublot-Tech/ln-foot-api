@@ -1,82 +1,124 @@
-# ln-foot
+# LN Foot API
 
-## Description
-
-ln-foot is a Spring Boot application.
-
-## Technologies Used
-
-*   Java
-*   Spring Boot
-*   PostgreSQL
+A Spring Boot application with Keycloak integration for authentication and authorization.
 
 ## Prerequisites
 
-*   Java Development Kit (JDK) 17 or higher
-*   Gradle
-*   PostgreSQL database
+- Docker and Docker Compose
+- Java 17
+- Gradle
+- Make
+- Google Cloud Console account (for OAuth credentials)
 
-## Setup Instructions
+## Setup
 
-1.  **Clone the repository:**
+1. **Google OAuth Setup**
+   - Go to [Google Cloud Console](https://console.cloud.google.com)
+   - Create a new project
+   - Enable Google OAuth API
+   - Create OAuth 2.0 credentials
+   - Add authorized redirect URIs:
+     - `http://localhost:8180/realms/ln-foot-01/broker/google/endpoint`
+     - `http://localhost:8180/realms/ln-foot-01/broker/google/endpoint/login`
 
-    ```bash
-    git clone <repository_url>
-    ```
+2. **Environment Configuration**
+   - Copy `.env.example` to `.env`
+   - Update the following variables:
+     ```
+     GOOGLE_CLIENT_ID=your-google-client-id
+     GOOGLE_CLIENT_SECRET=your-google-client-secret
+     KEYCLOAK_ADMIN=admin
+     KEYCLOAK_ADMIN_PASSWORD=your-secure-password
+     ```
 
-2.  **Configure the database:**
+## Running the Application
 
-    *   Ensure that you have a PostgreSQL database running.
-    *   Update the `src/main/resources/application.properties` file with your database credentials:
+### Using Make (Recommended)
 
-        ```properties
-        spring.datasource.url=jdbc:postgresql://<host>:<port>/<database>
-        spring.datasource.username=<username>
-        spring.datasource.password=<password>
-        ```
+The project includes a Makefile for common operations:
 
-3.  **Build the application:**
-    Using Gradle:
+```bash
+# Start all services (Keycloak + Spring Boot)
+make dev
 
-    ```bash
-    gradle clean build
-    ```
+# Build the application
+make build
 
-4.  **Run the application:**
+# Run tests
+make test
 
-    Using Gradle:
+# Clean everything
+make clean-all
 
-    ```bash
-    gradle bootRun
-    ```
-
-## Configuration
-
-The application is configured using the `src/main/resources/application.properties` file.  You can override these properties using environment variables or command-line arguments.
-
-### Security
-
-The application uses basic authentication. The default username and password are:
-
-*   Username: `admin`
-*   Password: `admin123`
-
-**Warning:** It is highly recommended to change these default credentials in a production environment.
-
-## Accessing the API Documentation (Swagger UI)
-
-The API documentation can be accessed through the Swagger UI at the following URL:
-
-```
-http://localhost:8080/swagger-ui/index.html
+# Show all available commands
+make help
 ```
 
-or
+### Manual Steps
+
+1. **Start Keycloak**
+   ```bash
+   docker compose up -d
+   ```
+   - Wait for Keycloak to start (usually takes 30-60 seconds)
+   - Access Keycloak admin console at `http://localhost:8180`
+   - Login with admin credentials from `.env`
+
+2. **Start Spring Boot Application**
+   ```bash
+   ./gradlew bootRun
+   ```
+   - The application will start on port 8080
+   - Access Swagger UI at `http://localhost:8080/swagger-ui/index.html`
+
+## API Documentation
+
+- Swagger UI: `http://localhost:8080/swagger-ui/index.html`
+- OpenAPI JSON: `http://localhost:8080/v3/api-docs`
+
+## Security
+
+- All endpoints are public by default
+- Protected endpoints are secured with `@PreAuthorize` annotations
+- Authentication is handled by Keycloak with Google OAuth
+- JWT tokens are used for API authentication
+- Two roles are available:
+  - `admin`: Full access to all endpoints
+  - `user`: Limited access to specific endpoints
+
+## Development
+
+- The application uses Spring Boot 3.4.4
+- Keycloak is configured with Google as the identity provider
+- PostgreSQL is used as the database
+- Swagger/OpenAPI for API documentation
+
+## Project Structure
 
 ```
-http://localhost:8080/v3/api-docs
+.
+├── src/
+│   ├── main/
+│   │   ├── java/
+│   │   │   └── co/hublots/ln_foot/
+│   │   │       ├── config/
+│   │   │       ├── controllers/
+│   │   │       ├── models/
+│   │   │       └── services/
+│   │   └── resources/
+│   └── test/
+├── .docker/
+│   └── keycloak-config/
+├── Dockerfile
+├── Makefile
+├── compose.yml
+└── build.gradle
 ```
 
-**Note:** Replace `localhost:8080` with the actual host and port your application is running on if it's different.
+## Contributing
 
-The first URL provides an interactive UI for exploring the API, while the second URL provides the OpenAPI definition in JSON format.
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request

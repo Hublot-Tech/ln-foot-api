@@ -12,5 +12,5 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: http://10.206.168.85:8080/realms/ln-foot
+          issuer-uri: http://localhost:8080/realms/kd-marc-team-01
 
