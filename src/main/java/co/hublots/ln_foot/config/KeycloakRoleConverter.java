@@ -6,10 +6,10 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.core.convert.converter.Converter;
+import org.springframework.lang.NonNull;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.lang.NonNull;
 
 public class KeycloakRoleConverter implements Converter<Jwt, Collection<GrantedAuthority>> {
 
@@ -24,7 +24,7 @@ public class KeycloakRoleConverter implements Converter<Jwt, Collection<GrantedA
         List<String> roles = (List<String>) realmAccess.get("roles");
 
         return roles.stream()
-                .map(role -> "ROLE_" + role)
+                .map(role -> "ROLE_" + role.toUpperCase())
                 .map(SimpleGrantedAuthority::new)
                 .collect(Collectors.toList());
     }

@@ -45,7 +45,7 @@
         "email": "${KEYCLOAK_ADMIN}@hublots.co",
         "username": "${KEYCLOAK_ADMIN}",
         "firstName": "LNF",
-        "lastName": "Hublots",
+        "lastName": "Admin",
         "enabled": true,
         "emailVerified": true,
         "credentials": [
@@ -55,7 +55,23 @@
             "value": "${KEYCLOAK_ADMIN_PASSWORD}"
           }
         ],
-        "realmRoles": ["admin"]
+        "realmRoles": ["admin", "user"]
+      },
+      {
+        "email": "lnfoot@hublots.co",
+        "username": "lnfoot-user",
+        "firstName": "LNF",
+        "lastName": "User",
+        "enabled": true,
+        "emailVerified": true,
+        "credentials": [
+          {
+            "temporary": false,
+            "type": "password",
+            "value": "test-password"
+          }
+        ],
+        "realmRoles": ["user"]
       }
     ]
 }

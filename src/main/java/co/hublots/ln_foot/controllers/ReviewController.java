@@ -53,7 +53,6 @@ public class ReviewController {
 
     @PostMapping
     @PreAuthorize("hasRole('USER')")
-    @GetMapping("/protected")
     @Operation(
         security = { @SecurityRequirement(name = "bearerAuth") }
     )
