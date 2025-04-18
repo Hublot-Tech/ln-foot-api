@@ -1,20 +1,20 @@
 package co.hublots.ln_foot.services;
 
 import java.util.List;
-import java.util.UUID;
+
 
 import co.hublots.ln_foot.models.Order;
 
 public interface OrderService {
     List<Order> getAllOrders();
 
-    List<Order> getUserOrders(UUID userId);
+    List<Order> getUserOrders(String userId);
 
-    Order getOrderById(UUID id);
+    Order getOrderById(String id);
 
     Order createOrder(Order order);
 
-    Order updateOrder(UUID id, Order order);
+    Order updateOrder(String id, Order order);
 
-    void deleteOrder(UUID id);
+    void deleteOrder(String id);
 }

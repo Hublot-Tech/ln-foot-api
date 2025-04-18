@@ -3,16 +3,16 @@ package co.hublots.ln_foot.services;
 
 import co.hublots.ln_foot.models.Review;
 import java.util.List;
-import java.util.UUID;
+
 
 public interface ReviewService {
     List<Review> getAllReviews();
 
-    Review getReviewById(UUID id);
+    Review getReviewById(String id);
 
     Review createReview(Review reviewDto);
 
-    Review updateReview(UUID id, Review reviewDto);
+    Review updateReview(String id, Review reviewDto);
 
-    void deleteReview(UUID id);
+    void deleteReview(String id);
 }

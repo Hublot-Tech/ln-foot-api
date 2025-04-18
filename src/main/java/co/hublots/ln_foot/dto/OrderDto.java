@@ -3,7 +3,7 @@ package co.hublots.ln_foot.dto;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.UUID;
+
 import java.util.stream.Collectors;
 
 import co.hublots.ln_foot.models.Order;
@@ -15,7 +15,7 @@ import lombok.Data;
 @Builder
 @AllArgsConstructor
 public class OrderDto {
-    private UUID id;
+    private String id;
 
     private LocalDate orderDate;
 

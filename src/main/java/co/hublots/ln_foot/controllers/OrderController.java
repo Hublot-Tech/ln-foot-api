@@ -9,7 +9,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.UUID;
+
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -44,7 +44,7 @@ public class OrderController {
     @GetMapping("me")
     @PreAuthorize("hasRole('USER')")
     @Operation(security = { @SecurityRequirement(name = "bearerAuth") })
-    public List<OrderDto> getUserOrders(@KeycloakUserId UUID userId) {
+    public List<OrderDto> getUserOrders(@KeycloakUserId String userId) {
         List<Order> Orders = orderService.getUserOrders(userId);
         return Orders.stream()
                 .map(OrderDto::fromEntity)
@@ -54,7 +54,7 @@ public class OrderController {
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('USER')")
     @Operation(security = { @SecurityRequirement(name = "bearerAuth") })
-    public ResponseEntity<OrderDto> getOrderById(@PathVariable UUID id) {
+    public ResponseEntity<OrderDto> getOrderById(@PathVariable String id) {
         try {
             Order Order = orderService.getOrderById(id);
             return new ResponseEntity<>(
@@ -81,7 +81,7 @@ public class OrderController {
     @PreAuthorize("hasRole('USER')")
     @Operation(security = { @SecurityRequirement(name = "bearerAuth") })
     public ResponseEntity<OrderDto> updateOrder(
-            @PathVariable UUID id,
+            @PathVariable String id,
             @Valid @RequestBody OrderDto orderDto) {
         try {
             Order Order = orderDto.toEntity();
@@ -97,7 +97,7 @@ public class OrderController {
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('USER')")
     @Operation(security = { @SecurityRequirement(name = "bearerAuth") })
-    public ResponseEntity<Void> deleteOrder(@PathVariable UUID id) {
+    public ResponseEntity<Void> deleteOrder(@PathVariable String id) {
         try {
             orderService.deleteOrder(id);
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);

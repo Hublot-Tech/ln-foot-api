@@ -1,10 +1,10 @@
 package co.hublots.ln_foot.models;
 
-import java.util.UUID;
+
+
+import org.hibernate.annotations.UuidGenerator;
 
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -20,8 +20,8 @@ import lombok.Builder;
 @Builder
 public class Review {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+    @UuidGenerator
+    private String id;
 
     @ManyToOne
     @JoinColumn(name = "product_id")
@@ -29,5 +29,5 @@ public class Review {
 
     private int rating;
     private String comment;
-    private UUID keycloakUserId;
+    private String keycloakUserId;
 }

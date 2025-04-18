@@ -2,7 +2,7 @@ package co.hublots.ln_foot.controllers;
 
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.UUID;
+
 import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
@@ -42,7 +42,7 @@ public class SizeController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<SizeDto> getSizeById(@PathVariable UUID id) {
+    public ResponseEntity<SizeDto> getSizeById(@PathVariable String id) {
         try {
             Size size = sizeService.getSizeById(id);
             return new ResponseEntity<>(
@@ -72,7 +72,7 @@ public class SizeController {
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(security = { @SecurityRequirement(name = "bearerAuth") })
     public ResponseEntity<SizeDto> updateSize(
-        @PathVariable UUID id,
+        @PathVariable String id,
         @Valid @RequestBody SizeDto sizeDto
     ) {
         try {
@@ -90,7 +90,7 @@ public class SizeController {
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(security = { @SecurityRequirement(name = "bearerAuth") })
-    public ResponseEntity<Void> deleteSize(@PathVariable UUID id) {
+    public ResponseEntity<Void> deleteSize(@PathVariable String id) {
         try {
             sizeService.deleteSize(id);
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);

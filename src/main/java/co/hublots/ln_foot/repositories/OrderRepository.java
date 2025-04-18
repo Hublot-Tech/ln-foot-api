@@ -1,6 +1,6 @@
 package co.hublots.ln_foot.repositories;
 
-import java.util.UUID;
+
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -8,5 +8,5 @@ import org.springframework.stereotype.Repository;
 import co.hublots.ln_foot.models.Order;
 
 @Repository
-public interface OrderRepository extends JpaRepository<Order, UUID> {
+public interface OrderRepository extends JpaRepository<Order, String> {
 } 

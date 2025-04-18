@@ -1,6 +1,6 @@
 package co.hublots.ln_foot.resolvers;
 
-import java.util.UUID;
+
 
 import org.keycloak.KeycloakPrincipal;
 import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken;
@@ -41,7 +41,7 @@ public class UserIdArgumentResolver implements HandlerMethodArgumentResolver {
             if (userId == null || userId.isEmpty()) {
                 throw new IllegalArgumentException("UserId not found in token");
             }
-            return UUID.fromString(userId);
+            return userId;
         }
         throw new IllegalStateException("User is not authenticated with Keycloak");
     }

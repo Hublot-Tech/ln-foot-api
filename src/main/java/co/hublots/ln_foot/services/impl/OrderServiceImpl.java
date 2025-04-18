@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.InputMismatchException;
 import java.util.Optional;
-import java.util.UUID;
+
 
 import org.springframework.data.domain.Example;
 import org.springframework.stereotype.Service;
@@ -26,7 +26,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public List<Order> getUserOrders(UUID userId) {
+    public List<Order> getUserOrders(String userId) {
         Order orderExample = Order.builder()
                 .userId(userId) // Assuming Order has a userId field
                 .build();
@@ -37,7 +37,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public Order getOrderById(UUID id) {
+    public Order getOrderById(String id) {
         return orderRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Order not found with id: " + id));
     }
@@ -48,7 +48,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public Order updateOrder(UUID id, Order order) {
+    public Order updateOrder(String id, Order order) {
         Order existingCategory = orderRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Order not found with id: " + id));
 
@@ -62,7 +62,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public void deleteOrder(UUID id) {
+    public void deleteOrder(String id) {
         orderRepository.deleteById(id);
     }
 

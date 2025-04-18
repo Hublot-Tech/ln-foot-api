@@ -1,7 +1,7 @@
 package co.hublots.ln_foot.controllers;
 
 import java.util.List;
-import java.util.UUID;
+
 
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -34,7 +34,7 @@ public class PromotionController {
     }
 
     @GetMapping("/{id}")
-    public Promotion getPromotionById(@PathVariable UUID id) {
+    public Promotion getPromotionById(@PathVariable String id) {
         return promotionService.getPromotionById(id);
     }
 
@@ -58,7 +58,7 @@ public class PromotionController {
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(security = { @SecurityRequirement(name = "bearerAuth") })
     public Promotion updatePromotion(
-            @PathVariable UUID id,
+            @PathVariable String id,
             @Valid @RequestBody PromotionDto promotionDto) {
         return promotionService.createPromotion(promotionDto);
     }
@@ -66,7 +66,7 @@ public class PromotionController {
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(security = { @SecurityRequirement(name = "bearerAuth") })
-    public void deletePromotion(@PathVariable UUID id) {
+    public void deletePromotion(@PathVariable String id) {
         promotionService.deletePromotion(id);
     }
 }

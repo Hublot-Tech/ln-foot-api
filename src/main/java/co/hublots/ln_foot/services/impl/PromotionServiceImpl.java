@@ -8,7 +8,7 @@ import co.hublots.ln_foot.services.PromotionService;
 
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.UUID;
+
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -25,7 +25,7 @@ public class PromotionServiceImpl implements PromotionService {
     }
 
     @Override
-    public Promotion getPromotionById(UUID id) {
+    public Promotion getPromotionById(String id) {
         return promotionRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Product not found with id: " + id));
     }
@@ -46,14 +46,14 @@ public class PromotionServiceImpl implements PromotionService {
     }
 
     @Override
-    public Promotion updatePromotion(UUID id, PromotionDto promotionDto) {
+    public Promotion updatePromotion(String id, PromotionDto promotionDto) {
         Promotion promotion = promotionDto.toEntity();
         promotion.setId(id);
         return promotionRepository.save(promotion);
     }
 
     @Override
-    public void deletePromotion(UUID id) {
+    public void deletePromotion(String id) {
         promotionRepository.deleteById(id);
     }
 }

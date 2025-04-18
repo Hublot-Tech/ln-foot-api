@@ -89,7 +89,7 @@ make help
 ## Development
 
 - The application uses Spring Boot 3.4.4
-- Keycloak is configured with Google as the UUID provider
+- Keycloak is configured with Google as the String provider
 - PostgreSQL is used as the database
 - Swagger/OpenAPI for API documentation
 

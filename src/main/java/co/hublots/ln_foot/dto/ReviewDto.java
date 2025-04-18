@@ -1,5 +1,5 @@
 package co.hublots.ln_foot.dto;
-import java.util.UUID;
+
 
 import co.hublots.ln_foot.models.Product;
 import co.hublots.ln_foot.models.Review;
@@ -15,10 +15,10 @@ import lombok.Data;
 @Builder
 @AllArgsConstructor
 public class ReviewDto {
-    private UUID id;
+    private String id;
 
     @NotNull(message = "Product ID is required")
-    private UUID productId;
+    private String productId;
 
     @NotNull(message = "Rating is required")
     @Min(value = 1, message = "Rating must be at least 1")

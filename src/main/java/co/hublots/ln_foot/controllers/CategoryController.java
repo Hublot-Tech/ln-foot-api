@@ -2,7 +2,7 @@ package co.hublots.ln_foot.controllers;
 
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.UUID;
+
 import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
@@ -42,7 +42,7 @@ public class CategoryController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<CategoryDto> getCategoryById(@PathVariable UUID id) {
+    public ResponseEntity<CategoryDto> getCategoryById(@PathVariable String id) {
         try {
             Category category = categoryService.getCategoryById(id);
             return new ResponseEntity<>(
@@ -69,7 +69,7 @@ public class CategoryController {
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(security = { @SecurityRequirement(name = "bearerAuth") })
     public ResponseEntity<CategoryDto> updateCategory(
-            @PathVariable UUID id,
+            @PathVariable String id,
             @Valid @RequestBody CategoryDto categoryDto) {
         try {
             Category category = categoryDto.toEntity();
@@ -87,7 +87,7 @@ public class CategoryController {
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(security = { @SecurityRequirement(name = "bearerAuth") })
-    public ResponseEntity<Void> deleteCategory(@PathVariable UUID id) {
+    public ResponseEntity<Void> deleteCategory(@PathVariable String id) {
         try {
             categoryService.deleteCategory(id);
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);

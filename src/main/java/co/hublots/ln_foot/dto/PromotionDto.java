@@ -7,7 +7,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.UUID;
+
 
 import co.hublots.ln_foot.models.Product;
 import co.hublots.ln_foot.models.Promotion;
@@ -16,10 +16,10 @@ import co.hublots.ln_foot.models.Promotion;
 @Builder
 @AllArgsConstructor
 public class PromotionDto {
-    private UUID id;
+    private String id;
 
     @NotNull(message = "Product ID is required")
-    private UUID productId;
+    private String productId;
 
     @NotNull(message = "Discounted price is required")
     @Positive(message = "Discounted price must be positive")

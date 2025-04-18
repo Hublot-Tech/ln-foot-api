@@ -9,7 +9,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.UUID;
+
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -41,7 +41,7 @@ public class ReviewController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ReviewDto> getReviewById(@PathVariable UUID id) {
+    public ResponseEntity<ReviewDto> getReviewById(@PathVariable String id) {
         try {
             Review review = reviewService.getReviewById(id);
             return new ResponseEntity<>(ReviewDto.fromEntity(review), HttpStatus.OK);
@@ -54,7 +54,7 @@ public class ReviewController {
     @PreAuthorize("hasRole('USER')")
     @Operation(security = { @SecurityRequirement(name = "bearerAuth") })
     public ResponseEntity<ReviewDto> createReview(
-            @KeycloakUserId UUID userId,
+            @KeycloakUserId String userId,
             @Valid @RequestBody ReviewDto reviewDto) {
 
         Review review = reviewDto.toEntity();
@@ -73,7 +73,7 @@ public class ReviewController {
     @PreAuthorize("hasRole('USER')")
     @Operation(security = { @SecurityRequirement(name = "bearerAuth") })
     public ResponseEntity<ReviewDto> updateReview(
-            @PathVariable UUID id,
+            @PathVariable String id,
             @KeycloakUserId String userId,
             @RequestBody ReviewDto reviewDto) {
 
@@ -88,7 +88,7 @@ public class ReviewController {
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     @Operation(security = { @SecurityRequirement(name = "bearerAuth") })
-    public ResponseEntity<Void> deleteReview(@PathVariable UUID id) {
+    public ResponseEntity<Void> deleteReview(@PathVariable String id) {
         reviewService.deleteReview(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }

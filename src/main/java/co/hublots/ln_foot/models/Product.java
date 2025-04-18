@@ -2,12 +2,11 @@ package co.hublots.ln_foot.models;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.UUID;
+
+import org.hibernate.annotations.UuidGenerator;
 
 import co.hublots.ln_foot.dto.ProductDto;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
@@ -24,8 +23,8 @@ import lombok.Data;
 @AllArgsConstructor
 public class Product {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+    @UuidGenerator
+    private String id;
 
     private String name;
     private String description;

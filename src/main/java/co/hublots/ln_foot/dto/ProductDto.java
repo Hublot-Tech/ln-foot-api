@@ -2,7 +2,7 @@ package co.hublots.ln_foot.dto;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.UUID;
+
 import java.util.stream.Collectors;
 
 import co.hublots.ln_foot.models.Category;
@@ -22,7 +22,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProductDto {
-        private UUID id;
+        private String id;
 
         @NotBlank(message = "Name is required")
         private String name;
@@ -41,13 +41,13 @@ public class ProductDto {
         private int stockQuantity;
 
         @NotNull(message = "Category IDs are required")
-        private List<UUID> categoryIds;
+        private List<String> categoryIds;
 
         @NotNull(message = "Size IDs are required")
-        private List<UUID> sizeIds;
+        private List<String> sizeIds;
 
         @NotNull(message = "Color IDs are required")
-        private List<UUID> colorIds;
+        private List<String> colorIds;
 
         public static ProductDto fromEntity(Product product) {
                 return ProductDto.builder()

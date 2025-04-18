@@ -2,7 +2,8 @@ package co.hublots.ln_foot.models;
 
 import jakarta.persistence.*;
 import java.util.List;
-import java.util.UUID;
+
+import org.hibernate.annotations.UuidGenerator;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -18,8 +19,8 @@ import lombok.NoArgsConstructor;
 public class Color {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+    @UuidGenerator
+    private String id;
 
     private String name; // e.g., "Red", "Blue", "Green"
 
@@ -27,4 +28,4 @@ public class Color {
 
     @ManyToMany(mappedBy = "colors")
     private List<Product> products;
-} 
+}

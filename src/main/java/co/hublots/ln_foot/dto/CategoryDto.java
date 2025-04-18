@@ -1,6 +1,6 @@
 package co.hublots.ln_foot.dto;
 
-import java.util.UUID;
+
 
 import co.hublots.ln_foot.models.Category;
 import jakarta.validation.constraints.NotBlank;
@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CategoryDto {
-    private UUID id;
+    private String id;
 
     @NotBlank(message = "Category name is required")
     private String name;

@@ -2,7 +2,7 @@
 package co.hublots.ln_foot.dto;
 
 import java.math.BigDecimal;
-import java.util.UUID;
+
 
 import co.hublots.ln_foot.models.Color;
 import co.hublots.ln_foot.models.OrderItem;
@@ -16,15 +16,15 @@ import lombok.Data;
 @Builder
 @AllArgsConstructor
 public class OrderItemDto {
-    private UUID id;
+    private String id;
 
-    private UUID productId;
+    private String productId;
 
     private int quantity;
 
-    private UUID sizeId;
+    private String sizeId;
 
-    private UUID colorId;
+    private String colorId;
 
     private BigDecimal price;
 

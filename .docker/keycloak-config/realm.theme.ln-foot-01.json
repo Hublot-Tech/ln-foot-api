@@ -22,7 +22,7 @@
             }
         ]
     },
-    "UUIDProviders": [
+    "StringProviders": [
       {
         "alias": "google",
         "displayName": "Google",

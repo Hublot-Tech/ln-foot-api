@@ -9,7 +9,7 @@ import co.hublots.ln_foot.services.ReviewService;
 
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.UUID;
+
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -27,7 +27,7 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
-    public Review getReviewById(UUID id) {
+    public Review getReviewById(String id) {
         return reviewRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Review not found with id: " + id));
 
@@ -35,7 +35,7 @@ public class ReviewServiceImpl implements ReviewService {
 
     @Override
     public Review createReview(Review review) {
-        UUID productId = review.getProduct().getId();
+        String productId = review.getProduct().getId();
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new NoSuchElementException("Product not found with id: " + productId));
 
@@ -44,7 +44,7 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
-    public Review updateReview(UUID id, Review review) throws NoSuchElementException {
+    public Review updateReview(String id, Review review) throws NoSuchElementException {
         Review existingReview = reviewRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Review not found with id: " + id));
 
@@ -54,7 +54,7 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
-    public void deleteReview(UUID id) {
+    public void deleteReview(String id) {
         reviewRepository.deleteById(id);
     }
 }
