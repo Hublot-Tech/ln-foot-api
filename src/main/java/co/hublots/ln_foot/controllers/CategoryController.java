@@ -2,6 +2,7 @@ package co.hublots.ln_foot.controllers;
 
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
@@ -34,16 +35,19 @@ public class CategoryController {
     @GetMapping
     public List<CategoryDto> getAllCategories() {
         List<Category> categories = categoryService.getAllCategories();
-        return categories.stream()
+        return categories
+                .stream()
                 .map(CategoryDto::fromEntity)
                 .collect(Collectors.toList());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<CategoryDto> getCategoryById(@PathVariable Long id) {
+    public ResponseEntity<CategoryDto> getCategoryById(@PathVariable UUID id) {
         try {
             Category category = categoryService.getCategoryById(id);
-            return new ResponseEntity<>(CategoryDto.fromEntity(category), HttpStatus.OK);
+            return new ResponseEntity<>(
+                    CategoryDto.fromEntity(category),
+                    HttpStatus.OK);
         } catch (NoSuchElementException e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
@@ -51,25 +55,30 @@ public class CategoryController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(
-        security = { @SecurityRequirement(name = "bearerAuth") }
-    )
-    public ResponseEntity<CategoryDto> createCategory(@Valid @RequestBody CategoryDto categoryDto) {
+    @Operation(security = { @SecurityRequirement(name = "bearerAuth") })
+    public ResponseEntity<CategoryDto> createCategory(
+            @Valid @RequestBody CategoryDto categoryDto) {
         Category category = categoryDto.toEntity();
         Category createdCategory = categoryService.createCategory(category);
-        return new ResponseEntity<>(CategoryDto.fromEntity(createdCategory), HttpStatus.CREATED);
+        return new ResponseEntity<>(
+                CategoryDto.fromEntity(createdCategory),
+                HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(
-        security = { @SecurityRequirement(name = "bearerAuth") }
-    )
-    public ResponseEntity<CategoryDto> updateCategory(@PathVariable Long id, @Valid @RequestBody CategoryDto categoryDto) {
+    @Operation(security = { @SecurityRequirement(name = "bearerAuth") })
+    public ResponseEntity<CategoryDto> updateCategory(
+            @PathVariable UUID id,
+            @Valid @RequestBody CategoryDto categoryDto) {
         try {
             Category category = categoryDto.toEntity();
-            Category updatedCategory = categoryService.updateCategory(id, category);
-            return new ResponseEntity<>(CategoryDto.fromEntity(updatedCategory), HttpStatus.OK);
+            Category updatedCategory = categoryService.updateCategory(
+                    id,
+                    category);
+            return new ResponseEntity<>(
+                    CategoryDto.fromEntity(updatedCategory),
+                    HttpStatus.OK);
         } catch (NoSuchElementException e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
@@ -77,10 +86,8 @@ public class CategoryController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(
-        security = { @SecurityRequirement(name = "bearerAuth") }
-    )
-    public ResponseEntity<Void> deleteCategory(@PathVariable Long id) {
+    @Operation(security = { @SecurityRequirement(name = "bearerAuth") })
+    public ResponseEntity<Void> deleteCategory(@PathVariable UUID id) {
         try {
             categoryService.deleteCategory(id);
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -88,4 +95,4 @@ public class CategoryController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
-} 
+}

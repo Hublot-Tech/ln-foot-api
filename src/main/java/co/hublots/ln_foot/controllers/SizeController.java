@@ -2,6 +2,7 @@ package co.hublots.ln_foot.controllers;
 
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
@@ -34,16 +35,20 @@ public class SizeController {
     @GetMapping
     public List<SizeDto> getAllSizes() {
         List<Size> sizes = sizeService.getAllSizes();
-        return sizes.stream()
-                .map(SizeDto::fromEntity)
-                .collect(Collectors.toList());
+        return sizes
+            .stream()
+            .map(SizeDto::fromEntity)
+            .collect(Collectors.toList());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<SizeDto> getSizeById(@PathVariable Long id) {
+    public ResponseEntity<SizeDto> getSizeById(@PathVariable UUID id) {
         try {
             Size size = sizeService.getSizeById(id);
-            return new ResponseEntity<>(SizeDto.fromEntity(size), HttpStatus.OK);
+            return new ResponseEntity<>(
+                SizeDto.fromEntity(size),
+                HttpStatus.OK
+            );
         } catch (NoSuchElementException e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
@@ -51,25 +56,32 @@ public class SizeController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(
-        security = { @SecurityRequirement(name = "bearerAuth") }
-    )
-    public ResponseEntity<SizeDto> createSize(@Valid @RequestBody SizeDto sizeDto) {
+    @Operation(security = { @SecurityRequirement(name = "bearerAuth") })
+    public ResponseEntity<SizeDto> createSize(
+        @Valid @RequestBody SizeDto sizeDto
+    ) {
         Size size = sizeDto.toEntity();
         Size createdSize = sizeService.createSize(size);
-        return new ResponseEntity<>(SizeDto.fromEntity(createdSize), HttpStatus.CREATED);
+        return new ResponseEntity<>(
+            SizeDto.fromEntity(createdSize),
+            HttpStatus.CREATED
+        );
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(
-        security = { @SecurityRequirement(name = "bearerAuth") }
-    )
-    public ResponseEntity<SizeDto> updateSize(@PathVariable Long id, @Valid @RequestBody SizeDto sizeDto) {
+    @Operation(security = { @SecurityRequirement(name = "bearerAuth") })
+    public ResponseEntity<SizeDto> updateSize(
+        @PathVariable UUID id,
+        @Valid @RequestBody SizeDto sizeDto
+    ) {
         try {
             Size size = sizeDto.toEntity();
             Size updatedSize = sizeService.updateSize(id, size);
-            return new ResponseEntity<>(SizeDto.fromEntity(updatedSize), HttpStatus.OK);
+            return new ResponseEntity<>(
+                SizeDto.fromEntity(updatedSize),
+                HttpStatus.OK
+            );
         } catch (NoSuchElementException e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
@@ -77,10 +89,8 @@ public class SizeController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(
-        security = { @SecurityRequirement(name = "bearerAuth") }
-    )
-    public ResponseEntity<Void> deleteSize(@PathVariable Long id) {
+    @Operation(security = { @SecurityRequirement(name = "bearerAuth") })
+    public ResponseEntity<Void> deleteSize(@PathVariable UUID id) {
         try {
             sizeService.deleteSize(id);
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -88,4 +98,4 @@ public class SizeController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
-} 
+}

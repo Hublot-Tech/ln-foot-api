@@ -1,6 +1,8 @@
 package co.hublots.ln_foot.dto;
+import java.util.UUID;
+
+import co.hublots.ln_foot.models.Product;
 import co.hublots.ln_foot.models.Review;
-import co.hublots.ln_foot.repositories.ProductRepository;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -13,10 +15,10 @@ import lombok.Data;
 @Builder
 @AllArgsConstructor
 public class ReviewDto {
-    private Long id;
+    private UUID id;
 
     @NotNull(message = "Product ID is required")
-    private Long productId;
+    private UUID productId;
 
     @NotNull(message = "Rating is required")
     @Min(value = 1, message = "Rating must be at least 1")
@@ -36,10 +38,10 @@ public class ReviewDto {
                 .build();
     }
 
-    public Review toEntity(ProductRepository productRepository) {
+    public Review toEntity() {
         return Review.builder()
                 .id(id)
-                .product(productRepository.findById(productId).orElse(null))
+                .product(Product.builder().id(productId).build())
                 .rating(rating)
                 .comment(comment)
                 .build();   

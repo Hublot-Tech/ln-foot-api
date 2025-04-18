@@ -1,6 +1,9 @@
 package co.hublots.ln_foot.dto;
 
 import jakarta.validation.constraints.NotBlank;
+
+import java.util.UUID;
+
 import co.hublots.ln_foot.models.Color;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -12,7 +15,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ColorDto {
-    private Long id;
+    private UUID id;
 
     @NotBlank(message = "Color name is required")
     private String name;

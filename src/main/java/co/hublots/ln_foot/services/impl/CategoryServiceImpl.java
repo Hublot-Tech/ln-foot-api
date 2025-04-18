@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class CategoryServiceImpl implements CategoryService {
@@ -25,7 +27,7 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public Category getCategoryById(Long id) {
+    public Category getCategoryById(UUID id) {
         return categoryRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Category not found with id: " + id));
     }
@@ -36,15 +38,16 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public Category updateCategory(Long id, Category category) {
+    public Category updateCategory(UUID id, Category category) {
         Category existingCategory = categoryRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Category not found with id: " + id));
-        existingCategory.setName(category.getName());
+        Optional.of(category.getName()).ifPresent(existingCategory::setName);
+        
         return categoryRepository.save(existingCategory);
     }
 
     @Override
-    public void deleteCategory(Long id) {
+    public void deleteCategory(UUID id) {
         categoryRepository.deleteById(id);
     }
 } 

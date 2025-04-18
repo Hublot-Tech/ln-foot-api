@@ -9,16 +9,19 @@ import co.hublots.ln_foot.repositories.ColorRepository;
 import co.hublots.ln_foot.repositories.ProductRepository;
 import co.hublots.ln_foot.repositories.SizeRepository;
 import co.hublots.ln_foot.services.ProductService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;
@@ -26,38 +29,25 @@ public class ProductServiceImpl implements ProductService {
     private final SizeRepository sizeRepository;
     private final ColorRepository colorRepository;
 
-    @Autowired
-    public ProductServiceImpl(ProductRepository productRepository, CategoryRepository categoryRepository,
-            SizeRepository sizeRepository, ColorRepository colorRepository) {
-        this.productRepository = productRepository;
-        this.categoryRepository = categoryRepository;
-        this.sizeRepository = sizeRepository;
-        this.colorRepository = colorRepository;
-    }
-
     @Override
     public List<Product> getAllProducts() {
         return productRepository.findAll();
     }
 
     @Override
-    public Product getProductById(Long id) {
+    public Product getProductById(UUID id) {
         return productRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Product not found with id: " + id));
     }
 
     @Override
     public Product createProduct(Product product) {
-        Optional.ofNullable(product.getCategories()).ifPresent(categories -> product.setCategories(categories));
-        Optional.ofNullable(product.getSizes()).ifPresent(sizes -> product.setSizes(sizes));
-        Optional.ofNullable(product.getColors()).ifPresent(colors -> product.setColors(colors));
-
         return productRepository.save(product);
     }
 
     @Override
     @Transactional
-    public Product updateProduct(Long id, Product product) {
+    public Product updateProduct(UUID id, Product product) {
         Product existingProduct = productRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Product not found with id: " + id));
 
@@ -100,7 +90,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public void deleteProduct(Long id) {
+    public void deleteProduct(UUID id) {
         productRepository.deleteById(id);
     }
 }

@@ -2,6 +2,7 @@ package co.hublots.ln_foot.models;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.UUID;
 
 import co.hublots.ln_foot.dto.ProductDto;
 import jakarta.persistence.Entity;
@@ -22,10 +23,9 @@ import lombok.Data;
 @Builder
 @AllArgsConstructor
 public class Product {
-
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     private String name;
     private String description;

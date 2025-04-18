@@ -2,15 +2,16 @@ package co.hublots.ln_foot.services;
 
 import co.hublots.ln_foot.models.Category;
 import java.util.List;
+import java.util.UUID;
 
 public interface CategoryService {
     List<Category> getAllCategories();
 
-    Category getCategoryById(Long id);
+    Category getCategoryById(UUID id);
 
     Category createCategory(Category category);
 
-    Category updateCategory(Long id, Category category);
+    Category updateCategory(UUID id, Category category);
 
-    void deleteCategory(Long id);
+    void deleteCategory(UUID id);
 }

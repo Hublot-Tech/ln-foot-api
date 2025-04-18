@@ -2,9 +2,9 @@ package co.hublots.ln_foot.controllers;
 
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -19,10 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import co.hublots.ln_foot.dto.ProductDto;
 import co.hublots.ln_foot.models.Product;
-import co.hublots.ln_foot.services.CategoryService;
-import co.hublots.ln_foot.services.ColorService;
 import co.hublots.ln_foot.services.ProductService;
-import co.hublots.ln_foot.services.SizeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
@@ -33,28 +30,26 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/products")
 public class ProductController {
 
-    @Autowired
     private final ProductService productService;
-    @Autowired
-    private final CategoryService categoryService;
-    @Autowired
-    private final SizeService sizeService;
-    @Autowired
-    private final ColorService colorService;
 
     @GetMapping
-    public List<ProductDto> getAllProducts() {
+    public ResponseEntity<List<ProductDto>> getAllProducts() {
         List<Product> products = productService.getAllProducts();
-        return products.stream()
-                .map(ProductDto::fromEntity)
-                .collect(Collectors.toList());
+        return new ResponseEntity<>(
+                products
+                        .stream()
+                        .map(ProductDto::fromEntity)
+                        .collect(Collectors.toList()),
+                HttpStatus.OK);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ProductDto> getProductById(@PathVariable Long id) {
+    public ResponseEntity<ProductDto> getProductById(@PathVariable UUID id) {
         try {
             Product product = productService.getProductById(id);
-            return new ResponseEntity<>(ProductDto.fromEntity(product), HttpStatus.OK);
+            return new ResponseEntity<>(
+                    ProductDto.fromEntity(product),
+                    HttpStatus.OK);
         } catch (NoSuchElementException e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
@@ -62,25 +57,28 @@ public class ProductController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(
-        security = { @SecurityRequirement(name = "bearerAuth") }
-    )
-    public ResponseEntity<ProductDto> createProduct(@Valid @RequestBody ProductDto productDto) {
-        Product product = productDto.toEntity(categoryService, sizeService, colorService);
+    @Operation(security = { @SecurityRequirement(name = "bearerAuth") })
+    public ResponseEntity<ProductDto> createProduct(
+            @Valid @RequestBody ProductDto productDto) {
+        Product product = productDto.toEntity();
         Product createdProduct = productService.createProduct(product);
-        return new ResponseEntity<>(ProductDto.fromEntity(createdProduct), HttpStatus.CREATED);
+        return new ResponseEntity<>(
+                ProductDto.fromEntity(createdProduct),
+                HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(
-        security = { @SecurityRequirement(name = "bearerAuth") }
-    )
-    public ResponseEntity<ProductDto> updateProduct(@PathVariable Long id, @Valid @RequestBody ProductDto productDto) {
+    @Operation(security = { @SecurityRequirement(name = "bearerAuth") })
+    public ResponseEntity<ProductDto> updateProduct(
+            @PathVariable UUID id,
+            @Valid @RequestBody ProductDto productDto) {
         try {
-            Product product = productDto.toEntity(categoryService, sizeService, colorService);
+            Product product = productDto.toEntity();
             Product updatedProduct = productService.updateProduct(id, product);
-            return new ResponseEntity<>(ProductDto.fromEntity(updatedProduct), HttpStatus.OK);
+            return new ResponseEntity<>(
+                    ProductDto.fromEntity(updatedProduct),
+                    HttpStatus.OK);
         } catch (NoSuchElementException e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
@@ -88,10 +86,8 @@ public class ProductController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(
-        security = { @SecurityRequirement(name = "bearerAuth") }
-    )
-    public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
+    @Operation(security = { @SecurityRequirement(name = "bearerAuth") })
+    public ResponseEntity<Void> deleteProduct(@PathVariable UUID id) {
         productService.deleteProduct(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }

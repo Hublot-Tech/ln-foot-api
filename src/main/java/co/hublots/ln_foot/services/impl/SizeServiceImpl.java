@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class SizeServiceImpl implements SizeService {
@@ -25,7 +27,7 @@ public class SizeServiceImpl implements SizeService {
     }
 
     @Override
-    public Size getSizeById(Long id) {
+    public Size getSizeById(UUID id) {
         return sizeRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Size not found with id: " + id));
     }
@@ -36,15 +38,15 @@ public class SizeServiceImpl implements SizeService {
     }
 
     @Override
-    public Size updateSize(Long id, Size size) {
+    public Size updateSize(UUID id, Size size) {
         Size existingSize = sizeRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Size not found with id: " + id));
-        existingSize.setName(size.getName());
+        Optional.of(size.getName()).ifPresent(existingSize::setName);
         return sizeRepository.save(existingSize);
     }
 
     @Override
-    public void deleteSize(Long id) {
+    public void deleteSize(UUID id) {
         sizeRepository.deleteById(id);
     }
-} 
+}

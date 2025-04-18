@@ -2,6 +2,7 @@ package co.hublots.ln_foot.controllers;
 
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
@@ -40,7 +41,7 @@ public class ColorController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ColorDto> getColorById(@PathVariable Long id) {
+    public ResponseEntity<ColorDto> getColorById(@PathVariable UUID id) {
         try {
             Color color = colorService.getColorById(id);
             return new ResponseEntity<>(ColorDto.fromEntity(color), HttpStatus.OK);
@@ -51,9 +52,7 @@ public class ColorController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(
-        security = { @SecurityRequirement(name = "bearerAuth") }
-    )
+    @Operation(security = { @SecurityRequirement(name = "bearerAuth") })
     public ResponseEntity<ColorDto> createColor(@Valid @RequestBody ColorDto colorDto) {
         Color color = colorDto.toEntity();
         Color createdColor = colorService.createColor(color);
@@ -62,10 +61,8 @@ public class ColorController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(
-        security = { @SecurityRequirement(name = "bearerAuth") }
-    )
-    public ResponseEntity<ColorDto> updateColor(@PathVariable Long id, @Valid @RequestBody ColorDto colorDto) {
+    @Operation(security = { @SecurityRequirement(name = "bearerAuth") })
+    public ResponseEntity<ColorDto> updateColor(@PathVariable UUID id, @Valid @RequestBody ColorDto colorDto) {
         try {
             Color color = colorDto.toEntity();
             Color updatedColor = colorService.updateColor(id, color);
@@ -77,10 +74,8 @@ public class ColorController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(
-        security = { @SecurityRequirement(name = "bearerAuth") }
-    )
-    public ResponseEntity<Void> deleteColor(@PathVariable Long id) {
+    @Operation(security = { @SecurityRequirement(name = "bearerAuth") })
+    public ResponseEntity<Void> deleteColor(@PathVariable UUID id) {
         try {
             colorService.deleteColor(id);
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);

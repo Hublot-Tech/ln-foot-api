@@ -21,4 +21,4 @@ spring:
 logging:
   level:
     root: DEBUG
-    com.hublots.ln_foot: LOG
+    com.hublots.ln_foot: INFO

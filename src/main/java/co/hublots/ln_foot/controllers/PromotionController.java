@@ -1,8 +1,8 @@
 package co.hublots.ln_foot.controllers;
 
 import java.util.List;
+import java.util.UUID;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,59 +15,58 @@ import org.springframework.web.bind.annotation.RestController;
 
 import co.hublots.ln_foot.dto.PromotionDto;
 import co.hublots.ln_foot.models.Promotion;
-import co.hublots.ln_foot.repositories.ProductRepository;
-import co.hublots.ln_foot.repositories.PromotionRepository;
+import co.hublots.ln_foot.services.PromotionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/promotions")
 public class PromotionController {
 
-    @Autowired
-    private PromotionRepository promotionRepository;
-
-    @Autowired
-    private ProductRepository productRepository;
+    private PromotionService promotionService;
 
     @GetMapping
     public List<Promotion> getAllPromotions() {
-        return promotionRepository.findAll();
+        return promotionService.getAllPromotions();
     }
 
     @GetMapping("/{id}")
-    public Promotion getPromotionById(@PathVariable Long id) {
-        return promotionRepository.findById(id).orElse(null);
+    public Promotion getPromotionById(@PathVariable UUID id) {
+        return promotionService.getPromotionById(id);
     }
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(
-        security = { @SecurityRequirement(name = "bearerAuth") }
-    )
-    public Promotion createPromotion(@Valid @RequestBody PromotionDto promotionDto) {
-        Promotion promotion = promotionDto.toEntity(productRepository);
-        return promotionRepository.save(promotion);
+    @Operation(security = { @SecurityRequirement(name = "bearerAuth") })
+    public Promotion createPromotion(
+            @Valid @RequestBody PromotionDto promotionDto) {
+        return promotionService.createPromotion(promotionDto);
+    }
+
+    @PostMapping("/batch")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(security = { @SecurityRequirement(name = "bearerAuth") })
+    public List<Promotion> createPromotions(
+            @Valid @RequestBody List<PromotionDto> promotionDtos) {
+       return promotionService.createPromotions(promotionDtos);
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(
-        security = { @SecurityRequirement(name = "bearerAuth") }
-    )
-    public Promotion updatePromotion(@PathVariable Long id, @Valid @RequestBody PromotionDto promotionDto) {
-        Promotion promotion = promotionDto.toEntity(productRepository);
-        promotion.setId(id);
-        return promotionRepository.save(promotion);
+    @Operation(security = { @SecurityRequirement(name = "bearerAuth") })
+    public Promotion updatePromotion(
+            @PathVariable UUID id,
+            @Valid @RequestBody PromotionDto promotionDto) {
+        return promotionService.createPromotion(promotionDto);
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(
-        security = { @SecurityRequirement(name = "bearerAuth") }
-    )
-    public void deletePromotion(@PathVariable Long id) {
-        promotionRepository.deleteById(id);
+    @Operation(security = { @SecurityRequirement(name = "bearerAuth") })
+    public void deletePromotion(@PathVariable UUID id) {
+        promotionService.deletePromotion(id);
     }
 }

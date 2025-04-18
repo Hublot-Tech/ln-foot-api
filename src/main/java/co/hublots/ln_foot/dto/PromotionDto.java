@@ -7,18 +7,19 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.UUID;
 
+import co.hublots.ln_foot.models.Product;
 import co.hublots.ln_foot.models.Promotion;
-import co.hublots.ln_foot.repositories.ProductRepository;
 
 @Data
 @Builder
 @AllArgsConstructor
 public class PromotionDto {
-    private Long id;
+    private UUID id;
 
     @NotNull(message = "Product ID is required")
-    private Long productId;
+    private UUID productId;
 
     @NotNull(message = "Discounted price is required")
     @Positive(message = "Discounted price must be positive")
@@ -40,10 +41,10 @@ public class PromotionDto {
                 .build();
     }
 
-    public Promotion toEntity(ProductRepository productRepository) {
+    public Promotion toEntity() {
         return Promotion.builder()
                 .id(id)
-                .product(productRepository.findById(productId).orElse(null))
+                .product(Product.builder().id(productId).build())
                 .discountedPrice(discountedPrice)
                 .startDate(startDate)
                 .endDate(endDate)

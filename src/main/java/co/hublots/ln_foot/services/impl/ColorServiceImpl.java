@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class ColorServiceImpl implements ColorService {
@@ -25,7 +27,7 @@ public class ColorServiceImpl implements ColorService {
     }
 
     @Override
-    public Color getColorById(Long id) {
+    public Color getColorById(UUID id) {
         return colorRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Color not found with id: " + id));
     }
@@ -36,15 +38,15 @@ public class ColorServiceImpl implements ColorService {
     }
 
     @Override
-    public Color updateColor(Long id, Color color) {
+    public Color updateColor(UUID id, Color color) {
         Color existingColor = colorRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Color not found with id: " + id));
-        existingColor.setName(color.getName());
+        Optional.of(color.getName()).ifPresent(existingColor::setName);
         return colorRepository.save(existingColor);
     }
 
     @Override
-    public void deleteColor(Long id) {
+    public void deleteColor(UUID id) {
         colorRepository.deleteById(id);
     }
-} 
+}

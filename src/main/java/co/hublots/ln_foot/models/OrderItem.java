@@ -1,5 +1,7 @@
+// src/main/java/co/hublots/ln_foot/models/OrderItem.java
 package co.hublots.ln_foot.models;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 import jakarta.persistence.Entity;
@@ -9,25 +11,34 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import lombok.Data;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Data;
 
 @Entity
-@Table(name = "reviews")
+@Table(name = "order_items")
 @Data
-@AllArgsConstructor
 @Builder
-public class Review {
+@AllArgsConstructor
+public class OrderItem {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @ManyToOne
+    @JoinColumn(name = "order_id")
+    private Order order;
+
+    @ManyToOne
     @JoinColumn(name = "product_id")
     private Product product;
 
-    private int rating;
-    private String comment;
-    private UUID keycloakUserId;
+    private int quantity;
+
+    private Size size;
+
+    private Color color;
+
+    private BigDecimal price;
+
 }

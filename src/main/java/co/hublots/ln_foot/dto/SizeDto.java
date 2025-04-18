@@ -1,5 +1,7 @@
 package co.hublots.ln_foot.dto;
 
+import java.util.UUID;
+
 import co.hublots.ln_foot.models.Size;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
@@ -12,7 +14,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class SizeDto {
-    private Long id;
+    private UUID id;
 
     @NotBlank(message = "Size name is required")
     private String name;

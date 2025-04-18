@@ -5,8 +5,8 @@ import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import co.hublots.ln_foot.models.Color;
+import co.hublots.ln_foot.models.Order;
 
 @Repository
-public interface ColorRepository extends JpaRepository<Color, UUID> {
+public interface OrderRepository extends JpaRepository<Order, UUID> {
 } 
