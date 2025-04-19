@@ -22,7 +22,7 @@
             }
         ]
     },
-    "StringProviders": [
+    "identityProviders": [
       {
         "alias": "google",
         "displayName": "Google",

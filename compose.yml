@@ -27,16 +27,3 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_USERNAME: ${DB_USERNAME}
     restart: unless-stopped
-
-  ln-foot:
-    image: ln-foot:${LN_FOOT_VERSION}
-    build:
-      context: .
-      dockerfile: Dockerfile
-    ports:
-      - ${LN_FOOT_PORT}:8080
-    depends_on:
-      - keycloak
-      - postgres
-    environment:
-      KC_ISSUER_URI: ${KC_ISSUER_URI}

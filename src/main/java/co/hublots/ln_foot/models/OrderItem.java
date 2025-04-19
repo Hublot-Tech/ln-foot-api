@@ -32,12 +32,15 @@ public class OrderItem {
     @JoinColumn(name = "product_id")
     private Product product;
 
-    private int quantity;
-
+    @ManyToOne
+    @JoinColumn(name = "size_id")
     private Size size;
 
+    @ManyToOne
+    @JoinColumn(name = "color_id")
     private Color color;
 
     private BigDecimal price;
 
+    private int quantity;
 }

@@ -36,7 +36,7 @@ docker-compose-down:
 all: build test docker-build
 
 # Development workflow
-dev: docker-compose-up
+dev: docker-compose-up run
 
 # Clean everything
 clean-all: clean docker-compose-down
