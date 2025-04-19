@@ -36,9 +36,9 @@ public class SizeController {
     public List<SizeDto> getAllSizes() {
         List<Size> sizes = sizeService.getAllSizes();
         return sizes
-            .stream()
-            .map(SizeDto::fromEntity)
-            .collect(Collectors.toList());
+                .stream()
+                .map(SizeDto::fromEntity)
+                .collect(Collectors.toList());
     }
 
     @GetMapping("/{id}")
@@ -46,8 +46,8 @@ public class SizeController {
         try {
             Size size = sizeService.getSizeById(id);
             return new ResponseEntity<>(
-                SizeDto.fromEntity(size),
-                HttpStatus.OK
+                    SizeDto.fromEntity(size),
+                    HttpStatus.OK
             );
         } catch (NoSuchElementException e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -56,31 +56,31 @@ public class SizeController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(security = { @SecurityRequirement(name = "bearerAuth") })
+    @Operation(security = {@SecurityRequirement(name = "bearerAuth")})
     public ResponseEntity<SizeDto> createSize(
-        @Valid @RequestBody SizeDto sizeDto
+            @Valid @RequestBody SizeDto sizeDto
     ) {
         Size size = sizeDto.toEntity();
         Size createdSize = sizeService.createSize(size);
         return new ResponseEntity<>(
-            SizeDto.fromEntity(createdSize),
-            HttpStatus.CREATED
+                SizeDto.fromEntity(createdSize),
+                HttpStatus.CREATED
         );
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(security = { @SecurityRequirement(name = "bearerAuth") })
+    @Operation(security = {@SecurityRequirement(name = "bearerAuth")})
     public ResponseEntity<SizeDto> updateSize(
-        @PathVariable String id,
-        @Valid @RequestBody SizeDto sizeDto
+            @PathVariable String id,
+            @Valid @RequestBody SizeDto sizeDto
     ) {
         try {
             Size size = sizeDto.toEntity();
             Size updatedSize = sizeService.updateSize(id, size);
             return new ResponseEntity<>(
-                SizeDto.fromEntity(updatedSize),
-                HttpStatus.OK
+                    SizeDto.fromEntity(updatedSize),
+                    HttpStatus.OK
             );
         } catch (NoSuchElementException e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -89,7 +89,7 @@ public class SizeController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(security = { @SecurityRequirement(name = "bearerAuth") })
+    @Operation(security = {@SecurityRequirement(name = "bearerAuth")})
     public ResponseEntity<Void> deleteSize(@PathVariable String id) {
         try {
             sizeService.deleteSize(id);

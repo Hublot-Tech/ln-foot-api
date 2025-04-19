@@ -52,7 +52,7 @@ public class ColorController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(security = { @SecurityRequirement(name = "bearerAuth") })
+    @Operation(security = {@SecurityRequirement(name = "bearerAuth")})
     public ResponseEntity<ColorDto> createColor(@Valid @RequestBody ColorDto colorDto) {
         Color color = colorDto.toEntity();
         Color createdColor = colorService.createColor(color);
@@ -61,7 +61,7 @@ public class ColorController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(security = { @SecurityRequirement(name = "bearerAuth") })
+    @Operation(security = {@SecurityRequirement(name = "bearerAuth")})
     public ResponseEntity<ColorDto> updateColor(@PathVariable String id, @Valid @RequestBody ColorDto colorDto) {
         try {
             Color color = colorDto.toEntity();
@@ -74,7 +74,7 @@ public class ColorController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(security = { @SecurityRequirement(name = "bearerAuth") })
+    @Operation(security = {@SecurityRequirement(name = "bearerAuth")})
     public ResponseEntity<Void> deleteColor(@PathVariable String id) {
         try {
             colorService.deleteColor(id);
