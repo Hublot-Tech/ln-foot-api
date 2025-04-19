@@ -26,7 +26,7 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/promotions")
 public class PromotionController {
 
-    private PromotionService promotionService;
+    private final PromotionService promotionService;
 
     @GetMapping
     public List<Promotion> getAllPromotions() {

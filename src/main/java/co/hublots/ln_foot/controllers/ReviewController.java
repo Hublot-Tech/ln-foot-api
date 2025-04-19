@@ -29,7 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/reviews")
 public class ReviewController {
 
-    private ReviewService reviewService;
+    private final ReviewService reviewService;
 
     @GetMapping
     public ResponseEntity<List<ReviewDto>> getAllReviews() {
