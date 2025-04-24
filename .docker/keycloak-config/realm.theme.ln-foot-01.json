@@ -85,12 +85,10 @@
       "enabled": true,
       "publicClient": true,
       "redirectUris": [
-        "http://localhost:3000/api/auth/*",
-        "http://localhost:8080/*"
+        "*"
       ],
       "webOrigins": [
-        "http://localhost:3000",
-        "http://localhost:8080"
+        "*"
       ],
       "protocol": "openid-connect",
       "standardFlowEnabled": true,
