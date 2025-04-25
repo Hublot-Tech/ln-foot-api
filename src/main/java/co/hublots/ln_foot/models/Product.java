@@ -11,16 +11,19 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.RequiredArgsConstructor;
 
 @Entity
 @Table(name = "products")
 @Data
 @Builder
 @AllArgsConstructor
+@RequiredArgsConstructor
 public class Product {
     @Id
     @UuidGenerator
@@ -32,26 +35,22 @@ public class Product {
     private String imageUrl; // URL to the product image
     private int stockQuantity;
 
+    @OneToMany(mappedBy = "product")
+    private List<Promotion> promotions;
+
+    @OneToMany(mappedBy = "product")
+    private List<ColoredProduct> coloredProducts;
+
+    @OneToMany(mappedBy = "product")
+    private List<Review> reviews;
 
     @ManyToMany
     @JoinTable(name = "product_categories", joinColumns = @JoinColumn(name = "product_id"), inverseJoinColumns = @JoinColumn(name = "category_id"))
     private List<Category> categories;
 
     @ManyToMany
-    @JoinTable(
-            name = "product_sizes",
-            joinColumns = @JoinColumn(name = "product_id"),
-            inverseJoinColumns = @JoinColumn(name = "size_id")
-    )
+    @JoinTable(name = "product_sizes", joinColumns = @JoinColumn(name = "product_id"), inverseJoinColumns = @JoinColumn(name = "size_id"))
     private List<Size> sizes;
-
-    @ManyToMany
-    @JoinTable(
-            name = "product_colors",
-            joinColumns = @JoinColumn(name = "product_id"),
-            inverseJoinColumns = @JoinColumn(name = "color_id")
-    )
-    private List<Color> colors;
 
     public static Product from(ProductDto productDto) {
         return Product.builder()

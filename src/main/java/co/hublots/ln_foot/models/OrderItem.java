@@ -13,12 +13,14 @@ import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.RequiredArgsConstructor;
 
 @Entity
 @Table(name = "order_items")
 @Data
 @Builder
 @AllArgsConstructor
+@RequiredArgsConstructor
 public class OrderItem {
     @Id
     @UuidGenerator
@@ -29,16 +31,12 @@ public class OrderItem {
     private Order order;
 
     @ManyToOne
-    @JoinColumn(name = "product_id")
-    private Product product;
-
-    @ManyToOne
     @JoinColumn(name = "size_id")
     private Size size;
 
     @ManyToOne
-    @JoinColumn(name = "color_id")
-    private Color color;
+    @JoinColumn(name = "colored_product_id")
+    private ColoredProduct coloredProduct;
 
     private BigDecimal price;
 

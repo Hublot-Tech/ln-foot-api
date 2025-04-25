@@ -2,7 +2,6 @@ package co.hublots.ln_foot.controllers;
 
 import java.util.List;
 import java.util.NoSuchElementException;
-
 import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
@@ -20,8 +19,6 @@ import org.springframework.web.bind.annotation.RestController;
 import co.hublots.ln_foot.dto.SizeDto;
 import co.hublots.ln_foot.models.Size;
 import co.hublots.ln_foot.services.SizeService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -56,7 +53,6 @@ public class SizeController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(security = {@SecurityRequirement(name = "bearerAuth")})
     public ResponseEntity<SizeDto> createSize(
             @Valid @RequestBody SizeDto sizeDto
     ) {
@@ -70,7 +66,6 @@ public class SizeController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(security = {@SecurityRequirement(name = "bearerAuth")})
     public ResponseEntity<SizeDto> updateSize(
             @PathVariable String id,
             @Valid @RequestBody SizeDto sizeDto
@@ -89,7 +84,6 @@ public class SizeController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(security = {@SecurityRequirement(name = "bearerAuth")})
     public ResponseEntity<Void> deleteSize(@PathVariable String id) {
         try {
             sizeService.deleteSize(id);

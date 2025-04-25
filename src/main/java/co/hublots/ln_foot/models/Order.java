@@ -12,12 +12,14 @@ import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.RequiredArgsConstructor;
 
 @Entity
 @Table(name = "orders")
 @Data
 @Builder
 @AllArgsConstructor
+@RequiredArgsConstructor
 public class Order {
     @Id
     @UuidGenerator
@@ -26,9 +28,9 @@ public class Order {
     @OneToMany(mappedBy = "order")
     private List<OrderItem> orderItems;
 
-    // Authorization server (Keycloak) user id
-    private String userId;
     private LocalDate orderDate;
     private boolean isCompleted;
+    // Authorization server (Keycloak) user id
+    private String userId;
 
 }

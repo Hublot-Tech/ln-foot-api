@@ -11,12 +11,14 @@ import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.RequiredArgsConstructor;
 
 @Entity
 @Table(name = "categories")
 @Data
 @Builder
 @AllArgsConstructor
+@RequiredArgsConstructor
 public class Category {
     @Id
     @UuidGenerator

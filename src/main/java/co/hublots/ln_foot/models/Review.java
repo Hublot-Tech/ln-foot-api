@@ -10,14 +10,16 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 
 @Entity
 @Table(name = "reviews")
 @Data
-@AllArgsConstructor
 @Builder
+@AllArgsConstructor
+@RequiredArgsConstructor
 public class Review {
     @Id
     @UuidGenerator

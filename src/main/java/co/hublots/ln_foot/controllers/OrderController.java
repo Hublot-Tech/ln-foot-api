@@ -1,18 +1,9 @@
 package co.hublots.ln_foot.controllers;
 
-import co.hublots.ln_foot.annotations.KeycloakUserId;
-import co.hublots.ln_foot.dto.OrderDto;
-import co.hublots.ln_foot.models.Order;
-import co.hublots.ln_foot.services.OrderService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import jakarta.validation.Valid;
-
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -25,6 +16,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import co.hublots.ln_foot.annotations.KeycloakUserId;
+import co.hublots.ln_foot.dto.OrderDto;
+import co.hublots.ln_foot.models.Order;
+import co.hublots.ln_foot.services.OrderService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/orders")
@@ -34,7 +32,6 @@ public class OrderController {
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(security = {@SecurityRequirement(name = "bearerAuth")})
     public List<OrderDto> getAllOrders(@KeycloakUserId String userId) {
         List<Order> Orders = orderService.getAllOrders();
         return Orders.stream()
@@ -44,7 +41,6 @@ public class OrderController {
 
     @GetMapping("me")
     @PreAuthorize("hasRole('USER')")
-    @Operation(security = {@SecurityRequirement(name = "bearerAuth")})
     public List<OrderDto> getUserOrders(@KeycloakUserId String userId) {
         List<Order> Orders = orderService.getUserOrders(userId);
         return Orders.stream()
@@ -54,7 +50,6 @@ public class OrderController {
 
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('USER')")
-    @Operation(security = {@SecurityRequirement(name = "bearerAuth")})
     public ResponseEntity<OrderDto> getOrderById(@PathVariable String id) {
         try {
             Order Order = orderService.getOrderById(id);
@@ -68,7 +63,6 @@ public class OrderController {
 
     @PostMapping
     @PreAuthorize("hasRole('USER')")
-    @Operation(security = {@SecurityRequirement(name = "bearerAuth")})
     public ResponseEntity<OrderDto> createOrder(
             @Valid @RequestBody OrderDto orderDto) {
         Order order = orderDto.toEntity();
@@ -80,7 +74,6 @@ public class OrderController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('USER')")
-    @Operation(security = {@SecurityRequirement(name = "bearerAuth")})
     public ResponseEntity<OrderDto> updateOrder(
             @PathVariable String id,
             @Valid @RequestBody OrderDto orderDto) {
@@ -97,7 +90,6 @@ public class OrderController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('USER')")
-    @Operation(security = {@SecurityRequirement(name = "bearerAuth")})
     public ResponseEntity<Void> deleteOrder(@PathVariable String id) {
         try {
             orderService.deleteOrder(id);

@@ -1,11 +1,11 @@
 package co.hublots.ln_foot.services.impl;
 
 import co.hublots.ln_foot.models.Category;
-import co.hublots.ln_foot.models.Color;
+import co.hublots.ln_foot.models.ColoredProduct;
 import co.hublots.ln_foot.models.Product;
 import co.hublots.ln_foot.models.Size;
 import co.hublots.ln_foot.repositories.CategoryRepository;
-import co.hublots.ln_foot.repositories.ColorRepository;
+import co.hublots.ln_foot.repositories.ColoredProductRepository;
 import co.hublots.ln_foot.repositories.ProductRepository;
 import co.hublots.ln_foot.repositories.SizeRepository;
 import co.hublots.ln_foot.services.ProductService;
@@ -27,7 +27,7 @@ public class ProductServiceImpl implements ProductService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
     private final SizeRepository sizeRepository;
-    private final ColorRepository colorRepository;
+    private final ColoredProductRepository colorRepository;
 
     @Override
     public List<Product> getAllProducts() {
@@ -78,12 +78,12 @@ public class ProductServiceImpl implements ProductService {
         }
 
         // Update colors
-        if (product.getColors() != null) {
-            List<Color> colors = product.getColors().stream()
+        if (product.getColoredProducts() != null) {
+            List<ColoredProduct> colors = product.getColoredProducts().stream()
                     .map(color -> colorRepository.findById(color.getId())
                             .orElseThrow(() -> new NoSuchElementException("Color not found with id: " + color.getId())))
                     .collect(Collectors.toList());
-            existingProduct.setColors(colors);
+            existingProduct.setColoredProducts(colors);
         }
 
         return productRepository.save(existingProduct);

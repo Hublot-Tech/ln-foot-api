@@ -1,13 +1,9 @@
-// src/main/java/co/hublots/ln_foot/dto/OrderItemDto.java
 package co.hublots.ln_foot.dto;
 
-import java.math.BigDecimal;
-
-
-import co.hublots.ln_foot.models.Color;
+import co.hublots.ln_foot.models.ColoredProduct;
 import co.hublots.ln_foot.models.OrderItem;
-import co.hublots.ln_foot.models.Product;
 import co.hublots.ln_foot.models.Size;
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -18,35 +14,29 @@ import lombok.Data;
 public class OrderItemDto {
     private String id;
 
-    private String productId;
+    @NotBlank(message = "Product id is required")
+    private String coloredProductId;
 
+    @NotBlank(message = "Quantity is required")
     private int quantity;
 
     private String sizeId;
 
-    private String colorId;
-
-    private BigDecimal price;
-
     public static OrderItemDto fromEntity(OrderItem orderItem) {
         return OrderItemDto.builder()
                 .id(orderItem.getId())
-                .productId(orderItem.getProduct().getId())
+                .coloredProductId(orderItem.getColoredProduct().getId())
                 .quantity(orderItem.getQuantity())
                 .sizeId(orderItem.getSize().getId())
-                .colorId(orderItem.getColor().getId())
-                .price(orderItem.getPrice())
                 .build();
     }
 
     public OrderItem toEntity() {
         return OrderItem.builder()
                 .id(id)
-                .product(Product.builder().id(productId).build())
+                .coloredProduct(ColoredProduct.builder().id(coloredProductId).build())
                 .quantity(quantity)
                 .size(Size.builder().id(sizeId).build())
-                .color(Color.builder().id(colorId).build())
-                .price(price)
                 .build();
     }
 }

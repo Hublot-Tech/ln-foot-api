@@ -1,4 +1,3 @@
-// src/main/java/co/hublots/ln_foot/dto/OrderDto.java
 package co.hublots.ln_foot.dto;
 
 import java.time.LocalDate;
@@ -7,6 +6,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import co.hublots.ln_foot.models.Order;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -19,6 +20,8 @@ public class OrderDto {
 
     private LocalDate orderDate;
 
+    @Size(min = 1)
+    @Valid
     private List<OrderItemDto> orderItems;
 
     public static OrderDto fromEntity(Order order) {

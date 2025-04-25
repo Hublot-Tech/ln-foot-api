@@ -13,12 +13,14 @@ import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.RequiredArgsConstructor;
 
 @Entity
 @Table(name = "promotions")
 @Data
-@AllArgsConstructor
 @Builder
+@AllArgsConstructor
+@RequiredArgsConstructor
 public class Promotion {
     @Id
     @UuidGenerator

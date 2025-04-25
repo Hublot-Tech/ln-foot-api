@@ -2,11 +2,14 @@ package co.hublots.ln_foot.dto;
 
 import java.math.BigDecimal;
 import java.util.List;
-
 import java.util.stream.Collectors;
 
+import org.springframework.web.multipart.MultipartFile;
+
+import com.fasterxml.jackson.annotation.JsonAlias;
+
 import co.hublots.ln_foot.models.Category;
-import co.hublots.ln_foot.models.Color;
+import co.hublots.ln_foot.models.ColoredProduct;
 import co.hublots.ln_foot.models.Product;
 import co.hublots.ln_foot.models.Size;
 import jakarta.validation.constraints.NotBlank;
@@ -15,14 +18,15 @@ import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 @Data
 @Builder
-@NoArgsConstructor
 @AllArgsConstructor
 public class ProductDto {
         private String id;
+
+        private String imageUrl;
+        private MultipartFile file;
 
         @NotBlank(message = "Name is required")
         private String name;
@@ -34,20 +38,19 @@ public class ProductDto {
         @Positive(message = "Price must be positive")
         private BigDecimal price;
 
-        @NotBlank(message = "Image URL is required")
-        private String imageUrl;
-
+        @JsonAlias({ "stock_quantity" })
+        @NotBlank(message = "Stock quantity is required")
         @Positive(message = "Stock quantity must be positive")
         private int stockQuantity;
 
         @NotNull(message = "Category IDs are required")
         private List<String> categoryIds;
 
-        @NotNull(message = "Size IDs are required")
-        private List<String> sizeIds;
+        @Builder.Default
+        private List<String> sizeIds = List.of();
 
-        @NotNull(message = "Color IDs are required")
-        private List<String> colorIds;
+        @Builder.Default
+        private List<String> coloredProductIds = List.of();
 
         public static ProductDto fromEntity(Product product) {
                 return ProductDto.builder()
@@ -60,7 +63,8 @@ public class ProductDto {
                                 .categoryIds(product.getCategories().stream().map(Category::getId)
                                                 .collect(Collectors.toList()))
                                 .sizeIds(product.getSizes().stream().map(Size::getId).collect(Collectors.toList()))
-                                .colorIds(product.getColors().stream().map(Color::getId).collect(Collectors.toList()))
+                                .coloredProductIds(product.getColoredProducts().stream().map(ColoredProduct::getId)
+                                                .collect(Collectors.toList()))
                                 .build();
         }
 
@@ -78,8 +82,8 @@ public class ProductDto {
                                 .sizes(sizeIds.stream()
                                                 .map(id -> Size.builder().id(id).build())
                                                 .collect(Collectors.toList()))
-                                .colors(colorIds.stream()
-                                                .map(id -> Color.builder().id(id).build())
+                                .coloredProducts(coloredProductIds.stream()
+                                                .map(id -> ColoredProduct.builder().id(id).build())
                                                 .collect(Collectors.toList()))
                                 .build();
         }

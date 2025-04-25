@@ -1,17 +1,9 @@
 package co.hublots.ln_foot.controllers;
 
-import co.hublots.ln_foot.annotations.KeycloakUserId;
-import co.hublots.ln_foot.dto.ReviewDto;
-import co.hublots.ln_foot.models.Review;
-import co.hublots.ln_foot.services.ReviewService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import jakarta.validation.Valid;
 import java.util.List;
 import java.util.NoSuchElementException;
-
 import java.util.stream.Collectors;
-import lombok.RequiredArgsConstructor;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -23,6 +15,13 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import co.hublots.ln_foot.annotations.KeycloakUserId;
+import co.hublots.ln_foot.dto.ReviewDto;
+import co.hublots.ln_foot.models.Review;
+import co.hublots.ln_foot.services.ReviewService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequiredArgsConstructor
@@ -52,10 +51,9 @@ public class ReviewController {
 
     @PostMapping
     @PreAuthorize("hasRole('USER')")
-    @Operation(security = { @SecurityRequirement(name = "bearerAuth") })
     public ResponseEntity<ReviewDto> createReview(
             @KeycloakUserId String userId,
-            @Valid @RequestBody ReviewDto reviewDto) {
+            @RequestBody @Valid ReviewDto reviewDto) {
 
         Review review = reviewDto.toEntity();
         review.setKeycloakUserId(userId);
@@ -71,7 +69,6 @@ public class ReviewController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('USER')")
-    @Operation(security = { @SecurityRequirement(name = "bearerAuth") })
     public ResponseEntity<ReviewDto> updateReview(
             @PathVariable String id,
             @KeycloakUserId String userId,
@@ -87,7 +84,6 @@ public class ReviewController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
-    @Operation(security = { @SecurityRequirement(name = "bearerAuth") })
     public ResponseEntity<Void> deleteReview(@PathVariable String id) {
         reviewService.deleteReview(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
