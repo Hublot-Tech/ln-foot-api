@@ -1,7 +1,6 @@
 package co.hublots.ln_foot.controllers;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
@@ -51,14 +50,10 @@ public class OrderController {
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<OrderDto> getOrderById(@PathVariable String id) {
-        try {
-            Order Order = orderService.getOrderById(id);
-            return new ResponseEntity<>(
-                    OrderDto.fromEntity(Order),
-                    HttpStatus.OK);
-        } catch (NoSuchElementException e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+        Order Order = orderService.getOrderById(id);
+        return new ResponseEntity<>(
+                OrderDto.fromEntity(Order),
+                HttpStatus.OK);
     }
 
     @PostMapping
@@ -77,25 +72,17 @@ public class OrderController {
     public ResponseEntity<OrderDto> updateOrder(
             @PathVariable String id,
             @Valid @RequestBody OrderDto orderDto) {
-        try {
-            Order Order = orderDto.toEntity();
-            Order updatedOrder = orderService.updateOrder(id, Order);
-            return new ResponseEntity<>(
-                    OrderDto.fromEntity(updatedOrder),
-                    HttpStatus.OK);
-        } catch (NoSuchElementException e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+        Order Order = orderDto.toEntity();
+        Order updatedOrder = orderService.updateOrder(id, Order);
+        return new ResponseEntity<>(
+                OrderDto.fromEntity(updatedOrder),
+                HttpStatus.OK);
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> deleteOrder(@PathVariable String id) {
-        try {
-            orderService.deleteOrder(id);
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        } catch (NoSuchElementException e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+        orderService.deleteOrder(id);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }

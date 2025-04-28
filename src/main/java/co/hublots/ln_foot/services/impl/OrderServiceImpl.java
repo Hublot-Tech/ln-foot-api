@@ -1,11 +1,11 @@
 package co.hublots.ln_foot.services.impl;
 
+import java.util.InputMismatchException;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.InputMismatchException;
 import java.util.Optional;
 
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
 import org.springframework.stereotype.Service;
 
@@ -17,7 +17,8 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class OrderServiceImpl implements OrderService {
-
+    
+    @Autowired
     private final OrderRepository orderRepository;
 
     @Override

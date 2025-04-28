@@ -6,10 +6,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.web.multipart.MultipartFile;
 
-import com.fasterxml.jackson.annotation.JsonAlias;
-
 import co.hublots.ln_foot.models.Category;
-import co.hublots.ln_foot.models.ColoredProduct;
 import co.hublots.ln_foot.models.Product;
 import co.hublots.ln_foot.models.Size;
 import jakarta.validation.constraints.NotBlank;
@@ -38,19 +35,15 @@ public class ProductDto {
         @Positive(message = "Price must be positive")
         private BigDecimal price;
 
-        @JsonAlias({ "stock_quantity" })
         @NotBlank(message = "Stock quantity is required")
         @Positive(message = "Stock quantity must be positive")
         private int stockQuantity;
 
         @NotNull(message = "Category IDs are required")
-        private List<String> categoryIds;
+        private List<String> categoryNames;
 
         @Builder.Default
-        private List<String> sizeIds = List.of();
-
-        @Builder.Default
-        private List<String> coloredProductIds = List.of();
+        private List<String> sizes = List.of();
 
         public static ProductDto fromEntity(Product product) {
                 return ProductDto.builder()
@@ -60,11 +53,9 @@ public class ProductDto {
                                 .price(product.getPrice())
                                 .imageUrl(product.getImageUrl())
                                 .stockQuantity(product.getStockQuantity())
-                                .categoryIds(product.getCategories().stream().map(Category::getId)
+                                .categoryNames(product.getCategories().stream().map(Category::getName)
                                                 .collect(Collectors.toList()))
-                                .sizeIds(product.getSizes().stream().map(Size::getId).collect(Collectors.toList()))
-                                .coloredProductIds(product.getColoredProducts().stream().map(ColoredProduct::getId)
-                                                .collect(Collectors.toList()))
+                                .sizes(product.getSizes().stream().map(Size::getName).collect(Collectors.toList()))
                                 .build();
         }
 
@@ -76,14 +67,10 @@ public class ProductDto {
                                 .price(price)
                                 .imageUrl(imageUrl)
                                 .stockQuantity(stockQuantity)
-                                .categories(categoryIds.stream()
-                                                .map(id -> Category.builder().id(id).build())
+                                .categories(categoryNames.stream()
+                                                .map(category -> Category.builder().name(category).build())
                                                 .collect(Collectors.toList()))
-                                .sizes(sizeIds.stream()
-                                                .map(id -> Size.builder().id(id).build())
-                                                .collect(Collectors.toList()))
-                                .coloredProducts(coloredProductIds.stream()
-                                                .map(id -> ColoredProduct.builder().id(id).build())
+                                .sizes(sizes.stream().map(size -> Size.builder().name(size).build())
                                                 .collect(Collectors.toList()))
                                 .build();
         }

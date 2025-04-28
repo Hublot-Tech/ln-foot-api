@@ -1,6 +1,8 @@
 package co.hublots.ln_foot.controllers;
 
+import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,14 +32,19 @@ public class ColoredProductController {
     private final MinioService minioService;
     private final ColoredProductService coloredProductService;
 
+    @GetMapping
+    public ResponseEntity<List<ColoredProductDto>> getColoredProducts() {
+        List<ColoredProduct> coloredProducts = coloredProductService.getAllColoredProducts();
+        return new ResponseEntity<>(
+                coloredProducts.stream().map(ColoredProductDto::fromEntity).collect(Collectors.toList()),
+                HttpStatus.OK);
+
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<ColoredProductDto> getColoredProduct(@PathVariable String id) {
-        try {
-            ColoredProduct coloredProduct = coloredProductService.getColoredProductById(id);
-            return new ResponseEntity<>(ColoredProductDto.fromEntity(coloredProduct), HttpStatus.OK);
-        } catch (NoSuchElementException e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+        ColoredProduct coloredProduct = coloredProductService.getColoredProductById(id);
+        return new ResponseEntity<>(ColoredProductDto.fromEntity(coloredProduct), HttpStatus.OK);
     }
 
     @PostMapping
@@ -49,12 +56,8 @@ public class ColoredProductController {
         ColoredProduct coloredProduct = coloredProductDto.toEntity();
 
         if (file != null) {
-            try {
-                String imageUrl = minioService.uploadFile(file);
-                coloredProduct.setImageUrl(imageUrl);
-            } catch (Exception e) {
-                return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-            }
+            String imageUrl = minioService.uploadFile(file);
+            coloredProduct.setImageUrl(imageUrl);
         }
 
         ColoredProduct createdColor = coloredProductService.createColoredProduct(coloredProduct);
@@ -70,12 +73,8 @@ public class ColoredProductController {
             MultipartFile file = coloredProductDto.getFile();
 
             if (file != null) {
-                try {
-                    String imageUrl = minioService.uploadFile(file);
-                    coloredProduct.setImageUrl(imageUrl);
-                } catch (Exception e) {
-                    return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-                }
+                String imageUrl = minioService.uploadFile(file);
+                coloredProduct.setImageUrl(imageUrl);
             }
 
             ColoredProduct updatedColor = coloredProductService.updateColoredProduct(id, coloredProduct);
@@ -88,11 +87,7 @@ public class ColoredProductController {
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteColoredProduct(@PathVariable String id) {
-        try {
-            coloredProductService.deleteColoredProduct(id);
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        } catch (NoSuchElementException e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+        coloredProductService.deleteColoredProduct(id);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }

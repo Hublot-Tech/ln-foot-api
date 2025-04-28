@@ -1,4 +1,3 @@
-// src/main/java/co/hublots/ln_foot/models/OrderItem.java
 package co.hublots.ln_foot.models;
 
 import java.math.BigDecimal;
@@ -29,16 +28,12 @@ public class OrderItem {
     @ManyToOne
     @JoinColumn(name = "order_id")
     private Order order;
-
-    @ManyToOne
-    @JoinColumn(name = "size_id")
-    private Size size;
-
+    
     @ManyToOne
     @JoinColumn(name = "colored_product_id")
     private ColoredProduct coloredProduct;
-
+    
+    private String size;
     private BigDecimal price;
-
     private int quantity;
 }

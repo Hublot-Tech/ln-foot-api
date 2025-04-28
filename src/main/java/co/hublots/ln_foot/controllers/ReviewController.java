@@ -1,7 +1,6 @@
 package co.hublots.ln_foot.controllers;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
@@ -41,12 +40,8 @@ public class ReviewController {
 
     @GetMapping("/{id}")
     public ResponseEntity<ReviewDto> getReviewById(@PathVariable String id) {
-        try {
-            Review review = reviewService.getReviewById(id);
-            return new ResponseEntity<>(ReviewDto.fromEntity(review), HttpStatus.OK);
-        } catch (NoSuchElementException e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+        Review review = reviewService.getReviewById(id);
+        return new ResponseEntity<>(ReviewDto.fromEntity(review), HttpStatus.OK);
     }
 
     @PostMapping
@@ -54,17 +49,13 @@ public class ReviewController {
     public ResponseEntity<ReviewDto> createReview(
             @KeycloakUserId String userId,
             @RequestBody @Valid ReviewDto reviewDto) {
-
         Review review = reviewDto.toEntity();
         review.setKeycloakUserId(userId);
-        try {
-            Review savedReview = reviewService.createReview(review);
-            return new ResponseEntity<>(
-                    ReviewDto.fromEntity(savedReview),
-                    HttpStatus.CREATED);
-        } catch (NoSuchElementException e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+
+        Review savedReview = reviewService.createReview(review);
+        return new ResponseEntity<>(
+                ReviewDto.fromEntity(savedReview),
+                HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
@@ -74,12 +65,8 @@ public class ReviewController {
             @KeycloakUserId String userId,
             @RequestBody ReviewDto reviewDto) {
 
-        try {
-            Review review = reviewService.createReview(reviewDto.toEntity());
-            return new ResponseEntity<>(ReviewDto.fromEntity(review), HttpStatus.OK);
-        } catch (NoSuchElementException e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+        Review review = reviewService.createReview(reviewDto.toEntity());
+        return new ResponseEntity<>(ReviewDto.fromEntity(review), HttpStatus.OK);
     }
 
     @DeleteMapping("/{id}")

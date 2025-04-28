@@ -35,3 +35,6 @@ logging:
   level:
     root: DEBUG
     com.hublots.ln_foot: DEBUG
+
+springdoc:
+  paths-to-match: /api/**

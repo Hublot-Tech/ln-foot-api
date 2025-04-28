@@ -1,7 +1,6 @@
 package co.hublots.ln_foot.controllers;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
@@ -51,31 +50,21 @@ public class ProductController {
 
     @GetMapping("/{id}")
     public ResponseEntity<ProductDto> getProductById(@PathVariable String id) {
-        try {
-            Product product = productService.getProductById(id);
-            return new ResponseEntity<>(
-                    ProductDto.fromEntity(product),
-                    HttpStatus.OK);
-        } catch (NoSuchElementException e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+        Product product = productService.getProductById(id);
+        return new ResponseEntity<>(
+                ProductDto.fromEntity(product),
+                HttpStatus.OK);
     }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ProductDto> createProduct(@Valid @RequestBody ProductDto productDto) {
         Product product = productDto.toEntity();
-        log.debug(productDto.toString());
         MultipartFile file = productDto.getFile();
-        log.debug("File is empty: " + file.isEmpty());
 
         if (file != null && !file.isEmpty()) {
-            try {
-                String imageUrl = minioService.uploadFile(file);
-                product.setImageUrl(imageUrl);
-            } catch (Exception e) {
-                return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-            }
+            String imageUrl = minioService.uploadFile(file);
+            product.setImageUrl(imageUrl);
         }
 
         Product createdProduct = productService.createProduct(product);
@@ -97,29 +86,20 @@ public class ProductController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ProductDto> updateProduct(
             @PathVariable String id,
-            @Valid @RequestBody ProductDto productDto) throws Exception {
+            @Valid @RequestBody ProductDto productDto) {
         Product product = productDto.toEntity();
         MultipartFile file = productDto.getFile();
 
-        try {
-
-            if (file != null && !file.isEmpty()) {
-                try {
-                    log.debug(file.toString());
-                    String imageUrl = minioService.uploadFile(file);
-                    product.setImageUrl(imageUrl);
-                } catch (Exception e) {
-                    return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-                }
-            }
-
-            Product updatedProduct = productService.updateProduct(id, product);
-            return new ResponseEntity<>(
-                    ProductDto.fromEntity(updatedProduct),
-                    HttpStatus.OK);
-        } catch (NoSuchElementException e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        if (file != null && !file.isEmpty()) {
+            log.debug(file.toString());
+            String imageUrl = minioService.uploadFile(file);
+            product.setImageUrl(imageUrl);
         }
+
+        Product updatedProduct = productService.updateProduct(id, product);
+        return new ResponseEntity<>(
+                ProductDto.fromEntity(updatedProduct),
+                HttpStatus.OK);
     }
 
     @DeleteMapping("/{id}")

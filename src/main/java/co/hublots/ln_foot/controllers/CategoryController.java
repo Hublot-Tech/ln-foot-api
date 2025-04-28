@@ -1,7 +1,6 @@
 package co.hublots.ln_foot.controllers;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
@@ -40,14 +39,10 @@ public class CategoryController {
 
     @GetMapping("/{id}")
     public ResponseEntity<CategoryDto> getCategoryById(@PathVariable String id) {
-        try {
-            Category category = categoryService.getCategoryById(id);
-            return new ResponseEntity<>(
-                    CategoryDto.fromEntity(category),
-                    HttpStatus.OK);
-        } catch (NoSuchElementException e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+        Category category = categoryService.getCategoryById(id);
+        return new ResponseEntity<>(
+                CategoryDto.fromEntity(category),
+                HttpStatus.OK);
     }
 
     @PostMapping
@@ -66,27 +61,19 @@ public class CategoryController {
     public ResponseEntity<CategoryDto> updateCategory(
             @PathVariable String id,
             @Valid @RequestBody CategoryDto categoryDto) {
-        try {
-            Category category = categoryDto.toEntity();
-            Category updatedCategory = categoryService.updateCategory(
-                    id,
-                    category);
-            return new ResponseEntity<>(
-                    CategoryDto.fromEntity(updatedCategory),
-                    HttpStatus.OK);
-        } catch (NoSuchElementException e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+        Category category = categoryDto.toEntity();
+        Category updatedCategory = categoryService.updateCategory(
+                id,
+                category);
+        return new ResponseEntity<>(
+                CategoryDto.fromEntity(updatedCategory),
+                HttpStatus.OK);
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteCategory(@PathVariable String id) {
-        try {
-            categoryService.deleteCategory(id);
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        } catch (NoSuchElementException e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+        categoryService.deleteCategory(id);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }

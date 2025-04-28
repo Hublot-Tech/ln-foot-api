@@ -1,7 +1,6 @@
 package co.hublots.ln_foot.controllers;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
@@ -40,56 +39,39 @@ public class SizeController {
 
     @GetMapping("/{id}")
     public ResponseEntity<SizeDto> getSizeById(@PathVariable String id) {
-        try {
-            Size size = sizeService.getSizeById(id);
-            return new ResponseEntity<>(
-                    SizeDto.fromEntity(size),
-                    HttpStatus.OK
-            );
-        } catch (NoSuchElementException e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+        Size size = sizeService.getSizeById(id);
+        return new ResponseEntity<>(
+                SizeDto.fromEntity(size),
+                HttpStatus.OK);
     }
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<SizeDto> createSize(
-            @Valid @RequestBody SizeDto sizeDto
-    ) {
+            @Valid @RequestBody SizeDto sizeDto) {
         Size size = sizeDto.toEntity();
         Size createdSize = sizeService.createSize(size);
         return new ResponseEntity<>(
                 SizeDto.fromEntity(createdSize),
-                HttpStatus.CREATED
-        );
+                HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<SizeDto> updateSize(
             @PathVariable String id,
-            @Valid @RequestBody SizeDto sizeDto
-    ) {
-        try {
-            Size size = sizeDto.toEntity();
-            Size updatedSize = sizeService.updateSize(id, size);
-            return new ResponseEntity<>(
-                    SizeDto.fromEntity(updatedSize),
-                    HttpStatus.OK
-            );
-        } catch (NoSuchElementException e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+            @Valid @RequestBody SizeDto sizeDto) {
+        Size size = sizeDto.toEntity();
+        Size updatedSize = sizeService.updateSize(id, size);
+        return new ResponseEntity<>(
+                SizeDto.fromEntity(updatedSize),
+                HttpStatus.OK);
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteSize(@PathVariable String id) {
-        try {
-            sizeService.deleteSize(id);
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        } catch (NoSuchElementException e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+        sizeService.deleteSize(id);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }

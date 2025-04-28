@@ -88,7 +88,7 @@ mcpServers:
       - "-i"
       - "--rm"
       - "--mount"
-      - "type=bind,src=/home/marco/Projects/playground/ln-foot-api/,dst=/projects"
+      - "type=bind,src=/home/marco/Projects/playground/ln-foot/ln-foot-api,dst=/projects"
       - "mcp/filesystem"
       - "/projects"
 
@@ -132,6 +132,16 @@ models:
         - FAIL SILENTLY: If you are unable to generate a reasonable completion, provide an empty string ("") as your output.
 
         Your ENTIRE output should consist ONLY of the generated code or an empty string.
+
+  - <<: *model_defaults
+    name: o3-mimi Apply
+    model: o3-mini
+    roles:
+      - apply
+      - edit
+    chatOptions:
+      baseSystemMessage: |
+        You are a code assistant that does two things - you either edit a code snippet as provided, or generate the changes that needs to occur in a code snippet. Your key rule is to provide code that fits seamlessly with the surrounding context, follows best practices for the programming language, and minimizes disruption to existing functionality.
 
   - <<: *model_defaults
     name: Llama3.1 8b Apply

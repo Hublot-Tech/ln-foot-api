@@ -15,11 +15,11 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class ColoredProductServiceImpl implements ColoredProductService {
-
+    
     private final ColoredProductRepository colorRepository;
 
     @Override
-    public List<ColoredProduct> getAllColors() {
+    public List<ColoredProduct> getAllColoredProducts() {
         return colorRepository.findAll();
     }
 

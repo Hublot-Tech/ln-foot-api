@@ -33,5 +33,4 @@ public class Promotion {
     private BigDecimal discountedPrice;
     private LocalDate startDate;
     private LocalDate endDate;
-    
-} 
+}

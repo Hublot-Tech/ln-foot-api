@@ -1,33 +1,32 @@
 package co.hublots.ln_foot.services.impl;
 
-import co.hublots.ln_foot.models.Category;
-import co.hublots.ln_foot.models.ColoredProduct;
-import co.hublots.ln_foot.models.Product;
-import co.hublots.ln_foot.models.Size;
-import co.hublots.ln_foot.repositories.CategoryRepository;
-import co.hublots.ln_foot.repositories.ColoredProductRepository;
-import co.hublots.ln_foot.repositories.ProductRepository;
-import co.hublots.ln_foot.repositories.SizeRepository;
-import co.hublots.ln_foot.services.ProductService;
-import lombok.RequiredArgsConstructor;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Optional;
+import co.hublots.ln_foot.models.Category;
+import co.hublots.ln_foot.models.Product;
+import co.hublots.ln_foot.models.Size;
+import co.hublots.ln_foot.repositories.CategoryRepository;
+import co.hublots.ln_foot.repositories.ProductRepository;
+import co.hublots.ln_foot.repositories.SizeRepository;
+import co.hublots.ln_foot.services.ProductService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
-import java.util.stream.Collectors;
-
+@Slf4j
 @Service
+@Transactional
 @RequiredArgsConstructor
 public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
     private final SizeRepository sizeRepository;
-    private final ColoredProductRepository colorRepository;
 
     @Override
     public List<Product> getAllProducts() {
@@ -42,11 +41,29 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public Product createProduct(Product product) {
+        // Update categories
+        if (product.getCategories() != null) {
+            List<Category> categories = product.getCategories().stream()
+                    .map(category -> categoryRepository.findByNameIgnoreCase(category.getName())
+                            .orElseGet(() -> categoryRepository.save(category)))
+                    .collect(Collectors.toList());
+            product.setCategories(categories);
+        }
+
+        // Update sizes
+        if (product.getSizes() != null) {
+            List<Size> sizes = product.getSizes().stream()
+                    .map(size -> sizeRepository.findByNameIgnoreCase(size.getName())
+                            .orElseGet(() -> sizeRepository.save(size)))
+                    .collect(Collectors.toList());
+            product.setSizes(sizes);
+        }
+
+        log.debug(product.toString());
         return productRepository.save(product);
     }
 
     @Override
-    @Transactional
     public Product updateProduct(String id, Product product) {
         Product existingProduct = productRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Product not found with id: " + id));
@@ -75,15 +92,6 @@ public class ProductServiceImpl implements ProductService {
                             .orElseThrow(() -> new NoSuchElementException("Size not found with id: " + size.getId())))
                     .collect(Collectors.toList());
             existingProduct.setSizes(sizes);
-        }
-
-        // Update colors
-        if (product.getColoredProducts() != null) {
-            List<ColoredProduct> colors = product.getColoredProducts().stream()
-                    .map(color -> colorRepository.findById(color.getId())
-                            .orElseThrow(() -> new NoSuchElementException("Color not found with id: " + color.getId())))
-                    .collect(Collectors.toList());
-            existingProduct.setColoredProducts(colors);
         }
 
         return productRepository.save(existingProduct);

@@ -1,24 +1,27 @@
-// src/main/java/co/hublots/ln_foot/services/impl/ReviewServiceImpl.java
 package co.hublots.ln_foot.services.impl;
+
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Optional;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import co.hublots.ln_foot.models.Product;
 import co.hublots.ln_foot.models.Review;
 import co.hublots.ln_foot.repositories.ProductRepository;
 import co.hublots.ln_foot.repositories.ReviewRepository;
 import co.hublots.ln_foot.services.ReviewService;
-
-import java.util.List;
-import java.util.NoSuchElementException;
-
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
 public class ReviewServiceImpl implements ReviewService {
 
+    @Autowired
     private final ReviewRepository reviewRepository;
+    
+    @Autowired
     private final ProductRepository productRepository;
 
     @Override

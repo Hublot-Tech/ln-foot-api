@@ -1,8 +1,7 @@
 package co.hublots.ln_foot.dto;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
-
 import java.util.stream.Collectors;
 
 import co.hublots.ln_foot.models.Order;
@@ -18,8 +17,6 @@ import lombok.Data;
 public class OrderDto {
     private String id;
 
-    private LocalDate orderDate;
-
     @Size(min = 1)
     @Valid
     private List<OrderItemDto> orderItems;
@@ -27,7 +24,6 @@ public class OrderDto {
     public static OrderDto fromEntity(Order order) {
         return OrderDto.builder()
                 .id(order.getId())
-                .orderDate(order.getOrderDate())
                 .orderItems(order.getOrderItems().stream()
                         .map(OrderItemDto::fromEntity)
                         .collect(Collectors.toList()))
@@ -37,7 +33,7 @@ public class OrderDto {
     public Order toEntity() {
         return Order.builder()
                 .id(id)
-                .orderDate(orderDate)
+                .orderDate(LocalDateTime.now())
                 .build();
     }
 }

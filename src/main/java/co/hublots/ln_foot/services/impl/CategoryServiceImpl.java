@@ -3,6 +3,8 @@ package co.hublots.ln_foot.services.impl;
 import co.hublots.ln_foot.models.Category;
 import co.hublots.ln_foot.repositories.CategoryRepository;
 import co.hublots.ln_foot.services.CategoryService;
+import lombok.RequiredArgsConstructor;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -12,14 +14,11 @@ import java.util.Optional;
 
 
 @Service
+@RequiredArgsConstructor
 public class CategoryServiceImpl implements CategoryService {
 
-    private final CategoryRepository categoryRepository;
-
     @Autowired
-    public CategoryServiceImpl(CategoryRepository categoryRepository) {
-        this.categoryRepository = categoryRepository;
-    }
+    private final CategoryRepository categoryRepository;
 
     @Override
     public List<Category> getAllCategories() {

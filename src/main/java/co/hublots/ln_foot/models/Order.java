@@ -1,6 +1,6 @@
 package co.hublots.ln_foot.models;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.hibernate.annotations.UuidGenerator;
@@ -28,7 +28,7 @@ public class Order {
     @OneToMany(mappedBy = "order")
     private List<OrderItem> orderItems;
 
-    private LocalDate orderDate;
+    private LocalDateTime orderDate;
     private boolean isCompleted;
     // Authorization server (Keycloak) user id
     private String userId;

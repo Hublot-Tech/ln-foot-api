@@ -1,22 +1,23 @@
-// src/main/java/co/hublots/ln_foot/services/impl/PromotionServiceImpl.java
 package co.hublots.ln_foot.services.impl;
+
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import co.hublots.ln_foot.dto.PromotionDto;
 import co.hublots.ln_foot.models.Promotion;
 import co.hublots.ln_foot.repositories.PromotionRepository;
 import co.hublots.ln_foot.services.PromotionService;
-
-import java.util.List;
-import java.util.NoSuchElementException;
-
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
 public class PromotionServiceImpl implements PromotionService {
 
+    @Autowired
     private final PromotionRepository promotionRepository;
 
     @Override
