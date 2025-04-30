@@ -1,12 +1,9 @@
-# Build stage
-FROM gradle:8.6-jdk17 AS build
-WORKDIR /app
-COPY . .
-RUN gradle build --no-daemon
+FROM eclipse-temurin:17-jdk-alpine
 
-# Run stage
-FROM openjdk:17-jdk-slim
+# JVM optimization for 4GB VPS
+ENV JAVA_OPTS="-Xmx512m -Xms256m"
+
 WORKDIR /app
-COPY --from=build /app/build/libs/*.jar app.jar
-EXPOSE 8080
-ENTRYPOINT ["java","-jar","app.jar"]
+COPY target/*.jar app.jar
+
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]

@@ -1,6 +1,6 @@
 spring:
   application:
-    name: ln-foot
+    name: ln-foot 
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/lnfootdb}?search_path=lnfoot_api
     username: ${DB_USERNAME:postgres}
@@ -25,10 +25,13 @@ spring:
       max-file-size: 10MB
       max-request-size: 10MB
 
+server:
+  port: ${PORT:8080}
+
 minio:
   url: ${MINIO_API_URL:http://localhost:9000}
-  access-key: ${MINIO_ACCESS_KEY:np75ZHQcKOtDL5Gn4xo3}
-  secret-key: ${MINIO_SECRET_KEY:VJKg6XJTjW6Z7TUTs5pIM6LzOZpIfrb784Ncjx2b}
+  access-key: ${MINIO_ACCESS_KEY:access-key}
+  secret-key: ${MINIO_SECRET_KEY:secret-key}
   bucket: uploads
 
 logging:
