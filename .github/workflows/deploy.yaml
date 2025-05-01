@@ -31,10 +31,14 @@ jobs:
       - name: Log in to GHCR
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
+      - name: downcase REPO
+        run: |
+          echo "GHCR_IMAGE=${GHCR_IMAGE,,}" >>${GITHUB_ENV}
+
       - name: Build and Push Docker Image
         run: |
-          docker build -t $GHCR_IMAGE .
-          docker push $GHCR_IMAGE
+          docker build -t ghcr.io/${{ env.GHCR_IMAGE }}/api:latest .
+          docker push ghcr.io/${{ env.GHCR_IMAGE }}/api:latest
 
   deploy:
     runs-on: ubuntu-latest
@@ -47,7 +51,7 @@ jobs:
           username: ${{ secrets.VPS_SSH_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
-            WORKDIR=/opt/${{ github.repository }}
+            WORKDIR=/opt/${GITHUB_REPOSITORY,,}
             mkdir -p $WORKDIR && cd $WORKDIR
 
             echo "${{ secrets.ENV_FILE }}" > .env
