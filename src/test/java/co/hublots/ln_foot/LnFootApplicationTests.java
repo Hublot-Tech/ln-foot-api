@@ -8,6 +8,8 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.test.context.ActiveProfiles;
 
+import io.minio.MinioClient;
+
 @SpringBootTest
 @ActiveProfiles("test")
 class LnFootApplicationTests {
@@ -24,6 +26,14 @@ class LnFootApplicationTests {
 			return token -> Jwt.withTokenValue(token)
 					.header("alg", "none")
 					.claim("sub", "test")
+					.build();
+		}
+
+		@Bean
+		public MinioClient minioClient() {
+			return MinioClient.builder()
+					.endpoint("http://localhost:9000")
+					.credentials("accessKey", "secretKey")
 					.build();
 		}
 	}
