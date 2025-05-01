@@ -61,10 +61,7 @@ jobs:
           host: ${{ secrets.VPS_SSH_HOST }}
           username: ${{ secrets.VPS_SSH_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          source: |
-            compose.yml
-            keycloak
-            monitoring
+          source: compose.yml,keycloak,monitoring
           target: ${{ env.WORKDIR }}
           strip_components: 0
 
