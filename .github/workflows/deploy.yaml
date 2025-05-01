@@ -44,10 +44,27 @@ jobs:
     runs-on: ubuntu-latest
     needs: build-and-push
 
+    env:
+      WORKDIR: /opt/$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]') 
+
     permissions:
       contents: read
 
     steps:
+
+      - name: Copy compose, keycloak theme, and monitoring files to VPS
+        uses: appleboy/scp-action@v0.1.5
+        with:
+          host: ${{ secrets.VPS_SSH_HOST }}
+          username: ${{ secrets.VPS_SSH_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          source: |
+            compose.yml
+            keycloak
+            monitoring
+          target: /opt/your-project-folder
+          strip_components: 0
+
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.0
         with:
@@ -55,8 +72,7 @@ jobs:
           username: ${{ secrets.VPS_SSH_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
-            WORKDIR=/opt/$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
-            mkdir -p $WORKDIR && cd $WORKDIR
+            mkdir -p ${{ env.WORKDIR }} && cd ${{ env.WORKDIR }}
 
             echo "${{ secrets.ENV_FILE }}" > .env
 
