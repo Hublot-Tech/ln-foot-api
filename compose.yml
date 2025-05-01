@@ -41,10 +41,14 @@ services:
   keycloak:
     image: quay.io/keycloak/keycloak:26.1.4
     environment:
-      - KC_LOG_LEVEL=INFO
-      - KC_REALM_NAME=${KC_REALM_NAME}
-      - KEYCLOAK_ADMIN=${KEYCLOAK_ADMIN}
-      - KEYCLOAK_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD}
+      KC_LOG_LEVEL: ${KC_LOG_LEVEL}
+      KC_REALM_NAME: ${KC_REALM_NAME}
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      KC_DB: ${KC_DB}
+      KC_DB_URL: jdbc:postgresql://postgres:5432/${KC_DB}
+      KC_DB_USERNAME: ${DB_USERNAME}
+      KC_DB_PASSWORD: ${DB_PASSWORD}
     networks:
       - lnfoot
     command:
