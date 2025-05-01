@@ -37,8 +37,8 @@ jobs:
 
       - name: Build and Push Docker Image
         run: |
-          docker build -t ghcr.io/${{ env.GHCR_IMAGE }}/api:latest .
-          docker push ghcr.io/${{ env.GHCR_IMAGE }}/api:latest
+          docker build -t ghcr.io/${{ env.GHCR_IMAGE }}:latest .
+          docker push ghcr.io/${{ env.GHCR_IMAGE }}:latest
 
   deploy:
     runs-on: ubuntu-latest
