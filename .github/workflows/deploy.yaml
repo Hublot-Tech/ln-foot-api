@@ -51,6 +51,9 @@ jobs:
       contents: read
 
     steps:
+      - name: downcase REPO
+        run: |
+          echo "WORKDIR=/opt/$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >>${GITHUB_ENV}
 
       - name: Copy compose, keycloak theme, and monitoring files to VPS
         uses: appleboy/scp-action@v0.1.5
@@ -62,7 +65,7 @@ jobs:
             compose.yml
             keycloak
             monitoring
-          target: /opt/your-project-folder
+          target: ${{ env.WORKDIR }}
           strip_components: 0
 
       - name: Deploy via SSH
