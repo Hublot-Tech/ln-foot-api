@@ -57,13 +57,29 @@ jobs:
 
       - name: Copy compose, keycloak theme, and monitoring files to VPS
         uses: appleboy/scp-action@v0.1.5
+        
+      - name: Package files into archive
+        run: |
+          tar -czf deployment.tar.gz \
+            compose.yml \
+            keycloak \
+            monitoring
+      
+      - name: Upload and extract archive on VPS
+        uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.VPS_SSH_HOST }}
           username: ${{ secrets.VPS_SSH_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          source: compose.yml,keycloak,monitoring
-          target: ${{ env.WORKDIR }}
-          strip_components: 0
+          script: |
+            mkdir -p ${{ env.WORKDIR }}
+            cat > ${{ env.WORKDIR }}/deployment.tar.gz << 'EOF'
+            $(base64 -w 0 < deployment.tar.gz)
+            EOF
+            cd ${{ env.WORKDIR }}
+            base64 -d deployment.tar.gz | tar -xz
+            rm deployment.tar.gz
+      
 
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.0
