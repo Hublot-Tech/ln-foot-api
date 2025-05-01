@@ -55,7 +55,7 @@ jobs:
           username: ${{ secrets.VPS_SSH_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
-            REPO=/opt/$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+            WORKDIR=/opt/$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
             mkdir -p $WORKDIR && cd $WORKDIR
 
             echo "${{ secrets.ENV_FILE }}" > .env
