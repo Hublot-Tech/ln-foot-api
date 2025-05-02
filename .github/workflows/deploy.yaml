@@ -57,6 +57,7 @@ jobs:
 
       - name: Package files into archive
         run: |
+          ls -al
           tar -czf deployment.tar.gz \
             compose.yml \
             keycloak \
