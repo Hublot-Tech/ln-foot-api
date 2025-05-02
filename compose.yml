@@ -1,10 +1,10 @@
 services:
   api:
-    image: ghcr.io/Hublot-Tech/ln_foot_api:latest
+    image: ghcr.io/hublot-tech/ln-foot-api:latest
     ports:
       - "8081:8080"
     environment:
-      - DB_URL=jdbc:postgresql://postgres:5432/${DB_NAME}
+      - DB_URL=jdbc:postgresql://postgres:5432/lnfootdb
       - DB_USERNAME=${DB_USERNAME}
       - DB_PASSWORD=${DB_PASSWORD}
       - MINIO_API_URL=http://minio:9000
@@ -45,14 +45,14 @@ services:
       KC_REALM_NAME: ${KC_REALM_NAME}
       KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
-      KC_DB: ${KC_DB}
-      KC_DB_URL: jdbc:postgresql://postgres:5432/${KC_DB}
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
       KC_DB_USERNAME: ${DB_USERNAME}
       KC_DB_PASSWORD: ${DB_PASSWORD}
     networks:
       - lnfoot
     command:
-      - "start-dev"
+      - "start"
       - "--import-realm"
       - "--spi-theme-static-max-age=-1"
       - "--spi-theme-cache-themes=false"
