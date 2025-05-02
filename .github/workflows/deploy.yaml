@@ -45,7 +45,7 @@ jobs:
     needs: build-and-push
 
     env:
-      WORKDIR: /opt/$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]') 
+      WORKDIR: /opt/$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
 
     permissions:
       contents: read
@@ -55,16 +55,13 @@ jobs:
         run: |
           echo "WORKDIR=/opt/$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >>${GITHUB_ENV}
 
-      - name: Copy compose, keycloak theme, and monitoring files to VPS
-        uses: appleboy/scp-action@v0.1.5
-        
       - name: Package files into archive
         run: |
           tar -czf deployment.tar.gz \
             compose.yml \
             keycloak \
             monitoring
-      
+
       - name: Upload and extract archive on VPS
         uses: appleboy/ssh-action@v1.0.0
         with:
@@ -79,7 +76,9 @@ jobs:
             cd ${{ env.WORKDIR }}
             base64 -d deployment.tar.gz | tar -xz
             rm deployment.tar.gz
-      
+            # Copy the directories to their respective locations
+            cp -r keycloak ${{ env.WORKDIR }}/keycloak
+            cp -r monitoring ${{ env.WORKDIR }}/monitoring
 
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.0
