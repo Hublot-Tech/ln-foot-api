@@ -45,7 +45,7 @@ jobs:
     needs: build-and-push
 
     env:
-      WORKDIR: /opt/${{ github.repository }}
+      WORKDIR: ${{ github.repository }}
 
     permissions:
       contents: read
