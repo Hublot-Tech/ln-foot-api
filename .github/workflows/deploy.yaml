@@ -45,7 +45,7 @@ jobs:
     needs: build-and-push
 
     env:
-      WORKDIR: ${{ github.repository }}
+      WORKDIR: projects/${{ github.repository }}
 
     permissions:
       contents: read
@@ -58,15 +58,6 @@ jobs:
         run: |
           echo "WORKDIR=$(echo ${{ env.WORKDIR }} | tr '[:upper:]' '[:lower:]')" >>${GITHUB_ENV}
 
-      - name: Copy deployment files to VPS
-        uses: appleboy/scp-action@v0.1.4
-        with:
-          host: ${{ secrets.VPS_SSH_HOST }}
-          username: ${{ secrets.VPS_SSH_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          source: 'compose.yml,keycloak,monitoring'
-          target: ${{ env.WORKDIR }}
-
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.0
         with:
@@ -75,8 +66,6 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
             mkdir -p ${{ env.WORKDIR }} && cd ${{ env.WORKDIR }}
-
-            echo "${{ secrets.ENV_FILE }}" > .env
 
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             docker compose pull

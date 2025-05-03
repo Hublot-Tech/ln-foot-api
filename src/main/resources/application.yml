@@ -27,6 +27,7 @@ spring:
 
 server:
   port: 8080
+  url: ${SERVER_URL:http://localhost:8080}
 
 minio:
   url: ${MINIO_API_URL:http://localhost:9000}
