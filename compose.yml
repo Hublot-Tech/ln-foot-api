@@ -1,8 +1,6 @@
 services:
   api:
     image: ghcr.io/hublot-tech/ln-foot-api:latest
-    ports:
-      - "8080:8080"
     environment:
       - DB_URL=jdbc:postgresql://postgres:5432/${DB_NAME}
       - DB_USERNAME=${DB_USERNAME}
@@ -29,8 +27,6 @@ services:
 
   portainer:
     image: portainer/portainer-ce
-    ports:
-      - "9443:9443"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - portainer_data:/data
@@ -39,7 +35,7 @@ services:
 
 
   keycloak:
-    image: quay.io/keycloak/keycloak:26.1.4
+    image: ghcr.io/marcjazz/keycloak-auth-theme:latest
     env_file:
       - keycloak/keycloak.env
     networks:
@@ -51,8 +47,6 @@ services:
       - "--spi-theme-cache-themes=false"
       - "--spi-theme-cache-templates=false"
     restart: unless-stopped
-    ports:
-      - 8081:8080
     volumes:
       - ./keycloak/config/:/opt/keycloak/data/import/:ro
 
@@ -64,9 +58,6 @@ services:
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
     volumes:
       - minio-data:/data
-    ports:
-      - "9000:9000"
-      - "9001:9001"
     networks:
       - lnfoot
 
@@ -74,8 +65,6 @@ services:
     image: prom/prometheus
     volumes:
       - ./monitoring/:/etc/prometheus/
-    ports:
-      - 9090:9090
     networks:
       - lnfoot
 
@@ -83,10 +72,23 @@ services:
     image: grafana/grafana
     volumes:
       - grafana-storage:/var/lib/grafana
-    ports:
-      - 3000:3000
     networks:
       - lnfoot
+  
+  caddy:
+    image: caddy:latest
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8081:8081"
+      - "9443:9443"
+      - "9000-9001:9000-9001"
+      - "3000:3000"
+      - "9090:9090"
+    networks:
+      - ln-foot
 
 volumes:
   pgdata:
@@ -96,3 +98,4 @@ volumes:
 
 networks:
   lnfoot:
+    driver: bridge
