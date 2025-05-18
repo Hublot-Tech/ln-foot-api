@@ -42,3 +42,8 @@ logging:
 
 springdoc:
   paths-to-match: /api/**
+
+notchpay:
+  api: 
+    key: ${NOTCHPAY_API_KEY}
+    base-url: ${NOTCHPAY_API_BASE_URL:https://api.notchpay.co/v1}
