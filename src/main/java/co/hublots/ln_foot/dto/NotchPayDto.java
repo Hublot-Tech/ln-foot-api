@@ -9,7 +9,7 @@ public abstract class NotchPayDto {
     @Data
     @Builder
     public static class InitiatePaymentRequest {
-        private int amount;
+        private double amount;
         private String currency;
         private Customer customer;
         private String description;

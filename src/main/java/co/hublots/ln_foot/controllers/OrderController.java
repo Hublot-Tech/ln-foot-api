@@ -1,5 +1,6 @@
 package co.hublots.ln_foot.controllers;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -16,9 +17,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import co.hublots.ln_foot.annotations.KeycloakUserId;
+import co.hublots.ln_foot.dto.NotchPayDto;
 import co.hublots.ln_foot.dto.OrderDto;
+import co.hublots.ln_foot.dto.PaymentResponseDto;
 import co.hublots.ln_foot.models.Order;
+import co.hublots.ln_foot.models.OrderItem;
+import co.hublots.ln_foot.models.Payment;
 import co.hublots.ln_foot.services.OrderService;
+import co.hublots.ln_foot.services.PaymentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -28,6 +34,7 @@ import lombok.RequiredArgsConstructor;
 public class OrderController {
 
     private final OrderService orderService;
+    private final PaymentService paymentService;
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
@@ -77,6 +84,28 @@ public class OrderController {
         return new ResponseEntity<>(
                 OrderDto.fromEntity(updatedOrder),
                 HttpStatus.OK);
+    }
+
+    @PutMapping("/{id}/confirm")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<PaymentResponseDto> comfirmOrder(
+            @PathVariable String id, @Valid @RequestBody NotchPayDto.InitiatePaymentRequest.Customer customer) {
+        Order order = orderService.getOrderById(id);
+        if (order == null) {
+            return new ResponseEntity<>(
+                    HttpStatus.NOT_FOUND);
+        }
+
+        List<OrderItem> orderItems = order.getOrderItems();
+        double amount = 0.0;
+        for (var item : orderItems) {
+            amount += item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())).doubleValue();
+        }
+
+        Payment payment = paymentService.confirmOrder(id, amount, customer.getEmail(), customer.getName(),
+                customer.getPhone());
+
+        return new ResponseEntity<>(PaymentResponseDto.fromEntity(payment), HttpStatus.ACCEPTED);
     }
 
     @DeleteMapping("/{id}")

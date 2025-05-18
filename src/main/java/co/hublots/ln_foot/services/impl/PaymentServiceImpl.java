@@ -42,13 +42,13 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     @Transactional
-    public Payment confirmOrder(String orderId, int amount, String currency, String customerEmail, String customerName,
+    public Payment confirmOrder(String orderId, double amount, String customerEmail, String customerName,
             String customerPhone) {
         Payment payment = paymentRepository.findByOrderId(orderId).orElseGet(() -> {
             // Initiate payment
             InitiatePaymentRequest initiateReq = InitiatePaymentRequest.builder()
                     .amount(amount)
-                    .currency(currency)
+                    .currency("XAF")
                     .customer(InitiatePaymentRequest.Customer.builder()
                             .name(customerName)
                             .email(customerEmail)

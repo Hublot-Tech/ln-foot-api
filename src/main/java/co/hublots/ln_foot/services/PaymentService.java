@@ -12,11 +12,10 @@ public interface PaymentService {
      *
      * @param orderId       Order identifier
      * @param amount        Amount in minor units (e.g. cents)
-     * @param currency      Currency code (e.g. "USD")
      * @param customerEmail Customer email
      * @param customerName  Customer full name
      * @return Payment entity with updated status
      */
     @Transactional
-    Payment confirmOrder(String orderId, int amount, String currency, String customerEmail, String customerName, String customerPhone);
+    Payment confirmOrder(String orderId, double amount, String customerEmail, String customerName, String customerPhone);
 }
