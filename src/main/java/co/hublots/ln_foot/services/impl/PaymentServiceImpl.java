@@ -76,7 +76,7 @@ public class PaymentServiceImpl implements PaymentService {
                 // proceed to charge immediately
                 ChargePaymentRequest chargeReq = ChargePaymentRequest.builder()
                         .channel("cm.mobile")
-                        .data(ChargePaymentRequest.DataPayload.builder()
+                        .data(ChargePaymentRequest.ChargeData.builder()
                                 .phone(customerPhone)
                                 .build())
                         .build();
