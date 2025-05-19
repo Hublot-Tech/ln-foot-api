@@ -44,7 +44,7 @@ public class OrderController {
                 .collect(Collectors.toList());
     }
 
-    @GetMapping("me")
+    @GetMapping("/user/orders")
     @PreAuthorize("hasRole('USER')")
     public List<OrderDto> getUserOrders(@KeycloakUserId String userId) {
         List<Order> Orders = orderService.getUserOrders(userId);

@@ -16,7 +16,9 @@ import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
 
 import co.hublots.ln_foot.annotations.KeycloakUserId;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Component
 public class UserIdArgumentResolver implements HandlerMethodArgumentResolver {
 
@@ -32,7 +34,9 @@ public class UserIdArgumentResolver implements HandlerMethodArgumentResolver {
                                   @NonNull NativeWebRequest webRequest, 
                                   WebDataBinderFactory binderFactory) throws Exception {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
+        
+        log.info("Authentication: {}", authentication);
+        
         if (authentication instanceof KeycloakAuthenticationToken) {
             KeycloakAuthenticationToken keycloakToken = (KeycloakAuthenticationToken) authentication;
             KeycloakPrincipal<?> principal = (KeycloakPrincipal<?>) keycloakToken.getPrincipal();
