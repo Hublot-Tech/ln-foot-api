@@ -1,6 +1,9 @@
 services:
   api:
     image: ghcr.io/hublot-tech/ln-foot-api:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
     environment:
       - DB_URL=jdbc:postgresql://postgres:5432/${DB_NAME}
       - DB_USERNAME=${DB_USERNAME}
@@ -25,14 +28,13 @@ services:
     networks:
       - lnfoot
 
-  portainer:
-    image: portainer/portainer-ce
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - portainer_data:/data
+  adminer:
+    image: adminer
+    restart: always
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
     networks:
       - lnfoot
-
 
   keycloak:
     image: ghcr.io/marcjazz/keycloak-auth-theme:latest
@@ -58,20 +60,6 @@ services:
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
     volumes:
       - minio-data:/data
-    networks:
-      - lnfoot
-
-  prometheus:
-    image: prom/prometheus
-    volumes:
-      - ./monitoring/:/etc/prometheus/
-    networks:
-      - lnfoot
-
-  grafana:
-    image: grafana/grafana
-    volumes:
-      - grafana-storage:/var/lib/grafana
     networks:
       - lnfoot
   
