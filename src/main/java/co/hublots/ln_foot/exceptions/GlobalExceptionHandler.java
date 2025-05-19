@@ -4,6 +4,9 @@ import java.util.NoSuchElementException;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
@@ -16,28 +19,42 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleIllegalArgumentException(IllegalArgumentException e) {
-        return new ResponseEntity<>(
-                new ErrorResponse(HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST, e.getMessage()),
-                HttpStatus.BAD_REQUEST);
+        return buildResponse(HttpStatus.BAD_REQUEST, e.getMessage());
+    }
+
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalStateException(IllegalStateException e) {
+        return buildResponse(HttpStatus.CONFLICT, e.getMessage());
     }
 
     @ExceptionHandler(NoSuchElementException.class)
     public ResponseEntity<ErrorResponse> handleNoSuchElementException(NoSuchElementException e) {
-        return new ResponseEntity<>(
-                new ErrorResponse(HttpStatus.NOT_FOUND.value(), HttpStatus.NOT_FOUND, e.getMessage()),
-                HttpStatus.NOT_FOUND);
+        return buildResponse(HttpStatus.NOT_FOUND, e.getMessage());
     }
 
-    @ExceptionHandler(Exception.class) // Catch-all for other exceptions
-    public ResponseEntity<ErrorResponse> handleOtherExceptions(Exception e, WebRequest req) throws Exception {
+    @ExceptionHandler({OAuth2AuthenticationException.class, AuthenticationException.class})
+    public ResponseEntity<ErrorResponse> handleOAuth2Exception(Exception e) {
+        log.warn("Authentication failure: {}", e.getMessage());
+        return buildResponse(HttpStatus.UNAUTHORIZED, "Authentication failed: " + e.getMessage());
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDeniedException(AccessDeniedException e) {
+        log.warn("Access denied: {}", e.getMessage());
+        return buildResponse(HttpStatus.FORBIDDEN, "Access is denied.");
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleOtherExceptions(Exception e, WebRequest req) {
+        log.error("Unexpected error", e);
+        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred.");
+    }
+
+    private ResponseEntity<ErrorResponse> buildResponse(HttpStatus status, String message) {
         return ResponseEntity
-                .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new ErrorResponse(
-                        HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                        HttpStatus.INTERNAL_SERVER_ERROR,
-                        "An unexpected error occurred."));
+                .status(status)
+                .body(new ErrorResponse(status.value(), status, message));
     }
-
 }
 
 // ErrorResponse class (a simple data class)
