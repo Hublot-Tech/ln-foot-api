@@ -2,16 +2,15 @@ package co.hublots.ln_foot.services;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import io.minio.GetPresignedObjectUrlArgs;
 import io.minio.MinioClient;
 import io.minio.UploadObjectArgs;
-import io.minio.http.Method;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -21,6 +20,9 @@ import lombok.extern.slf4j.Slf4j;
 public class MinioService {
 
     private final MinioClient minioClient;
+
+    @Value("${minio.url}")
+    private String minioUrl;
 
     @Value("${minio.bucket}")
     private String bucketName;
@@ -43,12 +45,7 @@ public class MinioService {
 
             Files.deleteIfExists(tempFile);
 
-            String url = minioClient.getPresignedObjectUrl(
-                    GetPresignedObjectUrlArgs.builder()
-                            .method(Method.GET)
-                            .bucket(bucketName)
-                            .object(uniqueName)
-                            .build());
+            String url = Paths.get(minioUrl, bucketName, uniqueName).toString();
 
             log.info("Upload complete: {}", url);
             return url;

@@ -1,6 +1,5 @@
 package co.hublots.ln_foot.models;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 import org.hibernate.annotations.UuidGenerator;
@@ -30,7 +29,7 @@ public class Product {
 
     private String name;
     private String description;
-    private BigDecimal price;
+    private double price;
     private int stockQuantity;
 
     @Lob

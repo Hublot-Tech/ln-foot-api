@@ -24,7 +24,7 @@ public class ColoredProductDto {
     private String productId;
 
     @NotBlank(message = "Colored product is required")
-    private float price;
+    private double price;
 
     public static ColoredProductDto fromEntity(ColoredProduct coloredProduct) {
         return ColoredProductDto.builder()

@@ -1,7 +1,5 @@
 package co.hublots.ln_foot.models;
 
-import java.math.BigDecimal;
-
 import org.hibernate.annotations.UuidGenerator;
 
 import jakarta.persistence.Entity;
@@ -34,6 +32,6 @@ public class OrderItem {
     private ColoredProduct coloredProduct;
     
     private String size;
-    private BigDecimal price;
+    private double price;
     private int quantity;
 }

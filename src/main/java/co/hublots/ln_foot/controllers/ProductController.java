@@ -73,8 +73,8 @@ public class ProductController {
         coloredProductService
                 .createColoredProduct(ColoredProduct.builder()
                         .name("default")
-                        .imageUrl(createdProduct.getImageUrl())
-                        .product(createdProduct)
+                        .imageUrl(product.getImageUrl())
+                        .product(product)
                         .build());
 
         return new ResponseEntity<>(

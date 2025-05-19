@@ -1,6 +1,5 @@
 package co.hublots.ln_foot.controllers;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -99,7 +98,7 @@ public class OrderController {
         List<OrderItem> orderItems = order.getOrderItems();
         double amount = 0.0;
         for (var item : orderItems) {
-            amount += item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())).doubleValue();
+            amount += item.getPrice() * item.getQuantity();
         }
 
         Payment payment = paymentService.confirmOrder(id, amount, customer.getEmail(), customer.getName(),

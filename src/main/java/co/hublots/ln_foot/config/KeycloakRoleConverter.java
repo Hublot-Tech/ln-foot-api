@@ -15,16 +15,30 @@ public class KeycloakRoleConverter implements Converter<Jwt, Collection<GrantedA
 
     @Override
     public Collection<GrantedAuthority> convert(@NonNull Jwt jwt) {
-        Map<String, Object> realmAccess = (Map<String, Object>) jwt.getClaims().get("realm_access");
 
-        if (realmAccess == null || realmAccess.isEmpty()) {
+        Object realmAccessClaim = jwt.getClaims().get("realm_access");
+
+        if (!(realmAccessClaim instanceof Map<?, ?>)) {
             return List.of();
         }
 
-        List<String> roles = (List<String>) realmAccess.get("roles");
+        Map<?, ?> realmAccessMap = (Map<?, ?>) realmAccessClaim;
+        Object rolesObject = realmAccessMap.get("roles");
+
+        if (!(rolesObject instanceof List<?>)) {
+            return List.of();
+        }
+
+        List<?> roles = (List<?>) rolesObject;
 
         return roles.stream()
-                .map(role -> "ROLE_" + role.toUpperCase())
+                .map(role -> {
+                    if (role instanceof String) {
+                        return "ROLE_" + ((String) role).toUpperCase();
+                    } else {
+                        throw new IllegalArgumentException("Role is not a string: " + role);
+                    }
+                })
                 .map(SimpleGrantedAuthority::new)
                 .collect(Collectors.toList());
     }

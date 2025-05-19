@@ -1,6 +1,5 @@
 package co.hublots.ln_foot.models;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 
 import org.hibernate.annotations.UuidGenerator;
@@ -16,12 +15,12 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 
 @Entity
-@Table(name = "promotions")
+@Table(name = "PromotionProducts")
 @Data
 @Builder
 @AllArgsConstructor
 @RequiredArgsConstructor
-public class Promotion {
+public class PromotionProduct {
     @Id
     @UuidGenerator
     private String id;
@@ -30,7 +29,7 @@ public class Promotion {
     @JoinColumn(name = "product_id")
     private Product product;
 
-    private BigDecimal discountedPrice;
+    private double discountedPrice;
     private LocalDate startDate;
     private LocalDate endDate;
 }

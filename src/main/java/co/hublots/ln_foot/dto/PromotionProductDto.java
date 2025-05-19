@@ -1,10 +1,9 @@
 package co.hublots.ln_foot.dto;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 
 import co.hublots.ln_foot.models.Product;
-import co.hublots.ln_foot.models.Promotion;
+import co.hublots.ln_foot.models.PromotionProduct;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
@@ -14,7 +13,7 @@ import lombok.Data;
 @Data
 @Builder
 @AllArgsConstructor
-public class PromotionDto {
+public class PromotionProductDto {
     private String id;
 
     @NotNull(message = "Product ID is required")
@@ -22,7 +21,7 @@ public class PromotionDto {
 
     @NotNull(message = "Discounted price is required")
     @Positive(message = "Discounted price must be positive")
-    private BigDecimal discountedPrice;
+    private double discountedPrice;
 
     @NotNull(message = "Start date is required")
     private LocalDate startDate;
@@ -30,18 +29,18 @@ public class PromotionDto {
     @NotNull(message = "End date is required")
     private LocalDate endDate;
 
-    public static PromotionDto fromEntity(Promotion promotion) {
-        return PromotionDto.builder()
-                .id(promotion.getId())
-                .productId(promotion.getProduct().getId())
-                .discountedPrice(promotion.getDiscountedPrice())
-                .startDate(promotion.getStartDate())
-                .endDate(promotion.getEndDate())
+    public static PromotionProductDto fromEntity(PromotionProduct PromotionProduct) {
+        return PromotionProductDto.builder()
+                .id(PromotionProduct.getId())
+                .productId(PromotionProduct.getProduct().getId())
+                .discountedPrice(PromotionProduct.getDiscountedPrice())
+                .startDate(PromotionProduct.getStartDate())
+                .endDate(PromotionProduct.getEndDate())
                 .build();
     }
 
-    public Promotion toEntity() {
-        return Promotion.builder()
+    public PromotionProduct toEntity() {
+        return PromotionProduct.builder()
                 .id(id)
                 .product(Product.builder().id(productId).build())
                 .discountedPrice(discountedPrice)
