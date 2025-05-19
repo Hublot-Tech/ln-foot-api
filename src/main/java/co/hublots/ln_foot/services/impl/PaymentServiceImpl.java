@@ -115,7 +115,7 @@ public class PaymentServiceImpl implements PaymentService {
     private InitiatePaymentResponse initiatePayment(InitiatePaymentRequest request) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.set("Authorization", "Bearer " + apiKey);
+        headers.set("Authorization", apiKey);
 
         HttpEntity<InitiatePaymentRequest> entity = new HttpEntity<>(request, headers);
 
@@ -135,7 +135,7 @@ public class PaymentServiceImpl implements PaymentService {
     private ChargePaymentResponse chargePayment(String reference, ChargePaymentRequest request) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.set("Authorization", "Bearer " + apiKey);
+        headers.set("Authorization", apiKey);
 
         HttpEntity<ChargePaymentRequest> entity = new HttpEntity<>(request, headers);
 
