@@ -20,7 +20,7 @@ import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/PromotionProducts")
+@RequestMapping("/api/promotion-products")
 public class PromotionProductController {
 
     private final PromotionProductService PromotionProductService;

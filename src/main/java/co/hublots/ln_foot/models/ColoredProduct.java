@@ -15,7 +15,7 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 
 @Entity
-@Table(name = "colored_pro+ducts")
+@Table(name = "colored_products")
 @Data
 @Builder
 @AllArgsConstructor

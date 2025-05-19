@@ -81,8 +81,6 @@ services:
 volumes:
   pgdata:
   minio-data:
-  grafana-storage:
-  portainer_data:
 
 networks:
   lnfoot:
