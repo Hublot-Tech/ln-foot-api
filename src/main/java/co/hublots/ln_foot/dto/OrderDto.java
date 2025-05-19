@@ -34,6 +34,11 @@ public class OrderDto {
         return Order.builder()
                 .id(id)
                 .orderDate(LocalDateTime.now())
+                .orderItems(orderItems.stream()
+                        .map(OrderItemDto::toEntity)
+                        .collect(Collectors.toList()))
+                .isCompleted(false)
+                .userId(null) // Set userId to null for now
                 .build();
     }
 }
