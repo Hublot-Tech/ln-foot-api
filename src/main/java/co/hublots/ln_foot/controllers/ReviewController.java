@@ -19,6 +19,7 @@ import co.hublots.ln_foot.annotations.KeycloakUserId;
 import co.hublots.ln_foot.dto.ReviewDto;
 import co.hublots.ln_foot.models.Review;
 import co.hublots.ln_foot.services.ReviewService;
+import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -47,7 +48,7 @@ public class ReviewController {
     @PostMapping
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ReviewDto> createReview(
-            @KeycloakUserId String userId,
+            @KeycloakUserId @Parameter(hidden = true) String userId,
             @RequestBody @Valid ReviewDto reviewDto) {
         Review review = reviewDto.toEntity();
         review.setKeycloakUserId(userId);
@@ -62,7 +63,7 @@ public class ReviewController {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ReviewDto> updateReview(
             @PathVariable String id,
-            @KeycloakUserId String userId,
+            @KeycloakUserId @Parameter(hidden = true) String userId,
             @RequestBody ReviewDto reviewDto) {
 
         Review review = reviewService.createReview(reviewDto.toEntity());

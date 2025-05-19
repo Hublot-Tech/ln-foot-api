@@ -24,6 +24,7 @@ import co.hublots.ln_foot.models.OrderItem;
 import co.hublots.ln_foot.models.Payment;
 import co.hublots.ln_foot.services.OrderService;
 import co.hublots.ln_foot.services.PaymentService;
+import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -37,7 +38,7 @@ public class OrderController {
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public List<OrderDto> getAllOrders(@KeycloakUserId String userId) {
+    public List<OrderDto> getAllOrders(@KeycloakUserId @Parameter(hidden = true) String userId) {
         List<Order> Orders = orderService.getAllOrders();
         return Orders.stream()
                 .map(OrderDto::fromEntity)
@@ -46,7 +47,7 @@ public class OrderController {
 
     @GetMapping("/user/orders")
     @PreAuthorize("hasRole('USER')")
-    public List<OrderDto> getUserOrders(@KeycloakUserId String userId) {
+    public List<OrderDto> getUserOrders(@KeycloakUserId @Parameter(hidden = true) String userId) {
         List<Order> Orders = orderService.getUserOrders(userId);
         return Orders.stream()
                 .map(OrderDto::fromEntity)
