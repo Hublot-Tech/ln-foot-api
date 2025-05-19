@@ -20,7 +20,7 @@ public class PaymentResponseDto {
         return PaymentResponseDto.builder()
                 .id(payment.getId().toString())
                 .orderId(payment.getOrderId())
-                .paymentId(payment.getPaymentId())
+                .paymentId(payment.getPaymentRef())
                 .status(payment.getStatus())
                 .createdAt(payment.getCreatedAt())
                 .updatedAt(payment.getUpdatedAt())

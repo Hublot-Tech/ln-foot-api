@@ -33,11 +33,11 @@ public class PaymentServiceImpl implements PaymentService {
     private String baseUrl;
 
     private String getInitiateUrl() {
-        return baseUrl + "/payments/initiate";
+        return baseUrl + "/payments";
     }
 
-    private String getChargeUrl() {
-        return baseUrl + "/payments/charge";
+    private String getChargeUrl(String reference) {
+        return baseUrl + "/payments/" + reference;
     }
 
     @Override
@@ -62,7 +62,7 @@ public class PaymentServiceImpl implements PaymentService {
 
             Payment newPayment = Payment.builder()
                     .orderId(orderId)
-                    .paymentId(initiateResp.getTransaction().getId())
+                    .paymentRef(initiateResp.getTransaction().getReference())
                     .status(initiateResp.getTransaction().getStatus())
                     .createdAt(Instant.now())
                     .updatedAt(Instant.now())
@@ -81,7 +81,7 @@ public class PaymentServiceImpl implements PaymentService {
                                 .build())
                         .build();
 
-                ChargePaymentResponse chargeResp = chargePayment(chargeReq);
+                ChargePaymentResponse chargeResp = chargePayment(payment.getPaymentRef(), chargeReq);
 
                 payment.setStatus(chargeResp.getTransaction().getStatus());
                 payment.setUpdatedAt(Instant.now());
@@ -132,7 +132,7 @@ public class PaymentServiceImpl implements PaymentService {
         }
     }
 
-    private ChargePaymentResponse chargePayment(ChargePaymentRequest request) {
+    private ChargePaymentResponse chargePayment(String reference, ChargePaymentRequest request) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set("Authorization", "Bearer " + apiKey);
@@ -140,7 +140,7 @@ public class PaymentServiceImpl implements PaymentService {
         HttpEntity<ChargePaymentRequest> entity = new HttpEntity<>(request, headers);
 
         ResponseEntity<ChargePaymentResponse> response = restTemplate.exchange(
-                getChargeUrl(),
+                getChargeUrl(reference),
                 HttpMethod.POST,
                 entity,
                 ChargePaymentResponse.class);

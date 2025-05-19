@@ -26,7 +26,7 @@ public class Payment {
 
     private String orderId;
 
-    private String paymentId; // NotchPay payment ID
+    private String paymentRef; // NotchPay payment ID
 
     private String status;
 
