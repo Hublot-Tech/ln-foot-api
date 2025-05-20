@@ -52,6 +52,7 @@ public class OrderController {
     @GetMapping("/user/orders")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<OrderDto>> getUserOrders(@KeycloakUserId @Parameter(hidden = true) String userId) {
+
         List<Order> Orders = orderService.getUserOrders(userId);
         return new ResponseEntity<>(Orders.stream()
                 .map(OrderDto::fromEntity)
@@ -73,8 +74,7 @@ public class OrderController {
     public ResponseEntity<OrderDto> createOrder(
             @KeycloakUserId @Parameter(hidden = true) String userId,
             @Valid @RequestBody OrderDto orderDto) {
-        Order order = orderDto.toEntity();
-        order.setUserId(userId);
+        Order order = orderDto.toEntity(userId);
         orderService.createOrder(order);
         return new ResponseEntity<>(
                 OrderDto.fromEntity(order),
@@ -84,9 +84,10 @@ public class OrderController {
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<OrderDto> updateOrder(
+        @KeycloakUserId @Parameter(hidden = true) String userId,
             @PathVariable String id,
             @Valid @RequestBody OrderDto orderDto) {
-        Order Order = orderDto.toEntity();
+        Order Order = orderDto.toEntity(userId);
         Order updatedOrder = orderService.updateOrder(id, Order);
         return new ResponseEntity<>(
                 OrderDto.fromEntity(updatedOrder),

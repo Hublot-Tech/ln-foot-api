@@ -30,7 +30,7 @@ public class OrderDto {
                 .build();
     }
 
-    public Order toEntity() {
+    public Order toEntity(String userId) {
         return Order.builder()
                 .id(id)
                 .orderDate(LocalDateTime.now())
@@ -38,7 +38,7 @@ public class OrderDto {
                         .map(OrderItemDto::toEntity)
                         .collect(Collectors.toList()))
                 .isCompleted(false)
-                .userId(null) // Set userId to null for now
+                .userId(userId) // Set userId to null for now
                 .build();
     }
 }
