@@ -5,7 +5,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.web.multipart.MultipartFile;
 
-import co.hublots.ln_foot.models.ColoredProduct;
+import co.hublots.ln_foot.models.ProductVariant;
 import co.hublots.ln_foot.models.Product;
 import co.hublots.ln_foot.models.Size;
 import jakarta.validation.constraints.NotBlank;
@@ -17,7 +17,7 @@ import lombok.Data;
 @Data
 @Builder
 @AllArgsConstructor
-public class ColoredProductDto {
+public class ProductVariantDto {
     private String id;
 
     private String imageUrl;
@@ -39,20 +39,20 @@ public class ColoredProductDto {
     @Builder.Default
     private List<String> sizes = List.of();
 
-    public static ColoredProductDto fromEntity(ColoredProduct coloredProduct) {
-        return ColoredProductDto.builder()
-                .id(coloredProduct.getId())
-                .colorCode(coloredProduct.getColorCode())
-                .stockQuantity(coloredProduct.getStockQuantity())
-                .price(coloredProduct.getPrice())
-                .imageUrl(coloredProduct.getImageUrl())
-                .sizes(coloredProduct.getSizes().stream().map(Size::getName).collect(Collectors.toList()))
-                .productId(coloredProduct.getProduct().getId())
+    public static ProductVariantDto fromEntity(ProductVariant productVariant) {
+        return ProductVariantDto.builder()
+                .id(productVariant.getId())
+                .colorCode(productVariant.getColorCode())
+                .stockQuantity(productVariant.getStockQuantity())
+                .price(productVariant.getPrice())
+                .imageUrl(productVariant.getImageUrl())
+                .sizes(productVariant.getSizes().stream().map(Size::getName).collect(Collectors.toList()))
+                .productId(productVariant.getProduct().getId())
                 .build();
     }
 
-    public ColoredProduct toEntity() {
-        return ColoredProduct.builder()
+    public ProductVariant toEntity() {
+        return ProductVariant.builder()
                 .id(id)
                 .colorCode(colorCode)
                 .stockQuantity(stockQuantity)

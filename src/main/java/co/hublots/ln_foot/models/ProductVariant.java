@@ -21,12 +21,12 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 
 @Entity
-@Table(name = "colored_products")
+@Table(name = "product_variants")
 @Data
 @Builder
 @AllArgsConstructor
 @RequiredArgsConstructor
-public class ColoredProduct {
+public class ProductVariant {
 
     @Id
     @UuidGenerator
@@ -45,7 +45,7 @@ public class ColoredProduct {
 
     @ManyToMany
     @Builder.Default
-    @JoinTable(name = "colored_product_sizes", joinColumns = @JoinColumn(name = "colored_product_id"), inverseJoinColumns = @JoinColumn(name = "size_id"))
+    @JoinTable(name = "product_variant_sizes", joinColumns = @JoinColumn(name = "product_variant_id"), inverseJoinColumns = @JoinColumn(name = "size_id"))
     private List<Size> sizes = List.of();
 
     @CreationTimestamp

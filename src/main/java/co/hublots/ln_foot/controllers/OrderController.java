@@ -20,11 +20,11 @@ import co.hublots.ln_foot.annotations.KeycloakUserId;
 import co.hublots.ln_foot.dto.NotchPayDto;
 import co.hublots.ln_foot.dto.OrderDto;
 import co.hublots.ln_foot.dto.PaymentResponseDto;
-import co.hublots.ln_foot.models.ColoredProduct;
+import co.hublots.ln_foot.models.ProductVariant;
 import co.hublots.ln_foot.models.Order;
 import co.hublots.ln_foot.models.OrderItem;
 import co.hublots.ln_foot.models.Payment;
-import co.hublots.ln_foot.services.ColoredProductService;
+import co.hublots.ln_foot.services.ProductVariantService;
 import co.hublots.ln_foot.services.OrderService;
 import co.hublots.ln_foot.services.PaymentService;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -38,7 +38,7 @@ public class OrderController {
 
     private final OrderService orderService;
     private final PaymentService paymentService;
-    private final ColoredProductService coloredProductService;
+    private final ProductVariantService productVariantService;
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
@@ -109,8 +109,8 @@ public class OrderController {
                     HttpStatus.BAD_REQUEST);
         }
         // validate the order items (quantity, sizes)
-        List<ColoredProduct> coloredProducts = coloredProductService
-                .getColoredProductsByIds(order.getOrderItems().stream()
+        List<ProductVariant> productVariants = productVariantService
+                .getProductVariantsByIds(order.getOrderItems().stream()
                         .map(OrderItem::getId)
                         .collect(Collectors.toList()));
 
@@ -118,12 +118,12 @@ public class OrderController {
         List<OrderItem> orderItems = order.getOrderItems();
         double amount = 0.0;
         for (var item : orderItems) {
-            ColoredProduct coloredProduct = coloredProducts.stream()
+            ProductVariant productVariant = productVariants.stream()
                     .filter(cp -> cp.getId().equals(item.getId()))
                     .findFirst()
                     .orElseThrow(() -> new IllegalArgumentException("Invalid product ID: " + item.getId()));
 
-            if (coloredProduct.getStockQuantity() < item.getQuantity()) {
+            if (productVariant.getStockQuantity() < item.getQuantity()) {
                 throw new IllegalArgumentException("Not enough stock for product ID: " + item.getId());
             }
 

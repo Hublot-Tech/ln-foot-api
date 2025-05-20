@@ -18,9 +18,9 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import co.hublots.ln_foot.dto.ProductDto;
-import co.hublots.ln_foot.models.ColoredProduct;
+import co.hublots.ln_foot.models.ProductVariant;
 import co.hublots.ln_foot.models.Product;
-import co.hublots.ln_foot.services.ColoredProductService;
+import co.hublots.ln_foot.services.ProductVariantService;
 import co.hublots.ln_foot.services.MinioService;
 import co.hublots.ln_foot.services.ProductService;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
@@ -36,7 +36,7 @@ public class ProductController {
 
     private final MinioService minioService;
     private final ProductService productService;
-    private final ColoredProductService coloredProductService;
+    private final ProductVariantService productVariantService;
 
     @GetMapping
     public ResponseEntity<List<ProductDto>> getAllProducts() {
@@ -72,8 +72,8 @@ public class ProductController {
         Product createdProduct = productService.createProduct(product);
 
         // creating default colored product
-        coloredProductService
-                .createColoredProduct(ColoredProduct.builder()
+        productVariantService
+                .createProductVariant(ProductVariant.builder()
                         .stockQuantity(product.getStockQuantity())
                         .sizes(product.getSizes())
                         .imageUrl(product.getImageUrl())

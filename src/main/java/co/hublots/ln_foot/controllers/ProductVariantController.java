@@ -18,9 +18,9 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import co.hublots.ln_foot.dto.ColoredProductDto;
-import co.hublots.ln_foot.models.ColoredProduct;
-import co.hublots.ln_foot.services.ColoredProductService;
+import co.hublots.ln_foot.dto.ProductVariantDto;
+import co.hublots.ln_foot.models.ProductVariant;
+import co.hublots.ln_foot.services.ProductVariantService;
 import co.hublots.ln_foot.services.MinioService;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import jakarta.validation.Valid;
@@ -28,60 +28,60 @@ import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/colored-products")
-public class ColoredProductController {
+@RequestMapping("/api/product-variants")
+public class ProductVariantController {
 
     private final MinioService minioService;
-    private final ColoredProductService coloredProductService;
+    private final ProductVariantService productVariantService;
 
     @GetMapping
-    public ResponseEntity<List<ColoredProductDto>> getColoredProducts() {
-        List<ColoredProduct> coloredProducts = coloredProductService.getAllColoredProducts();
+    public ResponseEntity<List<ProductVariantDto>> getProductVariants() {
+        List<ProductVariant> productVariants = productVariantService.getAllProductVariants();
         return new ResponseEntity<>(
-                coloredProducts.stream().map(ColoredProductDto::fromEntity).collect(Collectors.toList()),
+                productVariants.stream().map(ProductVariantDto::fromEntity).collect(Collectors.toList()),
                 HttpStatus.OK);
 
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ColoredProductDto> getColoredProduct(@PathVariable String id) {
-        ColoredProduct coloredProduct = coloredProductService.getColoredProductById(id);
-        return new ResponseEntity<>(ColoredProductDto.fromEntity(coloredProduct), HttpStatus.OK);
+    public ResponseEntity<ProductVariantDto> getProductVariant(@PathVariable String id) {
+        ProductVariant productVariant = productVariantService.getProductVariantById(id);
+        return new ResponseEntity<>(ProductVariantDto.fromEntity(productVariant), HttpStatus.OK);
     }
 
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ColoredProductDto> createColoredProduct(
-            @RequestBody @Valid ColoredProductDto coloredProductDto) {
+    public ResponseEntity<ProductVariantDto> createProductVariant(
+            @RequestBody @Valid ProductVariantDto productVariantDto) {
 
-        MultipartFile file = coloredProductDto.getFile();
-        ColoredProduct coloredProduct = coloredProductDto.toEntity();
+        MultipartFile file = productVariantDto.getFile();
+        ProductVariant productVariant = productVariantDto.toEntity();
 
         if (file != null) {
             String imageUrl = minioService.uploadFile(file);
-            coloredProduct.setImageUrl(imageUrl);
+            productVariant.setImageUrl(imageUrl);
         }
 
-        ColoredProduct createdColor = coloredProductService.createColoredProduct(coloredProduct);
-        return new ResponseEntity<>(ColoredProductDto.fromEntity(createdColor), HttpStatus.CREATED);
+        ProductVariant createdColor = productVariantService.createProductVariant(productVariant);
+        return new ResponseEntity<>(ProductVariantDto.fromEntity(createdColor), HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ColoredProductDto> updateColoredProduct(@PathVariable String id,
-            @RequestBody @Valid ColoredProductDto coloredProductDto) {
+    public ResponseEntity<ProductVariantDto> updateProductVariant(@PathVariable String id,
+            @RequestBody @Valid ProductVariantDto productVariantDto) {
         try {
-            ColoredProduct coloredProduct = coloredProductDto.toEntity();
-            MultipartFile file = coloredProductDto.getFile();
+            ProductVariant productVariant = productVariantDto.toEntity();
+            MultipartFile file = productVariantDto.getFile();
 
             if (file != null) {
                 String imageUrl = minioService.uploadFile(file);
-                coloredProduct.setImageUrl(imageUrl);
+                productVariant.setImageUrl(imageUrl);
             }
 
-            ColoredProduct updatedColor = coloredProductService.updateColoredProduct(id, coloredProduct);
-            return new ResponseEntity<>(ColoredProductDto.fromEntity(updatedColor), HttpStatus.OK);
+            ProductVariant updatedColor = productVariantService.updateProductVariant(id, productVariant);
+            return new ResponseEntity<>(ProductVariantDto.fromEntity(updatedColor), HttpStatus.OK);
         } catch (NoSuchElementException e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
@@ -90,8 +90,8 @@ public class ColoredProductController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> deleteColoredProduct(@PathVariable String id) {
-        coloredProductService.deleteColoredProduct(id);
+    public ResponseEntity<Void> deleteProductVariant(@PathVariable String id) {
+        productVariantService.deleteProductVariant(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }
