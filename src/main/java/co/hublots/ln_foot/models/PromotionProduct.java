@@ -26,8 +26,8 @@ public class PromotionProduct {
     private String id;
 
     @ManyToOne
-    @JoinColumn(name = "product_id")
-    private Product product;
+    @JoinColumn(name = "colored_product_id")
+    private ColoredProduct coloredProduct;
 
     private double discountedPrice;
     private LocalDate startDate;

@@ -6,6 +6,7 @@ import java.util.List;
 
 public interface ColoredProductService {
     List<ColoredProduct> getAllColoredProducts();
+    List<ColoredProduct> getColoredProductsByIds(List<String> ids);
 
     ColoredProduct getColoredProductById(String id);
 

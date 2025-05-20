@@ -16,34 +16,42 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ColoredProductServiceImpl implements ColoredProductService {
     
-    private final ColoredProductRepository colorRepository;
+    private final ColoredProductRepository coloredProductRepository;
 
     @Override
     public List<ColoredProduct> getAllColoredProducts() {
-        return colorRepository.findAll();
+        return coloredProductRepository.findAll();
     }
 
     @Override
     public ColoredProduct getColoredProductById(String id) {
-        return colorRepository.findById(id)
+        return coloredProductRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Color not found with id: " + id));
     }
 
     @Override
     public ColoredProduct createColoredProduct(ColoredProduct color) {
-        return colorRepository.save(color);
+        return coloredProductRepository.save(color);
     }
 
     @Override
     public ColoredProduct updateColoredProduct(String id, ColoredProduct color) {
-        ColoredProduct existingColor = colorRepository.findById(id)
+        ColoredProduct existingColor = coloredProductRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Color not found with id: " + id));
-        Optional.of(color.getName()).ifPresent(existingColor::setName);
-        return colorRepository.save(existingColor);
+        Optional.of(color.getImageUrl()).ifPresent(existingColor::setImageUrl);
+        Optional.of(color.getStockQuantity()).ifPresent(existingColor::setStockQuantity);
+        Optional.of(color.getPrice()).ifPresent(existingColor::setPrice);
+        Optional.of(color.getProduct()).ifPresent(existingColor::setProduct);
+        return coloredProductRepository.save(existingColor);
     }
 
     @Override
     public void deleteColoredProduct(String id) {
-        colorRepository.deleteById(id);
+        coloredProductRepository.deleteById(id);
+    }
+
+    @Override
+    public List<ColoredProduct> getColoredProductsByIds(List<String> ids) {
+        return coloredProductRepository.findByIdIn(ids);
     }
 }

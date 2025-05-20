@@ -19,9 +19,11 @@ import co.hublots.ln_foot.annotations.KeycloakUserId;
 import co.hublots.ln_foot.dto.NotchPayDto;
 import co.hublots.ln_foot.dto.OrderDto;
 import co.hublots.ln_foot.dto.PaymentResponseDto;
+import co.hublots.ln_foot.models.ColoredProduct;
 import co.hublots.ln_foot.models.Order;
 import co.hublots.ln_foot.models.OrderItem;
 import co.hublots.ln_foot.models.Payment;
+import co.hublots.ln_foot.services.ColoredProductService;
 import co.hublots.ln_foot.services.OrderService;
 import co.hublots.ln_foot.services.PaymentService;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -35,6 +37,7 @@ public class OrderController {
 
     private final OrderService orderService;
     private final PaymentService paymentService;
+    private final ColoredProductService coloredProductService;
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
@@ -66,8 +69,10 @@ public class OrderController {
     @PostMapping
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<OrderDto> createOrder(
+            @KeycloakUserId @Parameter(hidden = true) String userId,
             @Valid @RequestBody OrderDto orderDto) {
         Order order = orderDto.toEntity();
+        order.setUserId(userId);
         orderService.createOrder(order);
         return new ResponseEntity<>(
                 OrderDto.fromEntity(order),
@@ -95,10 +100,30 @@ public class OrderController {
             return new ResponseEntity<>(
                     HttpStatus.NOT_FOUND);
         }
+        if (order.isCompleted()) {
+            return new ResponseEntity<>(
+                    HttpStatus.BAD_REQUEST);
+        }
+        // validate the order items (quantity, sizes)
+        List<ColoredProduct> coloredProducts = coloredProductService
+                .getColoredProductsByIds(order.getOrderItems().stream()
+                        .map(OrderItem::getId)
+                        .collect(Collectors.toList()));
 
+        // Calculate the total amount of the order
         List<OrderItem> orderItems = order.getOrderItems();
         double amount = 0.0;
         for (var item : orderItems) {
+            ColoredProduct coloredProduct = coloredProducts.stream()
+                    .filter(cp -> cp.getId().equals(item.getId()))
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalArgumentException("Invalid product ID: " + item.getId()));
+
+            if (coloredProduct.getStockQuantity() < item.getQuantity()) {
+                return new ResponseEntity<>(
+                        HttpStatus.BAD_REQUEST);
+            }
+
             amount += item.getPrice() * item.getQuantity();
         }
 

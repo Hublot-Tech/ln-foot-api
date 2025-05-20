@@ -5,11 +5,11 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
 import org.springframework.stereotype.Service;
 
 import co.hublots.ln_foot.models.Order;
+import co.hublots.ln_foot.repositories.OrderItemRepository;
 import co.hublots.ln_foot.repositories.OrderRepository;
 import co.hublots.ln_foot.services.OrderService;
 import lombok.RequiredArgsConstructor;
@@ -17,9 +17,9 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class OrderServiceImpl implements OrderService {
-    
-    @Autowired
+
     private final OrderRepository orderRepository;
+    private final OrderItemRepository orderItemRepository;
 
     @Override
     public List<Order> getAllOrders() {
@@ -45,6 +45,11 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public Order createOrder(Order order) {
+        // Update sizes
+        if (order.getOrderItems() != null && !order.getOrderItems().isEmpty()) {
+            orderItemRepository.saveAll(order.getOrderItems());
+        }
+
         return orderRepository.save(order);
     }
 
