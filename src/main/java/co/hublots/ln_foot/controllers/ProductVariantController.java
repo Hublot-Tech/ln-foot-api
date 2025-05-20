@@ -1,5 +1,6 @@
 package co.hublots.ln_foot.controllers;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
@@ -14,14 +15,15 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import co.hublots.ln_foot.dto.ProductVariantDto;
 import co.hublots.ln_foot.models.ProductVariant;
-import co.hublots.ln_foot.services.ProductVariantService;
 import co.hublots.ln_foot.services.MinioService;
+import co.hublots.ln_foot.services.ProductVariantService;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -65,6 +67,36 @@ public class ProductVariantController {
 
         ProductVariant createdColor = productVariantService.createProductVariant(productVariant);
         return new ResponseEntity<>(ProductVariantDto.fromEntity(createdColor), HttpStatus.CREATED);
+    }
+
+    @ResponseStatus(HttpStatus.CREATED)
+    @PostMapping(value = "/bulk", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<ProductVariantDto>> createProductVariants(
+            @RequestPart("variants") List<ProductVariantDto> variantDtos,
+            @RequestPart(value = "files", required = false) List<MultipartFile> files) {
+
+        // Convert to entities and assign images
+        List<ProductVariant> variants = new ArrayList<>();
+        for (int i = 0; i < variantDtos.size(); i++) {
+            ProductVariantDto dto = variantDtos.get(i);
+            ProductVariant entity = dto.toEntity();
+
+            if (files != null && files.size() > i && files.get(i) != null && !files.get(i).isEmpty()) {
+                String imageUrl = minioService.uploadFile(files.get(i));
+                entity.setImageUrl(imageUrl);
+            }
+
+            variants.add(entity);
+        }
+
+        // Persist in bulk
+        List<ProductVariant> saved = productVariantService.createProductVariants(variants);
+
+        // Return result
+        return new ResponseEntity<>(
+                saved.stream().map(ProductVariantDto::fromEntity).toList(),
+                HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")

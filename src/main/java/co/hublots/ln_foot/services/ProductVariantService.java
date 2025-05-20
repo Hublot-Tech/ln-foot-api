@@ -12,6 +12,8 @@ public interface ProductVariantService {
 
     ProductVariant createProductVariant(ProductVariant color);
 
+    List<ProductVariant> createProductVariants(List<ProductVariant> colors);
+
     ProductVariant updateProductVariant(String id, ProductVariant color);
 
     void deleteProductVariant(String id);

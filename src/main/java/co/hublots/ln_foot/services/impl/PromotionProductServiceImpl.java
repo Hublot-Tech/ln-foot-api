@@ -11,6 +11,7 @@ import co.hublots.ln_foot.dto.PromotionProductDto;
 import co.hublots.ln_foot.models.PromotionProduct;
 import co.hublots.ln_foot.repositories.PromotionProductRepository;
 import co.hublots.ln_foot.services.PromotionProductService;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -38,12 +39,13 @@ public class PromotionProductServiceImpl implements PromotionProductService {
     }
 
     @Override
+    @Transactional
     public List<PromotionProduct> createPromotionProducts(List<PromotionProductDto> PromotionProductDtos) {
-        List<PromotionProduct> PromotionProducts = PromotionProductDtos.stream()
+        List<PromotionProduct> promotionProducts = PromotionProductDtos.stream()
                 .map(PromotionProductDto -> PromotionProductDto.toEntity())
                 .map(PromotionProductRepository::save)
                 .collect(Collectors.toList());
-        return PromotionProducts;
+        return promotionProducts;
     }
 
     @Override

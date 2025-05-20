@@ -1,9 +1,13 @@
 package co.hublots.ln_foot.services.impl;
 
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.springframework.stereotype.Service;
 
@@ -44,6 +48,35 @@ public class ProductVariantServiceImpl implements ProductVariantService {
         }
 
         return productVariantRepository.save(productVariant);
+    }
+
+    @Override
+    public List<ProductVariant> createProductVariants(List<ProductVariant> productVariants) {
+        // Preload all unique size names
+        Set<String> sizeNames = productVariants.stream()
+                .flatMap(variant -> variant.getSizes() != null ? variant.getSizes().stream() : Stream.empty())
+                .map(size -> size.getName().toLowerCase())
+                .collect(Collectors.toSet());
+
+        // Fetch existing sizes from the DB
+        Map<String, Size> existingSizes = sizeRepository.findAllByNameInIgnoreCase(sizeNames).stream()
+                .collect(Collectors.toMap(size -> size.getName().toLowerCase(), Function.identity()));
+
+        // Resolve or create sizes, and update each product variant
+        for (ProductVariant variant : productVariants) {
+            if (variant.getSizes() != null) {
+                List<Size> resolvedSizes = variant.getSizes().stream()
+                        .map(size -> {
+                            String lowerCaseName = size.getName().toLowerCase();
+                            return existingSizes.computeIfAbsent(lowerCaseName, k -> sizeRepository.save(size));
+                        })
+                        .collect(Collectors.toList());
+
+                variant.setSizes(resolvedSizes);
+            }
+        }
+
+        return productVariantRepository.saveAll(productVariants);
     }
 
     @Override
