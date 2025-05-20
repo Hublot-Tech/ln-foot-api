@@ -38,7 +38,7 @@ public class ProductDto {
         @Positive(message = "Stock quantity must be positive")
         private int stockQuantity;
 
-        @NotNull(message = "Category IDs are required")
+        @NotBlank(message = "Category IDs are required")
         private List<String> categoryNames;
 
         @Builder.Default

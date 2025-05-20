@@ -1,7 +1,5 @@
 package co.hublots.ln_foot.dto;
 
-
-
 import co.hublots.ln_foot.models.Size;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
@@ -30,4 +28,4 @@ public class SizeDto {
                 .name(name)
                 .build();
     }
-} 
+}
