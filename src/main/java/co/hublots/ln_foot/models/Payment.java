@@ -1,8 +1,9 @@
 package co.hublots.ln_foot.models;
 
+import java.time.LocalDateTime;
 
-import java.time.Instant;
-
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.UuidGenerator;
 
 import jakarta.persistence.Entity;
@@ -26,12 +27,13 @@ public class Payment {
 
     private String orderId;
 
-    private String paymentRef; // NotchPay payment ID
+    private String paymentRef; // NotchPay payment Ref
 
     private String status;
 
-    private Instant createdAt;
+    @CreationTimestamp
+    private LocalDateTime createdAt;
 
-    private Instant updatedAt;
-
+    @UpdateTimestamp
+    private LocalDateTime updatedAt;
 }

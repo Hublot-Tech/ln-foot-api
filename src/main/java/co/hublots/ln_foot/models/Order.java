@@ -3,8 +3,13 @@ package co.hublots.ln_foot.models;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.UuidGenerator;
 
+import jakarta.annotation.Nonnull;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
@@ -25,12 +30,21 @@ public class Order {
     @UuidGenerator
     private String id;
 
-    @OneToMany(mappedBy = "order")
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> orderItems;
 
+    @CreationTimestamp
     private LocalDateTime orderDate;
-    private boolean isCompleted;
-    // Authorization server (Keycloak) user id
-    private String userId;
 
+    @UpdateTimestamp
+    private LocalDateTime updatedAt;
+
+    @Builder.Default
+    @Column(nullable = false)
+    private boolean isCompleted = false;
+
+    // Authorization server (Keycloak) user id
+    @Column(nullable = false)
+    @Nonnull
+    private String userId;
 }

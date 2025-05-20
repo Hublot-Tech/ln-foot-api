@@ -1,9 +1,12 @@
 package co.hublots.ln_foot.services.impl;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
@@ -15,8 +18,8 @@ import co.hublots.ln_foot.dto.NotchPayDto.InitiatePaymentResponse;
 import co.hublots.ln_foot.models.Payment;
 import co.hublots.ln_foot.repositories.PaymentRepository;
 import co.hublots.ln_foot.services.PaymentService;
-
-import java.time.Instant;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
@@ -64,8 +67,6 @@ public class PaymentServiceImpl implements PaymentService {
                     .orderId(orderId)
                     .paymentRef(initiateResp.getTransaction().getReference())
                     .status(initiateResp.getTransaction().getStatus())
-                    .createdAt(Instant.now())
-                    .updatedAt(Instant.now())
                     .build();
 
             return paymentRepository.save(newPayment);
@@ -84,7 +85,6 @@ public class PaymentServiceImpl implements PaymentService {
                 ChargePaymentResponse chargeResp = chargePayment(payment.getPaymentRef(), chargeReq);
 
                 payment.setStatus(chargeResp.getTransaction().getStatus());
-                payment.setUpdatedAt(Instant.now());
                 paymentRepository.save(payment);
                 break;
 

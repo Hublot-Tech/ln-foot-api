@@ -1,10 +1,10 @@
 package co.hublots.ln_foot.services.impl;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import co.hublots.ln_foot.models.Product;
@@ -18,10 +18,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ReviewServiceImpl implements ReviewService {
 
-    @Autowired
     private final ReviewRepository reviewRepository;
-    
-    @Autowired
     private final ProductRepository productRepository;
 
     @Override
@@ -50,6 +47,9 @@ public class ReviewServiceImpl implements ReviewService {
     public Review updateReview(String id, Review review) throws NoSuchElementException {
         Review existingReview = reviewRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Review not found with id: " + id));
+        if (existingReview.getCreatedAt().isBefore(LocalDateTime.now().minusDays(30))) {
+            throw new NoSuchElementException("Review cannot be updated after 30 days");
+        }
 
         Optional.of(review.getComment()).ifPresent(existingReview::setComment);
         Optional.of(review.getRating()).ifPresent(existingReview::setRating);

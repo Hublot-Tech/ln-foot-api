@@ -51,7 +51,7 @@ public class ReviewController {
             @KeycloakUserId @Parameter(hidden = true) String userId,
             @RequestBody @Valid ReviewDto reviewDto) {
         Review review = reviewDto.toEntity();
-        review.setKeycloakUserId(userId);
+        review.setUserId(userId);
 
         Review savedReview = reviewService.createReview(review);
         return new ResponseEntity<>(
@@ -66,7 +66,7 @@ public class ReviewController {
             @KeycloakUserId @Parameter(hidden = true) String userId,
             @RequestBody ReviewDto reviewDto) {
 
-        Review review = reviewService.createReview(reviewDto.toEntity());
+        Review review = reviewService.updateReview(id, reviewDto.toEntity());
         return new ResponseEntity<>(ReviewDto.fromEntity(review), HttpStatus.OK);
     }
 

@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
-import org.springframework.data.domain.Example;
 import org.springframework.stereotype.Service;
 
 import co.hublots.ln_foot.models.Order;
@@ -28,13 +27,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public List<Order> getUserOrders(String userId) {
-        Order orderExample = Order.builder()
-                .userId(userId) // Assuming Order has a userId field
-                .build();
-
-        Example<Order> example = Example.of(orderExample);
-
-        return orderRepository.findAll(example);
+        return orderRepository.findAllByUserId(userId);
     }
 
     @Override
@@ -45,7 +38,6 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public Order createOrder(Order order) {
-        // Update sizes
         if (order.getOrderItems() != null && !order.getOrderItems().isEmpty()) {
             orderItemRepository.saveAll(order.getOrderItems());
         }

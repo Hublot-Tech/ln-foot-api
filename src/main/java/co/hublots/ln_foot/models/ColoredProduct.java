@@ -1,7 +1,10 @@
 package co.hublots.ln_foot.models;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.UuidGenerator;
 
 import jakarta.persistence.Column;
@@ -9,7 +12,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
-import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -35,7 +37,6 @@ public class ColoredProduct {
     private int stockQuantity;
     private String colorCode;
 
-    @Lob
     @Column(nullable = false)
     private String imageUrl;
 
@@ -47,4 +48,10 @@ public class ColoredProduct {
     @Builder.Default
     @JoinTable(name = "colored_product_sizes", joinColumns = @JoinColumn(name = "colored_product_id"), inverseJoinColumns = @JoinColumn(name = "size_id"))
     private List<Size> sizes = List.of();
+
+    @CreationTimestamp
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    private LocalDateTime updatedAt;
 }

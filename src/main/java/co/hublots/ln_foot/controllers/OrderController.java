@@ -120,8 +120,7 @@ public class OrderController {
                     .orElseThrow(() -> new IllegalArgumentException("Invalid product ID: " + item.getId()));
 
             if (coloredProduct.getStockQuantity() < item.getQuantity()) {
-                return new ResponseEntity<>(
-                        HttpStatus.BAD_REQUEST);
+                throw new IllegalArgumentException("Not enough stock for product ID: " + item.getId());
             }
 
             amount += item.getPrice() * item.getQuantity();

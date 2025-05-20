@@ -1,7 +1,10 @@
 package co.hublots.ln_foot.models;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.UuidGenerator;
 
 import jakarta.persistence.Entity;
@@ -32,4 +35,10 @@ public class PromotionProduct {
     private double discountedPrice;
     private LocalDate startDate;
     private LocalDate endDate;
+
+    @CreationTimestamp
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    private LocalDateTime updatedAt;
 }

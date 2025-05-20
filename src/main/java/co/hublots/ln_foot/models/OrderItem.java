@@ -1,5 +1,9 @@
 package co.hublots.ln_foot.models;
 
+import java.time.LocalDateTime;
+
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.UuidGenerator;
 
 import jakarta.persistence.Entity;
@@ -26,12 +30,18 @@ public class OrderItem {
     @ManyToOne
     @JoinColumn(name = "order_id")
     private Order order;
-    
+
     @ManyToOne
     @JoinColumn(name = "colored_product_id")
     private ColoredProduct coloredProduct;
-    
+
     private String size;
     private double price;
     private int quantity;
+
+    @CreationTimestamp
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    private LocalDateTime updatedAt;
 }
