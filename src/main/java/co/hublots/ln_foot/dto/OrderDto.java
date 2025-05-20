@@ -43,7 +43,7 @@ public class OrderDto {
                 .id(id)
                 .orderDate(LocalDateTime.now())
                 .orderItems(orderItems.stream()
-                        .map(OrderItemDto::toEntity)
+                        .map(item -> item.toEntity(id))
                         .collect(Collectors.toList()))
                 .isCompleted(isCompleted)
                 .userId(userId) // Set userId to null for now
