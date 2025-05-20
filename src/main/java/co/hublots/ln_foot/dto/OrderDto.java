@@ -16,9 +16,11 @@ import lombok.Data;
 @AllArgsConstructor
 public class OrderDto {
     private String id;
-    private LocalDateTime orderDate;
-    private boolean isCompleted;
     private String userId;
+    private LocalDateTime orderDate;
+
+    @Builder.Default
+    private boolean isCompleted = false;
 
     @Size(min = 1)
     @Valid
@@ -43,7 +45,7 @@ public class OrderDto {
                 .orderItems(orderItems.stream()
                         .map(OrderItemDto::toEntity)
                         .collect(Collectors.toList()))
-                .isCompleted(false)
+                .isCompleted(isCompleted)
                 .userId(userId) // Set userId to null for now
                 .build();
     }

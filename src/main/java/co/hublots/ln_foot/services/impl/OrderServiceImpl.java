@@ -27,13 +27,21 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public List<Order> getUserOrders(String userId) {
-        return orderRepository.findAllByUserId(userId);
+        List<Order> orders = orderRepository.findAllByUserId(userId);
+        return orders.stream()
+                .map(order -> {
+                    order.setOrderItems(orderItemRepository.findAllByOrderId(order.getId()));
+                    return order;
+                })
+                .toList();
     }
 
     @Override
     public Order getOrderById(String id) {
-        return orderRepository.findById(id)
+        Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Order not found with id: " + id));
+        order.setOrderItems(orderItemRepository.findAllByOrderId(order.getId()));
+        return order;
     }
 
     @Override
