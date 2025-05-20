@@ -11,7 +11,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
-import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -35,7 +34,6 @@ public class Product {
     private double price;
     private int stockQuantity;
 
-    @Lob
     private String imageUrl; // URL to the product image
 
     @ManyToMany

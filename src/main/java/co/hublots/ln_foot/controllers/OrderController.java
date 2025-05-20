@@ -84,7 +84,7 @@ public class OrderController {
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<OrderDto> updateOrder(
-        @KeycloakUserId @Parameter(hidden = true) String userId,
+            @KeycloakUserId @Parameter(hidden = true) String userId,
             @PathVariable String id,
             @Valid @RequestBody OrderDto orderDto) {
         Order Order = orderDto.toEntity(userId);
@@ -111,7 +111,7 @@ public class OrderController {
         // validate the order items (quantity, sizes)
         List<ProductVariant> productVariants = productVariantService
                 .getProductVariantsByIds(order.getOrderItems().stream()
-                        .map(OrderItem::getId)
+                        .map(item -> item.getProductVariant().getId())
                         .collect(Collectors.toList()));
 
         // Calculate the total amount of the order
