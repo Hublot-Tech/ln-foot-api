@@ -2,7 +2,7 @@ package co.hublots.ln_foot.dto;
 
 import java.time.LocalDate;
 
-import co.hublots.ln_foot.models.Product;
+import co.hublots.ln_foot.models.ColoredProduct;
 import co.hublots.ln_foot.models.PromotionProduct;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -17,7 +17,7 @@ public class PromotionProductDto {
     private String id;
 
     @NotNull(message = "Product ID is required")
-    private String productId;
+    private String coloredProductId;
 
     @NotNull(message = "Discounted price is required")
     @Positive(message = "Discounted price must be positive")
@@ -32,7 +32,7 @@ public class PromotionProductDto {
     public static PromotionProductDto fromEntity(PromotionProduct PromotionProduct) {
         return PromotionProductDto.builder()
                 .id(PromotionProduct.getId())
-                .productId(PromotionProduct.getProduct().getId())
+                .coloredProductId(PromotionProduct.getColoredProduct().getId())
                 .discountedPrice(PromotionProduct.getDiscountedPrice())
                 .startDate(PromotionProduct.getStartDate())
                 .endDate(PromotionProduct.getEndDate())
@@ -42,7 +42,7 @@ public class PromotionProductDto {
     public PromotionProduct toEntity() {
         return PromotionProduct.builder()
                 .id(id)
-                .product(Product.builder().id(productId).build())
+                .coloredProduct(ColoredProduct.builder().id(coloredProductId).build())
                 .discountedPrice(discountedPrice)
                 .startDate(startDate)
                 .endDate(endDate)

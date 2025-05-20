@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import co.hublots.ln_foot.annotations.KeycloakUserId;
@@ -41,20 +42,20 @@ public class OrderController {
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public List<OrderDto> getAllOrders(@KeycloakUserId @Parameter(hidden = true) String userId) {
+    public ResponseEntity<List<OrderDto>> getAllOrders(@KeycloakUserId @Parameter(hidden = true) String userId) {
         List<Order> Orders = orderService.getAllOrders();
-        return Orders.stream()
+        return new ResponseEntity<>(Orders.stream()
                 .map(OrderDto::fromEntity)
-                .collect(Collectors.toList());
+                .collect(Collectors.toList()), HttpStatus.OK);
     }
 
     @GetMapping("/user/orders")
     @PreAuthorize("hasRole('USER')")
-    public List<OrderDto> getUserOrders(@KeycloakUserId @Parameter(hidden = true) String userId) {
+    public ResponseEntity<List<OrderDto>> getUserOrders(@KeycloakUserId @Parameter(hidden = true) String userId) {
         List<Order> Orders = orderService.getUserOrders(userId);
-        return Orders.stream()
+        return new ResponseEntity<>(Orders.stream()
                 .map(OrderDto::fromEntity)
-                .collect(Collectors.toList());
+                .collect(Collectors.toList()), HttpStatus.OK);
     }
 
     @GetMapping("/{id}")
@@ -66,6 +67,7 @@ public class OrderController {
                 HttpStatus.OK);
     }
 
+    @ResponseStatus(HttpStatus.CREATED)
     @PostMapping
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<OrderDto> createOrder(
@@ -91,6 +93,7 @@ public class OrderController {
                 HttpStatus.OK);
     }
 
+    @ResponseStatus(HttpStatus.ACCEPTED)
     @PutMapping("/{id}/confirm")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<PaymentResponseDto> comfirmOrder(
@@ -132,6 +135,7 @@ public class OrderController {
         return new ResponseEntity<>(PaymentResponseDto.fromEntity(payment), HttpStatus.ACCEPTED);
     }
 
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> deleteOrder(@PathVariable String id) {

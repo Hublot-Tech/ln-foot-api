@@ -32,7 +32,6 @@ public class ColoredProduct {
     @UuidGenerator
     private String id;
 
-    private String size;
     private double price;
     private int stockQuantity;
     private String colorCode;

@@ -1,6 +1,6 @@
 package co.hublots.ln_foot.dto;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 import co.hublots.ln_foot.models.Payment;
 import lombok.Builder;
@@ -9,12 +9,12 @@ import lombok.Data;
 @Data
 @Builder
 public class PaymentResponseDto {
-    private String id; // UUID as String for serialization
+    private String id;
     private String orderId;
     private String paymentId;
     private String status;
-    private Instant createdAt;
-    private Instant updatedAt;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
     public static PaymentResponseDto fromEntity(Payment payment) {
         return PaymentResponseDto.builder()

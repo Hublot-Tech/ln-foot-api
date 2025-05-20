@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import co.hublots.ln_foot.dto.SizeDto;
@@ -29,12 +30,11 @@ public class SizeController {
     private final SizeService sizeService;
 
     @GetMapping
-    public List<SizeDto> getAllSizes() {
+    public ResponseEntity<List<SizeDto>> getAllSizes() {
         List<Size> sizes = sizeService.getAllSizes();
-        return sizes
-                .stream()
-                .map(SizeDto::fromEntity)
-                .collect(Collectors.toList());
+        return new ResponseEntity<>(
+                sizes.stream().map(SizeDto::fromEntity).collect(Collectors.toList()),
+                HttpStatus.OK);
     }
 
     @GetMapping("/{id}")
@@ -45,6 +45,7 @@ public class SizeController {
                 HttpStatus.OK);
     }
 
+    @ResponseStatus(HttpStatus.CREATED)
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<SizeDto> createSize(
@@ -68,6 +69,7 @@ public class SizeController {
                 HttpStatus.OK);
     }
 
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteSize(@PathVariable String id) {

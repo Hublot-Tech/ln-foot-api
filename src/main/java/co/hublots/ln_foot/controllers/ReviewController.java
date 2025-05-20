@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import co.hublots.ln_foot.annotations.KeycloakUserId;
@@ -45,6 +46,7 @@ public class ReviewController {
         return new ResponseEntity<>(ReviewDto.fromEntity(review), HttpStatus.OK);
     }
 
+    @ResponseStatus(HttpStatus.CREATED)
     @PostMapping
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ReviewDto> createReview(
@@ -70,6 +72,7 @@ public class ReviewController {
         return new ResponseEntity<>(ReviewDto.fromEntity(review), HttpStatus.OK);
     }
 
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<Void> deleteReview(@PathVariable String id) {
