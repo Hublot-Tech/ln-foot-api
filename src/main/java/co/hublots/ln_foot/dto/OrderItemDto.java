@@ -21,14 +21,14 @@ public class OrderItemDto {
     private int quantity;
 
     private String size;
-    private Order order;
+    private String orderId;
 
     public static OrderItemDto fromEntity(OrderItem orderItem) {
         return OrderItemDto.builder()
                 .id(orderItem.getId())
                 .productVariantId(orderItem.getProductVariant().getId())
                 .quantity(orderItem.getQuantity())
-                .order(orderItem.getOrder())
+                .orderId(orderItem.getOrder().getId())
                 .size(orderItem.getSize())
                 .build();
     }
