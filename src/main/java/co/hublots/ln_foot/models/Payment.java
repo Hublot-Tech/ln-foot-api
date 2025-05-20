@@ -17,9 +17,9 @@ import lombok.RequiredArgsConstructor;
 @Entity
 @Table(name = "payments")
 @Data
+@Builder
 @AllArgsConstructor
 @RequiredArgsConstructor
-@Builder
 public class Payment {
     @Id
     @UuidGenerator

@@ -16,6 +16,9 @@ import lombok.Data;
 @AllArgsConstructor
 public class OrderDto {
     private String id;
+    private LocalDateTime orderDate;
+    private boolean isCompleted;
+    private String userId;
 
     @Size(min = 1)
     @Valid
@@ -24,6 +27,9 @@ public class OrderDto {
     public static OrderDto fromEntity(Order order) {
         return OrderDto.builder()
                 .id(order.getId())
+                .isCompleted(order.isCompleted())
+                .orderDate(order.getOrderDate())
+                .userId(order.getUserId())
                 .orderItems(order.getOrderItems().stream()
                         .map(OrderItemDto::fromEntity)
                         .collect(Collectors.toList()))

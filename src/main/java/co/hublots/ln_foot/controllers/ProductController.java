@@ -76,6 +76,8 @@ public class ProductController {
                 .createProductVariant(ProductVariant.builder()
                         .stockQuantity(product.getStockQuantity())
                         .sizes(product.getSizes())
+                        .price(product.getPrice())
+                        .colorCode("default")
                         .imageUrl(product.getImageUrl())
                         .product(product)
                         .build());
