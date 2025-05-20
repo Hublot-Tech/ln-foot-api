@@ -47,6 +47,3 @@ notchpay:
   api: 
     key: ${NOTCHPAY_API_KEY:notchpay_api_key}
     base-url: ${NOTCHPAY_API_BASE_URL:https://api.notchpay.co}
-
-frontend:
-  url: ${FRONTEND_URL:http://localhost:3000}
