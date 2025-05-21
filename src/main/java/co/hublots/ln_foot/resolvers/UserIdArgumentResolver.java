@@ -37,6 +37,7 @@ public class UserIdArgumentResolver implements HandlerMethodArgumentResolver {
             if (userId == null || userId.isEmpty()) {
                 throw new IllegalArgumentException("User ID (sub) not found in JWT token");
             }
+            log.info("User ID: {}", userId);
             return userId;
         }
 

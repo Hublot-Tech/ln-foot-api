@@ -16,7 +16,6 @@ import lombok.Data;
 @AllArgsConstructor
 public class OrderDto {
     private String id;
-    private String userId;
     private LocalDateTime orderDate;
 
     @Builder.Default
@@ -31,7 +30,6 @@ public class OrderDto {
                 .id(order.getId())
                 .isCompleted(order.isCompleted())
                 .orderDate(order.getOrderDate())
-                .userId(order.getUserId())
                 .orderItems(order.getOrderItems().stream()
                         .map(OrderItemDto::fromEntity)
                         .collect(Collectors.toList()))
