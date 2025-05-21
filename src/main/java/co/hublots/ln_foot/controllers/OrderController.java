@@ -89,6 +89,7 @@ public class OrderController {
                     // Update the stock quantity
                     return OrderItem.builder()
                             .id(item.getId())
+                            .order(order)
                             .productVariant(productVariant)
                             .price(productVariant.getPrice())
                             .quantity(item.getQuantity())

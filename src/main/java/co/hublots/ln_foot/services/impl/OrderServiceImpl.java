@@ -11,6 +11,7 @@ import co.hublots.ln_foot.models.Order;
 import co.hublots.ln_foot.repositories.OrderItemRepository;
 import co.hublots.ln_foot.repositories.OrderRepository;
 import co.hublots.ln_foot.services.OrderService;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -37,6 +38,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional
     public Order createOrder(Order order) {
         if (order.getOrderItems() != null && !order.getOrderItems().isEmpty()) {
             orderItemRepository.saveAll(order.getOrderItems());
