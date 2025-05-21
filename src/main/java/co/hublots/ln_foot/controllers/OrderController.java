@@ -77,14 +77,22 @@ public class OrderController {
         Order order = orderDto.toEntity(userId);
         order.setOrderItems(orderDto.getOrderItems().stream()
                 .map(item -> {
+                    String productVariantId = item.getProductVariantId();
+                    if (productVariantId == null || productVariantId.isEmpty()) {
+                        throw new IllegalArgumentException(
+                                "Product variant ID cannot be null or empty");
+                    }
+
                     ProductVariant productVariant = productVariantService
                             .getProductVariantById(item.getProductVariantId());
                     if (productVariant == null) {
-                        throw new IllegalArgumentException("Invalid product variant ID: " + item.getProductVariantId());
+                        throw new IllegalArgumentException("Invalid product variant ID: "
+                                + item.getProductVariantId());
                     }
                     if (productVariant.getStockQuantity() < item.getQuantity()) {
                         throw new IllegalArgumentException(
-                                "Not enough stock for product variant ID: " + item.getProductVariantId());
+                                "Not enough stock for product variant ID: "
+                                        + item.getProductVariantId());
                     }
                     // Update the stock quantity
                     return OrderItem.builder()
@@ -116,11 +124,13 @@ public class OrderController {
                     ProductVariant productVariant = productVariantService
                             .getProductVariantById(item.getProductVariantId());
                     if (productVariant == null) {
-                        throw new IllegalArgumentException("Invalid product variant ID: " + item.getProductVariantId());
+                        throw new IllegalArgumentException("Invalid product variant ID: "
+                                + item.getProductVariantId());
                     }
                     if (productVariant.getStockQuantity() < item.getQuantity()) {
                         throw new IllegalArgumentException(
-                                "Not enough stock for product variant ID: " + item.getProductVariantId());
+                                "Not enough stock for product variant ID: "
+                                        + item.getProductVariantId());
                     }
                     // Update the stock quantity
                     return OrderItem.builder()
@@ -143,7 +153,8 @@ public class OrderController {
     @PutMapping("/{id}/confirm")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<PaymentResponseDto> comfirmOrder(
-            @PathVariable String id, @Valid @RequestBody NotchPayDto.InitiatePaymentRequest.Customer customer) {
+            @PathVariable String id,
+            @Valid @RequestBody NotchPayDto.InitiatePaymentRequest.Customer customer) {
         Order order = orderService.getOrderById(id);
         if (order == null) {
             return new ResponseEntity<>(
@@ -167,10 +178,12 @@ public class OrderController {
             ProductVariant productVariant = productVariants.stream()
                     .filter(cp -> cp.getId().equals(productVariantId))
                     .findFirst()
-                    .orElseThrow(() -> new IllegalArgumentException("Invalid product ID: " + item.getId()));
+                    .orElseThrow(() -> new IllegalArgumentException(
+                            "Invalid product ID: " + item.getId()));
 
             if (productVariant.getStockQuantity() < item.getQuantity()) {
-                throw new IllegalArgumentException("Not enough stock for product ID: " + productVariantId);
+                throw new IllegalArgumentException(
+                        "Not enough stock for product ID: " + productVariantId);
             }
 
             amount += item.getPrice() * item.getQuantity();

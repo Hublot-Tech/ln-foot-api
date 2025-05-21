@@ -16,36 +16,36 @@ import lombok.Data;
 @Builder
 @AllArgsConstructor
 public class OrderDto {
-        private String id;
-        private LocalDateTime orderDate;
+    private String id;
+    private LocalDateTime orderDate;
 
-        @Builder.Default
-        private String status = "pending";
+    @Builder.Default
+    private String status = "pending";
 
-        @Size(min = 1)
-        @Valid
-        private List<OrderItemDto> orderItems;
+    @Size(min = 1)
+    @Valid
+    private List<OrderItemDto> orderItems;
 
-        public static OrderDto fromEntity(Order order) {
-                return OrderDto.builder()
-                                .id(order.getId())
-                                .status(order.getStatus())
-                                .orderDate(order.getOrderDate())
-                                .orderItems(order.getOrderItems().stream()
-                                                .map(OrderItemDto::fromEntity)
-                                                .collect(Collectors.toList()))
-                                .build();
-        }
+    public static OrderDto fromEntity(Order order) {
+        return OrderDto.builder()
+                .id(order.getId())
+                .status(order.getStatus())
+                .orderDate(order.getOrderDate())
+                .orderItems(order.getOrderItems().stream()
+                        .map(OrderItemDto::fromEntity)
+                        .collect(Collectors.toList()))
+                .build();
+    }
 
-        public Order toEntity(String userId) {
-                return Order.builder()
-                                .id(id)
-                                .orderDate(LocalDateTime.now())
-                                .orderItems(orderItems.stream()
-                                                .map(item -> OrderItem.builder().id(item.getId()).build())
-                                                .collect(Collectors.toList()))
-                                .status(status)
-                                .userId(userId) // Set userId to null for now
-                                .build();
-        }
+    public Order toEntity(String userId) {
+        return Order.builder()
+                .id(id)
+                .orderDate(LocalDateTime.now())
+                .orderItems(orderItems.stream()
+                        .map(item -> OrderItem.builder().id(item.getId()).build())
+                        .collect(Collectors.toList()))
+                .status(status)
+                .userId(userId) // Set userId to null for now
+                .build();
+    }
 }

@@ -12,4 +12,5 @@ import co.hublots.ln_foot.models.ProductVariant;
 @Repository
 public interface ProductVariantRepository extends JpaRepository<ProductVariant, String> {
     List<ProductVariant> findByIdIn(List<String> ids);
+    List<ProductVariant> findAllByProductId(String productId);
 } 

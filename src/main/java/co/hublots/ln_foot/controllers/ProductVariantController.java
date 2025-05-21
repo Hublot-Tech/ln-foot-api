@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
+import org.springframework.data.repository.query.Param;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -36,7 +37,15 @@ public class ProductVariantController {
     private final ProductVariantService productVariantService;
 
     @GetMapping
-    public ResponseEntity<List<ProductVariantDto>> getProductVariants() {
+    public ResponseEntity<List<ProductVariantDto>> getProductVariants(@Param("productId") String productId) {
+        if (productId != null) {
+            List<ProductVariant> productVariants = productVariantService.getProductVariantsByProductId(productId);
+            return new ResponseEntity<>(
+                    productVariants.stream().map(ProductVariantDto::fromEntity).collect(Collectors.toList()),
+                    HttpStatus.OK);
+        }
+
+        // If no productId is provided, return all product variants
         List<ProductVariant> productVariants = productVariantService.getAllProductVariants();
         return new ResponseEntity<>(
                 productVariants.stream().map(ProductVariantDto::fromEntity).collect(Collectors.toList()),
