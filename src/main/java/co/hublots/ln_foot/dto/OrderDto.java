@@ -20,7 +20,7 @@ public class OrderDto {
         private LocalDateTime orderDate;
 
         @Builder.Default
-        private boolean isCompleted = false;
+        private String status = "pending";
 
         @Size(min = 1)
         @Valid
@@ -29,7 +29,7 @@ public class OrderDto {
         public static OrderDto fromEntity(Order order) {
                 return OrderDto.builder()
                                 .id(order.getId())
-                                .isCompleted(order.isCompleted())
+                                .status(order.getStatus())
                                 .orderDate(order.getOrderDate())
                                 .orderItems(order.getOrderItems().stream()
                                                 .map(OrderItemDto::fromEntity)
@@ -44,7 +44,7 @@ public class OrderDto {
                                 .orderItems(orderItems.stream()
                                                 .map(item -> OrderItem.builder().id(item.getId()).build())
                                                 .collect(Collectors.toList()))
-                                .isCompleted(isCompleted)
+                                .status(status)
                                 .userId(userId) // Set userId to null for now
                                 .build();
         }

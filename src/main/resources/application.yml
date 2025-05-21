@@ -44,6 +44,6 @@ springdoc:
   paths-to-match: /api/**
 
 notchpay:
-  api: 
-    key: ${NOTCHPAY_API_KEY:notchpay_api_key}
-    base-url: ${NOTCHPAY_API_BASE_URL:https://api.notchpay.co}
+  api-key: ${NOTCHPAY_API_KEY:notchpay_api_key}
+  api-base-url: ${NOTCHPAY_API_BASE_URL:https://api.notchpay.co}
+  webhook-secret: ${NOTCHPAY_WEBHOOK_SECRET:notchpay_webhook_secret}

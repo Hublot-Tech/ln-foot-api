@@ -52,7 +52,7 @@ public class OrderServiceImpl implements OrderService {
         Order existingCategory = orderRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Order not found with id: " + id));
 
-        if (existingCategory.isCompleted()) {
+        if (existingCategory.getStatus().equals("completed")) {
             throw new InputMismatchException("Order with id" + id + "cannot be updated");
         }
 

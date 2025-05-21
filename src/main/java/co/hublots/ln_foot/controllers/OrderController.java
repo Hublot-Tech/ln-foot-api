@@ -149,7 +149,7 @@ public class OrderController {
             return new ResponseEntity<>(
                     HttpStatus.NOT_FOUND);
         }
-        if (order.isCompleted()) {
+        if (order.getStatus().equals("completed")) {
             return new ResponseEntity<>(
                     HttpStatus.BAD_REQUEST);
         }

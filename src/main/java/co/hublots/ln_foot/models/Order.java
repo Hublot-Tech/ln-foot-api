@@ -44,7 +44,7 @@ public class Order {
 
     @Builder.Default
     @Column(nullable = false)
-    private boolean isCompleted = false;
+    private String status = "pending";
 
     // Authorization server (Keycloak) user id
     @Column(nullable = false)

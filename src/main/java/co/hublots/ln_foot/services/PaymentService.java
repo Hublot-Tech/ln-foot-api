@@ -1,9 +1,15 @@
 package co.hublots.ln_foot.services;
 
+import java.util.Optional;
+
 import org.springframework.transaction.annotation.Transactional;
 import co.hublots.ln_foot.models.Payment;
 
 public interface PaymentService {
+
+    Optional<Payment> findById(String id);
+    Optional<Payment> findByOrderId(String orderId);
+    Optional<Payment> findByReference(String reference);
 
     /**
      * Confirm order payment flow:

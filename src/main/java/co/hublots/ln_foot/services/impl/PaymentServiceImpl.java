@@ -1,5 +1,7 @@
 package co.hublots.ln_foot.services.impl;
 
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -29,10 +31,10 @@ public class PaymentServiceImpl implements PaymentService {
     private final PaymentRepository paymentRepository;
     private final RestTemplate restTemplate = new RestTemplate();
 
-    @Value("${notchpay.api.key}")
+    @Value("${notchpay.api-key}")
     private String apiKey;
 
-    @Value("${notchpay.api.base-url}")
+    @Value("${notchpay.api-base-url}")
     private String baseUrl;
 
     private String getInitiateUrl() {
@@ -125,7 +127,7 @@ public class PaymentServiceImpl implements PaymentService {
                 entity,
                 InitiatePaymentResponse.class);
 
-        if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+        if (response.getStatusCode() == HttpStatus.CREATED && response.getBody() != null) {
             return response.getBody();
         } else {
             throw new RuntimeException("Failed to initiate payment: HTTP " + response.getStatusCode());
@@ -145,10 +147,25 @@ public class PaymentServiceImpl implements PaymentService {
                 entity,
                 ChargePaymentResponse.class);
 
-        if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+        if (response.getStatusCode() == HttpStatus.ACCEPTED && response.getBody() != null) {
             return response.getBody();
         } else {
             throw new RuntimeException("Failed to charge payment: HTTP " + response.getStatusCode());
         }
+    }
+
+    @Override
+    public Optional<Payment> findById(String id) {
+        return paymentRepository.findById(id);
+    }
+
+    @Override
+    public Optional<Payment> findByOrderId(String orderId) {
+        return paymentRepository.findByOrderId(orderId);
+    }
+
+    @Override
+    public Optional<Payment> findByReference(String reference) {
+        return paymentRepository.findByPaymentRef(reference);
     }
 }
