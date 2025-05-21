@@ -22,6 +22,7 @@ public class OrderItemDto {
 
     private String size;
     private String orderId;
+    private double price;
 
     public static OrderItemDto fromEntity(OrderItem orderItem) {
         return OrderItemDto.builder()
@@ -29,6 +30,7 @@ public class OrderItemDto {
                 .productVariantId(orderItem.getProductVariant().getId())
                 .quantity(orderItem.getQuantity())
                 .orderId(orderItem.getOrder().getId())
+                .price(orderItem.getPrice())
                 .size(orderItem.getSize())
                 .build();
     }
@@ -39,6 +41,7 @@ public class OrderItemDto {
                 .order(Order.builder().id(orderId).build())
                 .productVariant(ProductVariant.builder().id(productVariantId).build())
                 .quantity(quantity)
+                .price(price)
                 .size(size)
                 .build();
     }
