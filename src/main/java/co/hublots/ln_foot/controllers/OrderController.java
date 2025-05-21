@@ -119,7 +119,7 @@ public class OrderController {
         double amount = 0.0;
         for (var item : orderItems) {
             ProductVariant productVariant = productVariants.stream()
-                    .filter(cp -> cp.getId().equals(item.getId()))
+                    .filter(cp -> cp.getId().equals(item.getProductVariant().getId()))
                     .findFirst()
                     .orElseThrow(() -> new IllegalArgumentException("Invalid product ID: " + item.getId()));
 
