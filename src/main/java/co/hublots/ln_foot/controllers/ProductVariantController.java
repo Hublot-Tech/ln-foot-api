@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -73,17 +72,17 @@ public class ProductVariantController {
     @PostMapping(value = "/bulk", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<ProductVariantDto>> createProductVariants(
-            @RequestPart("variants") List<ProductVariantDto> variantDtos,
-            @RequestPart(value = "files", required = false) List<MultipartFile> files) {
+            @Valid @RequestBody List<ProductVariantDto> variantDtos) {
 
         // Convert to entities and assign images
         List<ProductVariant> variants = new ArrayList<>();
         for (int i = 0; i < variantDtos.size(); i++) {
             ProductVariantDto dto = variantDtos.get(i);
+            MultipartFile file = dto.getFile();
             ProductVariant entity = dto.toEntity();
 
-            if (files != null && files.size() > i && files.get(i) != null && !files.get(i).isEmpty()) {
-                String imageUrl = minioService.uploadFile(files.get(i));
+            if (file != null && !file.isEmpty()) {
+                String imageUrl = minioService.uploadFile(file);
                 entity.setImageUrl(imageUrl);
             }
 

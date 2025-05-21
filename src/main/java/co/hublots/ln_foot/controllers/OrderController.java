@@ -75,6 +75,28 @@ public class OrderController {
             @KeycloakUserId @Parameter(hidden = true) String userId,
             @Valid @RequestBody OrderDto orderDto) {
         Order order = orderDto.toEntity(userId);
+        order.setOrderItems(orderDto.getOrderItems().stream()
+                .map(item -> {
+                    ProductVariant productVariant = productVariantService
+                            .getProductVariantById(item.getProductVariantId());
+                    if (productVariant == null) {
+                        throw new IllegalArgumentException("Invalid product variant ID: " + item.getProductVariantId());
+                    }
+                    if (productVariant.getStockQuantity() < item.getQuantity()) {
+                        throw new IllegalArgumentException(
+                                "Not enough stock for product variant ID: " + item.getProductVariantId());
+                    }
+                    // Update the stock quantity
+                    return OrderItem.builder()
+                            .id(item.getId())
+                            .productVariant(productVariant)
+                            .price(productVariant.getPrice())
+                            .quantity(item.getQuantity())
+                            .size(item.getSize())
+                            .build();
+                })
+                .collect(Collectors.toList()));
+
         orderService.createOrder(order);
         return new ResponseEntity<>(
                 OrderDto.fromEntity(order),
@@ -87,8 +109,30 @@ public class OrderController {
             @KeycloakUserId @Parameter(hidden = true) String userId,
             @PathVariable String id,
             @Valid @RequestBody OrderDto orderDto) {
-        Order Order = orderDto.toEntity(userId);
-        Order updatedOrder = orderService.updateOrder(id, Order);
+        Order order = orderDto.toEntity(userId);
+        order.setOrderItems(orderDto.getOrderItems().stream()
+                .map(item -> {
+                    ProductVariant productVariant = productVariantService
+                            .getProductVariantById(item.getProductVariantId());
+                    if (productVariant == null) {
+                        throw new IllegalArgumentException("Invalid product variant ID: " + item.getProductVariantId());
+                    }
+                    if (productVariant.getStockQuantity() < item.getQuantity()) {
+                        throw new IllegalArgumentException(
+                                "Not enough stock for product variant ID: " + item.getProductVariantId());
+                    }
+                    // Update the stock quantity
+                    return OrderItem.builder()
+                            .id(item.getId())
+                            .productVariant(productVariant)
+                            .price(productVariant.getPrice())
+                            .quantity(item.getQuantity())
+                            .size(item.getSize())
+                            .build();
+                })
+                .collect(Collectors.toList()));
+
+        Order updatedOrder = orderService.updateOrder(id, order);
         return new ResponseEntity<>(
                 OrderDto.fromEntity(updatedOrder),
                 HttpStatus.OK);
@@ -118,13 +162,14 @@ public class OrderController {
         List<OrderItem> orderItems = order.getOrderItems();
         double amount = 0.0;
         for (var item : orderItems) {
+            String productVariantId = item.getProductVariant().getId();
             ProductVariant productVariant = productVariants.stream()
-                    .filter(cp -> cp.getId().equals(item.getProductVariant().getId()))
+                    .filter(cp -> cp.getId().equals(productVariantId))
                     .findFirst()
                     .orElseThrow(() -> new IllegalArgumentException("Invalid product ID: " + item.getId()));
 
             if (productVariant.getStockQuantity() < item.getQuantity()) {
-                throw new IllegalArgumentException("Not enough stock for product ID: " + item.getId());
+                throw new IllegalArgumentException("Not enough stock for product ID: " + productVariantId);
             }
 
             amount += item.getPrice() * item.getQuantity();
