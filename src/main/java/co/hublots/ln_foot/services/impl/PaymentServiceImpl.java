@@ -49,30 +49,37 @@ public class PaymentServiceImpl implements PaymentService {
     @Transactional
     public Payment confirmOrder(String orderId, double amount, String customerEmail, String customerName,
             String customerPhone) {
-        Payment payment = paymentRepository.findByOrderId(orderId).orElseGet(() -> {
-            // Initiate payment
-            InitiatePaymentRequest initiateReq = InitiatePaymentRequest.builder()
-                    .amount(amount)
-                    .currency("XAF")
-                    .customer(InitiatePaymentRequest.Customer.builder()
-                            .name(customerName)
-                            .email(customerEmail)
-                            .phone(customerPhone)
-                            .build())
-                    .description("Payment for Order #" + orderId)
-                    .reference(orderId)
-                    .build();
+        Payment payment = paymentRepository.findByOrderId(orderId)
+                .filter(existing -> {
+                    String status = existing.getStatus();
+                    return !status.equalsIgnoreCase("failed")
+                            && !status.equalsIgnoreCase("expired")
+                            && !status.equalsIgnoreCase("cancelled");
+                })
+                .orElseGet(() -> {
+                    // Initiate payment
+                    InitiatePaymentRequest initiateReq = InitiatePaymentRequest.builder()
+                            .amount(amount)
+                            .currency("XAF")
+                            .customer(InitiatePaymentRequest.Customer.builder()
+                                    .name(customerName)
+                                    .email(customerEmail)
+                                    .phone(customerPhone)
+                                    .build())
+                            .description("Payment for Order #" + orderId)
+                            .reference(orderId)
+                            .build();
 
-            InitiatePaymentResponse initiateResp = initiatePayment(initiateReq);
+                    InitiatePaymentResponse initiateResp = initiatePayment(initiateReq);
 
-            Payment newPayment = Payment.builder()
-                    .orderId(orderId)
-                    .paymentRef(initiateResp.getTransaction().getReference())
-                    .status(initiateResp.getTransaction().getStatus())
-                    .build();
+                    Payment newPayment = Payment.builder()
+                            .orderId(orderId)
+                            .paymentRef(initiateResp.getTransaction().getReference())
+                            .status(initiateResp.getTransaction().getStatus())
+                            .build();
 
-            return paymentRepository.save(newPayment);
-        });
+                    return paymentRepository.save(newPayment);
+                });
 
         switch (payment.getStatus()) {
             case "pending":
