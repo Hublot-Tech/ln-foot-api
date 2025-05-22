@@ -81,10 +81,6 @@ public class NotchpayWebhookController {
                         Payment p = payment.get();
                         p.setStatus("failed");
                         paymentRepository.save(p);
-                        orderRepository.findById(p.getOrderId()).ifPresent(order -> {
-                            order.setStatus("failed");
-                            orderRepository.save(order);
-                        });
                     } else {
                         log.info("Payment not found for reference: " + eventData.get("reference").asText());
                     }

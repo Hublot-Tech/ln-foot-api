@@ -14,18 +14,23 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableMethodSecurity(securedEnabled = true, prePostEnabled = true)
 public class SecurityConfig {
 
-        @Bean
-        public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-                JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
-                jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(new KeycloakRoleConverter());
-                http
-                                .authorizeHttpRequests(authorize -> authorize
-                                                .requestMatchers(HttpMethod.GET).permitAll()
-                                                .requestMatchers(HttpMethod.GET, "/api/orders/**").authenticated()
-                                                .anyRequest().authenticated())
-                                .oauth2ResourceServer(oauth2 -> oauth2.jwt(
-                                                jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter)));
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
+        jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(new KeycloakRoleConverter());
 
-                return http.build();
-        }
+        http
+                .csrf(csrf -> csrf
+                        .ignoringRequestMatchers("/webhooks/notchpay") // ❌ No CSRF protection for this endpoint
+                )
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.POST, "/webhooks/notchpay").permitAll() // ✅ Public access
+                        .requestMatchers(HttpMethod.GET).permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/orders/**").authenticated()
+                        .anyRequest().authenticated())
+                .oauth2ResourceServer(oauth2 -> oauth2
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter)));
+
+        return http.build();
+    }
 }
