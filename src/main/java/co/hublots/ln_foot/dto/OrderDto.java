@@ -1,5 +1,6 @@
 package co.hublots.ln_foot.dto;
 
+import java.math.BigDecimal; // Added import
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -26,9 +27,9 @@ public class OrderDto {
     @Valid
     private List<OrderItemDto> orderItems;
 
-    private Double deliveryFee;
+    private BigDecimal deliveryFee; // Changed to BigDecimal
     private String deliveryAddress;
-    private Double totalAmount;
+    private BigDecimal totalAmount; // Changed to BigDecimal
 
     public static OrderDto fromEntity(Order order) {
         return OrderDto.builder()
@@ -38,9 +39,9 @@ public class OrderDto {
                 .orderItems(order.getOrderItems().stream()
                         .map(OrderItemDto::fromEntity)
                         .collect(Collectors.toList()))
-                .deliveryFee(order.getDeliveryFee())
+                .deliveryFee(order.getDeliveryFee()) // Assuming Order entity is updated
                 .deliveryAddress(order.getDeliveryAddress())
-                .totalAmount(order.getTotalAmount())
+                .totalAmount(order.getTotalAmount()) // Assuming Order entity is updated
                 .build();
     }
 
@@ -50,9 +51,9 @@ public class OrderDto {
                 .orderDate(LocalDateTime.now())
                 .status(status)
                 .userId(userId)
-                .deliveryFee(deliveryFee)
+                .deliveryFee(deliveryFee) // This will be BigDecimal
                 .deliveryAddress(deliveryAddress)
-                .totalAmount(totalAmount) // totalAmount will be recalculated in service layer
+                // .totalAmount(totalAmount) // totalAmount is recalculated in service layer
                 .build();
 
         if (orderItems != null) {
@@ -60,6 +61,8 @@ public class OrderDto {
                     .map(itemDto -> itemDto.toEntity(order)) // Pass the order instance
                     .collect(Collectors.toList());
             order.setOrderItems(entityOrderItems);
+        } else {
+            order.setOrderItems(java.util.Collections.emptyList()); // Use java.util.Collections
         }
         return order;
     }

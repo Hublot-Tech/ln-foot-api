@@ -1,5 +1,7 @@
 package co.hublots.ln_foot.dto;
 
+import java.math.BigDecimal; // Added import
+
 import co.hublots.ln_foot.models.Order;
 import co.hublots.ln_foot.models.OrderItem;
 import co.hublots.ln_foot.models.ProductVariant;
@@ -22,7 +24,7 @@ public class OrderItemDto {
 
     private String size;
     private String orderId;
-    private double price;
+    private BigDecimal price; // Changed to BigDecimal
 
     public static OrderItemDto fromEntity(OrderItem orderItem) {
         return OrderItemDto.builder()
@@ -30,7 +32,7 @@ public class OrderItemDto {
                 .productVariantId(orderItem.getProductVariant().getId())
                 .quantity(orderItem.getQuantity())
                 .orderId(orderItem.getOrder().getId())
-                .price(orderItem.getPrice())
+                .price(orderItem.getPrice()) // Assuming OrderItem entity is updated
                 .size(orderItem.getSize())
                 .build();
     }
@@ -41,7 +43,7 @@ public class OrderItemDto {
                 .order(order)
                 .productVariant(ProductVariant.builder().id(productVariantId).build())
                 .quantity(quantity)
-                .price(price)
+                .price(price) // This will be BigDecimal
                 .size(size)
                 .build();
     }

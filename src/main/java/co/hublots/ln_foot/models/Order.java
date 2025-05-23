@@ -1,5 +1,6 @@
 package co.hublots.ln_foot.models;
 
+import java.math.BigDecimal; // Added import
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -51,12 +52,12 @@ public class Order {
     @Nonnull
     private String userId;
 
-    @Column(nullable = true)
-    private Double deliveryFee;
+    @Column(nullable = true, precision = 19, scale = 4) // Added precision and scale
+    private BigDecimal deliveryFee;
 
     @Column(nullable = true)
     private String deliveryAddress;
 
-    @Column(nullable = true)
-    private Double totalAmount;
+    @Column(nullable = true, precision = 19, scale = 4) // Added precision and scale
+    private BigDecimal totalAmount;
 }

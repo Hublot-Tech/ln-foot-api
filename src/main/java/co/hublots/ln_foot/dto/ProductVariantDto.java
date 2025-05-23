@@ -1,5 +1,6 @@
 package co.hublots.ln_foot.dto;
 
+import java.math.BigDecimal; // Added import
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -29,10 +30,11 @@ public class ProductVariantDto {
     @NotBlank(message = "Product id is required")
     private String productId;
 
-    @NotBlank(message = "Colored product is required")
-    private double price;
+    // @NotBlank - BigDecimal cannot be blank, validation should be @NotNull
+    // Consider @DecimalMin("0.0") @Digits(integer=, fraction=) for validation
+    private BigDecimal price; // Changed to BigDecimal
 
-    @NotBlank(message = "Stock quantity is required")
+    // @NotBlank - int cannot be blank, validation should be @NotNull or @Min(1)
     @Positive(message = "Stock quantity must be positive")
     private int stockQuantity;
 
@@ -44,7 +46,7 @@ public class ProductVariantDto {
                 .id(productVariant.getId())
                 .colorCode(productVariant.getColorCode())
                 .stockQuantity(productVariant.getStockQuantity())
-                .price(productVariant.getPrice())
+                .price(productVariant.getPrice()) // Assuming ProductVariant entity is updated
                 .imageUrl(productVariant.getImageUrl())
                 .sizes(productVariant.getSizes().stream().map(Size::getName).collect(Collectors.toList()))
                 .productId(productVariant.getProduct().getId())
@@ -56,7 +58,7 @@ public class ProductVariantDto {
                 .id(id)
                 .colorCode(colorCode)
                 .stockQuantity(stockQuantity)
-                .price(price)
+                .price(price) // This will be BigDecimal
                 .imageUrl(imageUrl)
                 .sizes(sizes.stream().map(size -> Size.builder().name(size).build()).collect(Collectors.toList()))
                 .product(Product.builder().id(productId).build())

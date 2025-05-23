@@ -1,13 +1,14 @@
 package co.hublots.ln_foot.services.impl;
 
+import java.math.BigDecimal; // Added import
 import java.util.InputMismatchException;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
 import co.hublots.ln_foot.models.Order;
+import co.hublots.ln_foot.models.OrderItem; // Added import
 import co.hublots.ln_foot.repositories.OrderItemRepository;
 import co.hublots.ln_foot.repositories.OrderRepository;
 import co.hublots.ln_foot.services.OrderService;
@@ -40,29 +41,42 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional
     public Order createOrder(Order order) {
-        // Ensure order items are linked to the order if not already
+        // Set bidirectional relationship first
         if (order.getOrderItems() != null) {
             for (OrderItem item : order.getOrderItems()) {
-                item.setOrder(order); // Ensure bidirectional relationship is set
-                // Assuming productVariant details (like price) are fetched and set earlier,
-                // or OrderItem.price is pre-populated from DTO.
+                item.setOrder(order); // Essential for JPA relationships
             }
-            // Persist order items - this might be handled by cascade if configured on Order.
-            // Explicitly saving them ensures they have IDs before calculating total.
-            orderItemRepository.saveAll(order.getOrderItems());
         }
 
-        double subTotal = 0.0;
-        if (order.getOrderItems() != null) {
-            subTotal = order.getOrderItems().stream()
-                    .mapToDouble(item -> item.getPrice() * item.getQuantity())
-                    .sum();
+        // Persist the order to obtain its ID (if generated) and manage its lifecycle
+        Order savedOrder = orderRepository.save(order);
+
+        // Persist items associated with the now-managed order
+        // This is crucial if CascadeType.PERSIST or ALL is not automatically handling it,
+        // or if item IDs are needed immediately.
+        if (savedOrder.getOrderItems() != null && !savedOrder.getOrderItems().isEmpty()) {
+            // Note: If OrderItems were fetched/created separately and not part of the 'order' object
+            // when it was saved, you might need to re-associate them with 'savedOrder' before saving items.
+            // However, the current structure implies order.getOrderItems() are the ones to save.
+             orderItemRepository.saveAll(savedOrder.getOrderItems());
         }
 
-        double deliveryFee = order.getDeliveryFee() != null ? order.getDeliveryFee() : 0.0;
-        order.setTotalAmount(subTotal + deliveryFee);
+        // Recalculate totalAmount based on persisted/managed items and delivery fee
+        BigDecimal subTotal = BigDecimal.ZERO;
+        if (savedOrder.getOrderItems() != null) {
+            for (OrderItem item : savedOrder.getOrderItems()) {
+                if (item.getPrice() != null && item.getQuantity() > 0) {
+                    BigDecimal itemTotal = item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity()));
+                    subTotal = subTotal.add(itemTotal);
+                }
+            }
+        }
 
-        return orderRepository.save(order);
+        BigDecimal deliveryFee = savedOrder.getDeliveryFee() != null ? savedOrder.getDeliveryFee() : BigDecimal.ZERO;
+        savedOrder.setTotalAmount(subTotal.add(deliveryFee));
+        
+        // Save the order again to persist the calculated totalAmount
+        return orderRepository.save(savedOrder);
     }
 
     @Override
@@ -81,37 +95,47 @@ public class OrderServiceImpl implements OrderService {
         existingOrder.setDeliveryFee(orderDetails.getDeliveryFee());
 
         // Handle OrderItems update
-        if (orderDetails.getOrderItems() != null && !orderDetails.getOrderItems().isEmpty()) {
-            // Clear existing items and add new ones (simple approach)
-            // For more complex scenarios (e.g., keeping existing items not in new list),
-            // more sophisticated merging logic would be needed.
-            existingOrder.getOrderItems().clear();
-            orderItemRepository.deleteAll(orderRepository.findById(id).get().getOrderItems()); // remove old items
-
-
-            for (OrderItem newItemDto : orderDetails.getOrderItems()) {
-                OrderItem item = OrderItem.builder()
-                .productVariant(newItemDto.getProductVariant())
-                .quantity(newItemDto.getQuantity())
-                .price(newItemDto.getPrice()) // Ensure price is carried over
-                .size(newItemDto.getSize())
-                .order(existingOrder)
-                .build();
-                existingOrder.getOrderItems().add(item);
+        if (orderDetails.getOrderItems() != null) { // Check orderDetails for items
+            // Clear existing items from the order and database
+            if (existingOrder.getOrderItems() != null && !existingOrder.getOrderItems().isEmpty()) {
+                orderItemRepository.deleteAll(existingOrder.getOrderItems());
+                existingOrder.getOrderItems().clear(); // Clear the collection in the entity
             }
-            orderItemRepository.saveAll(existingOrder.getOrderItems());
+
+            // Add new items from orderDetails
+            if (!orderDetails.getOrderItems().isEmpty()) {
+                for (OrderItem newItemFromDetails : orderDetails.getOrderItems()) {
+                    OrderItem item = OrderItem.builder()
+                        .productVariant(newItemFromDetails.getProductVariant())
+                        .quantity(newItemFromDetails.getQuantity())
+                        .price(newItemFromDetails.getPrice()) // Ensure price is carried over
+                        .size(newItemFromDetails.getSize())
+                        .order(existingOrder) // Set the bidirectional relationship
+                        .build();
+                    existingOrder.getOrderItems().add(item);
+                }
+                orderItemRepository.saveAll(existingOrder.getOrderItems());
+            }
+        } else { // if orderDetails.getOrderItems() is null, implies removing all items
+            if (existingOrder.getOrderItems() != null && !existingOrder.getOrderItems().isEmpty()) {
+                orderItemRepository.deleteAll(existingOrder.getOrderItems());
+                existingOrder.getOrderItems().clear();
+            }
         }
 
-
-        double subTotal = 0.0;
+        // Recalculate totalAmount
+        BigDecimal subTotal = BigDecimal.ZERO;
         if (existingOrder.getOrderItems() != null) {
-            subTotal = existingOrder.getOrderItems().stream()
-                    .mapToDouble(item -> item.getPrice() * item.getQuantity())
-                    .sum();
+             for (OrderItem item : existingOrder.getOrderItems()) {
+                if (item.getPrice() != null && item.getQuantity() > 0) {
+                    BigDecimal itemTotal = item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity()));
+                    subTotal = subTotal.add(itemTotal);
+                }
+            }
         }
 
-        double deliveryFee = existingOrder.getDeliveryFee() != null ? existingOrder.getDeliveryFee() : 0.0;
-        existingOrder.setTotalAmount(subTotal + deliveryFee);
+        BigDecimal deliveryFee = existingOrder.getDeliveryFee() != null ? existingOrder.getDeliveryFee() : BigDecimal.ZERO;
+        existingOrder.setTotalAmount(subTotal.add(deliveryFee));
 
         return orderRepository.save(existingOrder);
     }

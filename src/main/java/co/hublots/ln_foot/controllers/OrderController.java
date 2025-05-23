@@ -1,5 +1,6 @@
 package co.hublots.ln_foot.controllers;
 
+import java.math.BigDecimal; // Added import
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -152,7 +153,7 @@ public class OrderController {
     @ResponseStatus(HttpStatus.ACCEPTED)
     @PutMapping("/{id}/confirm")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<PaymentResponseDto> comfirmOrder(
+    public ResponseEntity<PaymentResponseDto> confirmOrder( // Method renamed
             @PathVariable String id,
             @Valid @RequestBody NotchPayDto.InitiatePaymentRequest.Customer customer) {
         Order order = orderService.getOrderById(id);
@@ -187,9 +188,12 @@ public class OrderController {
         }
 
         // The totalAmount is now pre-calculated by OrderService and includes deliveryFee
-        double amount = order.getTotalAmount();
+        BigDecimal amount = order.getTotalAmount(); // Changed to BigDecimal
+        if (amount == null) { // Defensive null check
+            amount = BigDecimal.ZERO;
+        }
 
-        Payment payment = paymentService.confirmOrder(id, amount, customer.getEmail(), customer.getName(),
+        Payment payment = paymentService.confirmOrder(id, amount.doubleValue(), customer.getEmail(), customer.getName(), // Converted to double for paymentService
                 customer.getPhone());
 
         return new ResponseEntity<>(PaymentResponseDto.fromEntity(payment), HttpStatus.ACCEPTED);

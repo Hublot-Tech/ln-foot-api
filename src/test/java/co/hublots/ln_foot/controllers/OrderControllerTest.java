@@ -1,5 +1,7 @@
 package co.hublots.ln_foot.controllers;
 
+import java.math.BigDecimal; // Added import
+
 import co.hublots.ln_foot.dto.NotchPayDto;
 import co.hublots.ln_foot.models.Order;
 import co.hublots.ln_foot.models.OrderItem;
@@ -15,6 +17,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus; // Added import
 import org.springframework.http.ResponseEntity;
 
 import java.util.ArrayList;
@@ -24,7 +27,7 @@ import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList; // Changed from any(List.class)
 import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
@@ -53,17 +56,17 @@ public class OrderControllerTest {
         sampleOrder = new Order();
         sampleOrder.setId("orderTest123");
         sampleOrder.setStatus("pending");
-        sampleOrder.setDeliveryFee(10.00);
+        sampleOrder.setDeliveryFee(new BigDecimal("10.00")); // BigDecimal
 
         ProductVariant pv1 = new ProductVariant();
         pv1.setId("pv1");
-        pv1.setPrice(25.00);
+        pv1.setPrice(new BigDecimal("25.00")); // BigDecimal
         pv1.setStockQuantity(10);
 
         OrderItem item1 = OrderItem.builder()
                 .id("item1")
                 .productVariant(pv1)
-                .price(25.00) // Price from product variant
+                .price(new BigDecimal("25.00")) // BigDecimal
                 .quantity(2)  // 2 * 25 = 50
                 .order(sampleOrder)
                 .build();
@@ -72,9 +75,10 @@ public class OrderControllerTest {
         sampleOrder.setOrderItems(orderItems);
 
         // Total amount: (25.00 * 2) + 10.00 (deliveryFee) = 50 + 10 = 60.00
-        sampleOrder.setTotalAmount(60.00);
+        sampleOrder.setTotalAmount(new BigDecimal("60.00")); // BigDecimal
 
-        customerDto = new NotchPayDto.InitiatePaymentRequest.Customer("test@example.com", "Test User", "1234567890");
+        // Corrected Customer DTO instantiation order
+        customerDto = new NotchPayDto.InitiatePaymentRequest.Customer("Test User", "test@example.com", "1234567890");
     }
 
     @Test
@@ -86,7 +90,7 @@ public class OrderControllerTest {
         List<ProductVariant> productVariantsInOrder = sampleOrder.getOrderItems().stream()
             .map(OrderItem::getProductVariant)
             .collect(Collectors.toList());
-        when(productVariantService.getProductVariantsByIds(any(List.class))).thenReturn(productVariantsInOrder);
+        when(productVariantService.getProductVariantsByIds(anyList())).thenReturn(productVariantsInOrder); // Used anyList()
         
         Payment mockPayment = new Payment(); // Mock payment object
         mockPayment.setId("payment123");
@@ -95,7 +99,7 @@ public class OrderControllerTest {
             .thenReturn(mockPayment);
 
         // Act
-        ResponseEntity<?> response = orderController.comfirmOrder("orderTest123", customerDto);
+        ResponseEntity<?> response = orderController.confirmOrder("orderTest123", customerDto); // Method call updated
 
         // Assert
         ArgumentCaptor<Double> amountCaptor = ArgumentCaptor.forClass(Double.class);
@@ -109,7 +113,8 @@ public class OrderControllerTest {
 
         assertNotNull(response);
         assertEquals(HttpStatus.ACCEPTED, response.getStatusCode());
-        assertEquals(60.00, amountCaptor.getValue(), 
+        // amountCaptor now captures Double, as paymentService.confirmOrder expects double
+        assertEquals(60.00, amountCaptor.getValue().doubleValue(), 0.001, // Added delta for double comparison
             "Amount passed to paymentService should be the totalAmount from Order entity (including delivery fee).");
     }
 }

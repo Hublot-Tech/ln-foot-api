@@ -1,5 +1,6 @@
 package co.hublots.ln_foot.models;
 
+import java.math.BigDecimal; // Added import
 import java.time.LocalDateTime;
 
 import org.hibernate.annotations.CreationTimestamp;
@@ -37,7 +38,8 @@ public class OrderItem {
     private ProductVariant productVariant;
 
     private String size;
-    private double price;
+    @Column(precision = 19, scale = 4) // Added precision and scale
+    private BigDecimal price;
     private int quantity;
 
     @CreationTimestamp
