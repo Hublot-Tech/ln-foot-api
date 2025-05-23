@@ -49,13 +49,9 @@ public class OrderServiceImpl implements OrderService {
             }
         }
 
-        // Persist the order to obtain its ID (if generated) and manage its lifecycle
-        Order savedOrder = orderRepository.save(order);
-
-        // Persist the order to obtain its ID (if generated) and manage its lifecycle
+        // Persist the order to obtain its ID (if generated) and manage its lifecycle.
         // With CascadeType.ALL, associated orderItems (if order field is set on them) will also be persisted.
         Order savedOrder = orderRepository.save(order);
-
         // Explicit save of order items is removed due to CascadeType.ALL
         // if (savedOrder.getOrderItems() != null && !savedOrder.getOrderItems().isEmpty()) {
         //     orderItemRepository.saveAll(savedOrder.getOrderItems());
