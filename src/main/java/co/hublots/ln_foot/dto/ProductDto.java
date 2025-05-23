@@ -1,5 +1,6 @@
 package co.hublots.ln_foot.dto;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -32,7 +33,7 @@ public class ProductDto {
 
         @NotNull(message = "Price is required")
         @Positive(message = "Price must be positive")
-        private double price;
+        private BigDecimal price;
 
         @NotBlank(message = "Stock quantity is required")
         @Positive(message = "Stock quantity must be positive")

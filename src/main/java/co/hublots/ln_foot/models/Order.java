@@ -21,9 +21,11 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 
 @Entity
 @Table(name = "orders")
+@ToString(exclude = "orderItems")
 @Data
 @Builder
 @NoArgsConstructor

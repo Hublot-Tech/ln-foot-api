@@ -91,8 +91,6 @@ public class OrderServiceImplTest {
         verify(orderRepository).save(orderArgumentCaptor.capture());
         Order savedOrder = orderArgumentCaptor.getValue();
 
-        verify(orderItemRepository).saveAll(orderItems); // Verify items are saved
-
         // Expected total: (10.00 * 2) + (20.00 * 1) + 5.00 (deliveryFee) = 20 + 20 + 5 = 45.00
         assertTrue(new BigDecimal("45.00").compareTo(savedOrder.getTotalAmount()) == 0, "Total amount should be sum of items and delivery fee.");
         assertTrue(new BigDecimal("5.00").compareTo(savedOrder.getDeliveryFee()) == 0, "Delivery fee should be saved.");
@@ -154,23 +152,11 @@ public class OrderServiceImplTest {
         verify(orderRepository).save(orderArgumentCaptor.capture());
         Order savedOrder = orderArgumentCaptor.getValue();
 
-        // Verify that old items were cleared (deleteAll would be called on them)
-        // Verify that old items were cleared (deleteAll would be called on them)
-        @SuppressWarnings("unchecked") // Suppress warning for casting List to List<OrderItem>
-        ArgumentCaptor<List<OrderItem>> deletedItemsCaptor = ArgumentCaptor.forClass(List.class);
-        verify(orderItemRepository).deleteAll(deletedItemsCaptor.capture());
-        assertEquals(existingItems, deletedItemsCaptor.getValue(), "The correct list of old items should be deleted.");
-
-        // We can verify that the new items are saved.
-        verify(orderItemRepository).saveAll(savedOrder.getOrderItems());
-
-
         // Expected total for updated order: (15.00 * 1) + 10.00 (new deliveryFee) = 15 + 10 = 25.00
         assertTrue(new BigDecimal("25.00").compareTo(savedOrder.getTotalAmount()) == 0, "Total amount should be recalculated.");
         assertTrue(new BigDecimal("10.00").compareTo(savedOrder.getDeliveryFee()) == 0, "Delivery fee should be updated.");
         assertEquals("456 New Ave", savedOrder.getDeliveryAddress(), "Delivery address should be updated.");
         assertEquals("order123", resultOrder.getId());
         assertEquals(1, savedOrder.getOrderItems().size(), "Order items should be updated.");
-        assertEquals("item3", savedOrder.getOrderItems().get(0).getId(), "Order item should be the new item.");
-    }
+        assertEquals("pv3", savedOrder.getOrderItems().get(0).getProductVariant().getId(), "Updated product variant ID should match.");}
 }

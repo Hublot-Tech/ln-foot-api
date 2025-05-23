@@ -1,6 +1,6 @@
 package co.hublots.ln_foot.dto;
 
-import java.math.BigDecimal; // Added import
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -9,10 +9,10 @@ import org.springframework.web.multipart.MultipartFile;
 import co.hublots.ln_foot.models.ProductVariant;
 import co.hublots.ln_foot.models.Product;
 import co.hublots.ln_foot.models.Size;
-import jakarta.validation.constraints.DecimalMin; // Added import
-import jakarta.validation.constraints.Digits; // Added import
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull; // Added import
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

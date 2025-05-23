@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 
 import co.hublots.ln_foot.models.Order;
 import co.hublots.ln_foot.models.OrderItem; // Added import
-import co.hublots.ln_foot.repositories.OrderItemRepository;
 import co.hublots.ln_foot.repositories.OrderRepository;
 import co.hublots.ln_foot.services.OrderService;
 import jakarta.transaction.Transactional;
@@ -21,7 +20,6 @@ import lombok.RequiredArgsConstructor;
 public class OrderServiceImpl implements OrderService {
 
     private final OrderRepository orderRepository;
-    private final OrderItemRepository orderItemRepository;
 
     @Override
     public List<Order> getAllOrders() {

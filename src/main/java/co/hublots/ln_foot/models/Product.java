@@ -1,5 +1,6 @@
 package co.hublots.ln_foot.models;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -31,7 +32,7 @@ public class Product {
 
     private String name;
     private String description;
-    private double price;
+    private BigDecimal price;
     private int stockQuantity;
 
     private String imageUrl; // URL to the product image
