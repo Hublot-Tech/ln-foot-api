@@ -35,10 +35,10 @@ public class OrderItemDto {
                 .build();
     }
 
-    public OrderItem toEntity(String orderId) {
+    public OrderItem toEntity(Order order) {
         return OrderItem.builder()
                 .id(id)
-                .order(Order.builder().id(orderId).build())
+                .order(order)
                 .productVariant(ProductVariant.builder().id(productVariantId).build())
                 .quantity(quantity)
                 .price(price)

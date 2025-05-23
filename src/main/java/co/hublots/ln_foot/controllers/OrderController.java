@@ -170,24 +170,24 @@ public class OrderController {
                         .map(item -> item.getProductVariant().getId())
                         .collect(Collectors.toList()));
 
-        // Calculate the total amount of the order
-        List<OrderItem> orderItems = order.getOrderItems();
-        double amount = 0.0;
-        for (var item : orderItems) {
-            String productVariantId = item.getProductVariant().getId();
+        // Validate stock for order items before confirming
+        // This loop also implicitly validates product variant existence
+        for (OrderItem item : order.getOrderItems()) {
             ProductVariant productVariant = productVariants.stream()
-                    .filter(cp -> cp.getId().equals(productVariantId))
+                    .filter(pv -> pv.getId().equals(item.getProductVariant().getId()))
                     .findFirst()
                     .orElseThrow(() -> new IllegalArgumentException(
-                            "Invalid product ID: " + item.getId()));
+                            "Invalid product variant ID in order: " + item.getProductVariant().getId()));
 
             if (productVariant.getStockQuantity() < item.getQuantity()) {
                 throw new IllegalArgumentException(
-                        "Not enough stock for product ID: " + productVariantId);
+                        "Not enough stock for product variant ID: " + item.getProductVariant().getId() +
+                        ". Requested: " + item.getQuantity() + ", Available: " + productVariant.getStockQuantity());
             }
-
-            amount += item.getPrice() * item.getQuantity();
         }
+
+        // The totalAmount is now pre-calculated by OrderService and includes deliveryFee
+        double amount = order.getTotalAmount();
 
         Payment payment = paymentService.confirmOrder(id, amount, customer.getEmail(), customer.getName(),
                 customer.getPhone());

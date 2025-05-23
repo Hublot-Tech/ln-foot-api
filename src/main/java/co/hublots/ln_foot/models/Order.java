@@ -50,4 +50,13 @@ public class Order {
     @Column(nullable = false)
     @Nonnull
     private String userId;
+
+    @Column(nullable = true)
+    private Double deliveryFee;
+
+    @Column(nullable = true)
+    private String deliveryAddress;
+
+    @Column(nullable = true)
+    private Double totalAmount;
 }

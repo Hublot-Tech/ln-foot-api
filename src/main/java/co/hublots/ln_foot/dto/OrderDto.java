@@ -26,6 +26,10 @@ public class OrderDto {
     @Valid
     private List<OrderItemDto> orderItems;
 
+    private Double deliveryFee;
+    private String deliveryAddress;
+    private Double totalAmount;
+
     public static OrderDto fromEntity(Order order) {
         return OrderDto.builder()
                 .id(order.getId())
@@ -34,18 +38,29 @@ public class OrderDto {
                 .orderItems(order.getOrderItems().stream()
                         .map(OrderItemDto::fromEntity)
                         .collect(Collectors.toList()))
+                .deliveryFee(order.getDeliveryFee())
+                .deliveryAddress(order.getDeliveryAddress())
+                .totalAmount(order.getTotalAmount())
                 .build();
     }
 
     public Order toEntity(String userId) {
-        return Order.builder()
+        Order order = Order.builder()
                 .id(id)
                 .orderDate(LocalDateTime.now())
-                .orderItems(orderItems.stream()
-                        .map(item -> OrderItem.builder().id(item.getId()).build())
-                        .collect(Collectors.toList()))
                 .status(status)
-                .userId(userId) // Set userId to null for now
+                .userId(userId)
+                .deliveryFee(deliveryFee)
+                .deliveryAddress(deliveryAddress)
+                .totalAmount(totalAmount) // totalAmount will be recalculated in service layer
                 .build();
+
+        if (orderItems != null) {
+            List<OrderItem> entityOrderItems = orderItems.stream()
+                    .map(itemDto -> itemDto.toEntity(order)) // Pass the order instance
+                    .collect(Collectors.toList());
+            order.setOrderItems(entityOrderItems);
+        }
+        return order;
     }
 }
