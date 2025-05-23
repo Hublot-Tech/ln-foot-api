@@ -9,7 +9,10 @@ import org.springframework.web.multipart.MultipartFile;
 import co.hublots.ln_foot.models.ProductVariant;
 import co.hublots.ln_foot.models.Product;
 import co.hublots.ln_foot.models.Size;
+import jakarta.validation.constraints.DecimalMin; // Added import
+import jakarta.validation.constraints.Digits; // Added import
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull; // Added import
 import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -30,12 +33,12 @@ public class ProductVariantDto {
     @NotBlank(message = "Product id is required")
     private String productId;
 
-    // @NotBlank - BigDecimal cannot be blank, validation should be @NotNull
-    // Consider @DecimalMin("0.0") @Digits(integer=, fraction=) for validation
+    @NotNull(message = "Price is required")
+    @DecimalMin(value = "0.0", inclusive = false, message = "Price must be greater than zero")
+    @Digits(integer = 15, fraction = 4, message = "Price has invalid format")
     private BigDecimal price; // Changed to BigDecimal
 
-    // @NotBlank - int cannot be blank, validation should be @NotNull or @Min(1)
-    @Positive(message = "Stock quantity must be positive")
+    @Positive(message = "Stock quantity must be positive") // Comment removed
     private int stockQuantity;
 
     @Builder.Default

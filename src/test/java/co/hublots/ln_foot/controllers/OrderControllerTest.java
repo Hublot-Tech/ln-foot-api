@@ -27,7 +27,8 @@ import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.ArgumentMatchers.anyList; // Changed from any(List.class)
+import static org.junit.jupiter.api.Assertions.assertTrue; // Added for BigDecimal comparison
+import static org.mockito.ArgumentMatchers.anyList; 
 import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
@@ -113,8 +114,10 @@ public class OrderControllerTest {
 
         assertNotNull(response);
         assertEquals(HttpStatus.ACCEPTED, response.getStatusCode());
-        // amountCaptor now captures Double, as paymentService.confirmOrder expects double
-        assertEquals(60.00, amountCaptor.getValue().doubleValue(), 0.001, // Added delta for double comparison
-            "Amount passed to paymentService should be the totalAmount from Order entity (including delivery fee).");
+        
+        // Use BigDecimal for comparing the expected amount with the captured double value
+        BigDecimal expectedAmount = sampleOrder.getTotalAmount(); // This is already BigDecimal("60.00")
+        assertEquals(0, BigDecimal.valueOf(amountCaptor.getValue()).compareTo(expectedAmount),
+            "Amount passed to paymentService should be numerically equal to Order.totalAmount (after Order.totalAmount is converted to double for the call).");
     }
 }

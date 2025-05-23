@@ -1,6 +1,7 @@
 package co.hublots.ln_foot.services.impl;
 
-import java.math.BigDecimal; // Added import
+import java.math.BigDecimal;
+import java.math.RoundingMode; // Added import
 import java.util.InputMismatchException;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -51,32 +52,36 @@ public class OrderServiceImpl implements OrderService {
         // Persist the order to obtain its ID (if generated) and manage its lifecycle
         Order savedOrder = orderRepository.save(order);
 
-        // Persist items associated with the now-managed order
-        // This is crucial if CascadeType.PERSIST or ALL is not automatically handling it,
-        // or if item IDs are needed immediately.
-        if (savedOrder.getOrderItems() != null && !savedOrder.getOrderItems().isEmpty()) {
-            // Note: If OrderItems were fetched/created separately and not part of the 'order' object
-            // when it was saved, you might need to re-associate them with 'savedOrder' before saving items.
-            // However, the current structure implies order.getOrderItems() are the ones to save.
-             orderItemRepository.saveAll(savedOrder.getOrderItems());
-        }
+        // Persist the order to obtain its ID (if generated) and manage its lifecycle
+        // With CascadeType.ALL, associated orderItems (if order field is set on them) will also be persisted.
+        Order savedOrder = orderRepository.save(order);
 
-        // Recalculate totalAmount based on persisted/managed items and delivery fee
+        // Explicit save of order items is removed due to CascadeType.ALL
+        // if (savedOrder.getOrderItems() != null && !savedOrder.getOrderItems().isEmpty()) {
+        //     orderItemRepository.saveAll(savedOrder.getOrderItems());
+        // }
+
+        // Calculate totalAmount with proper scaling
         BigDecimal subTotal = BigDecimal.ZERO;
         if (savedOrder.getOrderItems() != null) {
             for (OrderItem item : savedOrder.getOrderItems()) {
                 if (item.getPrice() != null && item.getQuantity() > 0) {
-                    BigDecimal itemTotal = item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity()));
+                    BigDecimal itemPrice = item.getPrice().setScale(2, RoundingMode.HALF_UP);
+                    BigDecimal itemTotal = itemPrice.multiply(BigDecimal.valueOf(item.getQuantity()))
+                                                    .setScale(2, RoundingMode.HALF_UP);
                     subTotal = subTotal.add(itemTotal);
                 }
             }
         }
+        subTotal = subTotal.setScale(2, RoundingMode.HALF_UP);
 
         BigDecimal deliveryFee = savedOrder.getDeliveryFee() != null ? savedOrder.getDeliveryFee() : BigDecimal.ZERO;
-        savedOrder.setTotalAmount(subTotal.add(deliveryFee));
+        deliveryFee = deliveryFee.setScale(2, RoundingMode.HALF_UP);
         
-        // Save the order again to persist the calculated totalAmount
-        return orderRepository.save(savedOrder);
+        savedOrder.setTotalAmount(subTotal.add(deliveryFee).setScale(2, RoundingMode.HALF_UP));
+        
+        // Second save is removed; JPA dirty checking handles persisting totalAmount.
+        return savedOrder;
     }
 
     @Override
@@ -128,14 +133,19 @@ public class OrderServiceImpl implements OrderService {
         if (existingOrder.getOrderItems() != null) {
              for (OrderItem item : existingOrder.getOrderItems()) {
                 if (item.getPrice() != null && item.getQuantity() > 0) {
-                    BigDecimal itemTotal = item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity()));
+                    BigDecimal itemPrice = item.getPrice().setScale(2, RoundingMode.HALF_UP);
+                    BigDecimal itemTotal = itemPrice.multiply(BigDecimal.valueOf(item.getQuantity()))
+                                                    .setScale(2, RoundingMode.HALF_UP);
                     subTotal = subTotal.add(itemTotal);
                 }
             }
         }
+        subTotal = subTotal.setScale(2, RoundingMode.HALF_UP);
 
         BigDecimal deliveryFee = existingOrder.getDeliveryFee() != null ? existingOrder.getDeliveryFee() : BigDecimal.ZERO;
-        existingOrder.setTotalAmount(subTotal.add(deliveryFee));
+        deliveryFee = deliveryFee.setScale(2, RoundingMode.HALF_UP);
+        
+        existingOrder.setTotalAmount(subTotal.add(deliveryFee).setScale(2, RoundingMode.HALF_UP));
 
         return orderRepository.save(existingOrder);
     }

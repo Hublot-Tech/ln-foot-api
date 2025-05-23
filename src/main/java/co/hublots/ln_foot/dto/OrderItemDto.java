@@ -5,6 +5,7 @@ import java.math.BigDecimal; // Added import
 import co.hublots.ln_foot.models.Order;
 import co.hublots.ln_foot.models.OrderItem;
 import co.hublots.ln_foot.models.ProductVariant;
+import jakarta.validation.constraints.Min; // Added import
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -19,7 +20,7 @@ public class OrderItemDto {
     @NotBlank(message = "Product id is required")
     private String productVariantId;
 
-    @NotBlank(message = "Quantity is required")
+    @Min(value = 1, message = "Quantity must be at least 1") // Replaced @NotBlank
     private int quantity;
 
     private String size;
