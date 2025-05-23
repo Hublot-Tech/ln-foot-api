@@ -49,34 +49,16 @@ public class OrderServiceImpl implements OrderService {
             }
         }
 
-        // Persist the order to obtain its ID (if generated) and manage its lifecycle.
-        // With CascadeType.ALL, associated orderItems (if order field is set on them) will also be persisted.
+        // Persist the order. With CascadeType.ALL, associated orderItems
+        // (where item.setOrder(order) has been called) will also be persisted.
         Order savedOrder = orderRepository.save(order);
-        // Explicit save of order items is removed due to CascadeType.ALL
-        // if (savedOrder.getOrderItems() != null && !savedOrder.getOrderItems().isEmpty()) {
-        //     orderItemRepository.saveAll(savedOrder.getOrderItems());
-        // }
 
-        // Calculate totalAmount with proper scaling
-        BigDecimal subTotal = BigDecimal.ZERO;
-        if (savedOrder.getOrderItems() != null) {
-            for (OrderItem item : savedOrder.getOrderItems()) {
-                if (item.getPrice() != null && item.getQuantity() > 0) {
-                    BigDecimal itemPrice = item.getPrice().setScale(2, RoundingMode.HALF_UP);
-                    BigDecimal itemTotal = itemPrice.multiply(BigDecimal.valueOf(item.getQuantity()))
-                                                    .setScale(2, RoundingMode.HALF_UP);
-                    subTotal = subTotal.add(itemTotal);
-                }
-            }
-        }
-        subTotal = subTotal.setScale(2, RoundingMode.HALF_UP);
-
-        BigDecimal deliveryFee = savedOrder.getDeliveryFee() != null ? savedOrder.getDeliveryFee() : BigDecimal.ZERO;
-        deliveryFee = deliveryFee.setScale(2, RoundingMode.HALF_UP);
+        // Calculate totalAmount using the helper method
+        BigDecimal totalAmount = calculateOrderTotal(savedOrder.getOrderItems(), savedOrder.getDeliveryFee());
+        savedOrder.setTotalAmount(totalAmount);
         
-        savedOrder.setTotalAmount(subTotal.add(deliveryFee).setScale(2, RoundingMode.HALF_UP));
-        
-        // Second save is removed; JPA dirty checking handles persisting totalAmount.
+        // No second save needed here, JPA dirty checking handles persisting totalAmount
+        // because 'savedOrder' is a managed entity.
         return savedOrder;
     }
 
@@ -86,48 +68,51 @@ public class OrderServiceImpl implements OrderService {
         Order existingOrder = orderRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Order not found with id: " + id));
 
-        if (existingOrder.getStatus().equals("completed") || existingOrder.getStatus().equals("cancelled")) {
+        // Yoda conditions for status check
+        if ("completed".equals(existingOrder.getStatus()) || "cancelled".equals(existingOrder.getStatus())) {
             throw new InputMismatchException("Order with id " + id + " is " + existingOrder.getStatus() + " and cannot be updated.");
         }
 
         // Update basic fields
-        existingOrder.setStatus(orderDetails.getStatus()); // Allow status updates
+        existingOrder.setStatus(orderDetails.getStatus()); 
         existingOrder.setDeliveryAddress(orderDetails.getDeliveryAddress());
         existingOrder.setDeliveryFee(orderDetails.getDeliveryFee());
 
-        // Handle OrderItems update
-        if (orderDetails.getOrderItems() != null) { // Check orderDetails for items
-            // Clear existing items from the order and database
-            if (existingOrder.getOrderItems() != null && !existingOrder.getOrderItems().isEmpty()) {
-                orderItemRepository.deleteAll(existingOrder.getOrderItems());
-                existingOrder.getOrderItems().clear(); // Clear the collection in the entity
-            }
-
-            // Add new items from orderDetails
-            if (!orderDetails.getOrderItems().isEmpty()) {
-                for (OrderItem newItemFromDetails : orderDetails.getOrderItems()) {
-                    OrderItem item = OrderItem.builder()
-                        .productVariant(newItemFromDetails.getProductVariant())
-                        .quantity(newItemFromDetails.getQuantity())
-                        .price(newItemFromDetails.getPrice()) // Ensure price is carried over
-                        .size(newItemFromDetails.getSize())
-                        .order(existingOrder) // Set the bidirectional relationship
-                        .build();
-                    existingOrder.getOrderItems().add(item);
-                }
-                orderItemRepository.saveAll(existingOrder.getOrderItems());
-            }
-        } else { // if orderDetails.getOrderItems() is null, implies removing all items
-            if (existingOrder.getOrderItems() != null && !existingOrder.getOrderItems().isEmpty()) {
-                orderItemRepository.deleteAll(existingOrder.getOrderItems());
-                existingOrder.getOrderItems().clear();
+        // Handle OrderItems update using orphanRemoval=true strategy
+        // The ProductVariant for orderDetails.getOrderItems() should be fetched and set by the caller (e.g., controller)
+        // or this method needs access to ProductVariantRepository to fetch them.
+        // Assuming orderDetails.getOrderItems() are fully formed entities with correct ProductVariant and price.
+        if (existingOrder.getOrderItems() != null) {
+            existingOrder.getOrderItems().clear(); // Clears existing items, orphanRemoval handles DB deletion
+        } else {
+            existingOrder.setOrderItems(new java.util.ArrayList<>()); // Ensure collection is initialized
+        }
+        
+        if (orderDetails.getOrderItems() != null && !orderDetails.getOrderItems().isEmpty()) {
+            for (OrderItem newItemFromDetails : orderDetails.getOrderItems()) {
+                OrderItem item = OrderItem.builder()
+                    .productVariant(newItemFromDetails.getProductVariant()) // Assuming this is already fetched
+                    .quantity(newItemFromDetails.getQuantity())
+                    .price(newItemFromDetails.getPrice()) // Assuming price is correct from DTO/controller
+                    .size(newItemFromDetails.getSize())
+                    .order(existingOrder) // Set the bidirectional relationship
+                    .build();
+                existingOrder.getOrderItems().add(item);
             }
         }
+        // Explicit deleteAll and saveAll for items are removed due to CascadeType.ALL and orphanRemoval=true.
+        
+        // Calculate totalAmount using the helper method
+        BigDecimal totalAmount = calculateOrderTotal(existingOrder.getOrderItems(), existingOrder.getDeliveryFee());
+        existingOrder.setTotalAmount(totalAmount);
 
-        // Recalculate totalAmount
+        return orderRepository.save(existingOrder); // Single save persists Order and cascades OrderItem changes
+    }
+
+    private BigDecimal calculateOrderTotal(List<OrderItem> orderItems, BigDecimal deliveryFee) {
         BigDecimal subTotal = BigDecimal.ZERO;
-        if (existingOrder.getOrderItems() != null) {
-             for (OrderItem item : existingOrder.getOrderItems()) {
+        if (orderItems != null) {
+            for (OrderItem item : orderItems) {
                 if (item.getPrice() != null && item.getQuantity() > 0) {
                     BigDecimal itemPrice = item.getPrice().setScale(2, RoundingMode.HALF_UP);
                     BigDecimal itemTotal = itemPrice.multiply(BigDecimal.valueOf(item.getQuantity()))
@@ -138,12 +123,10 @@ public class OrderServiceImpl implements OrderService {
         }
         subTotal = subTotal.setScale(2, RoundingMode.HALF_UP);
 
-        BigDecimal deliveryFee = existingOrder.getDeliveryFee() != null ? existingOrder.getDeliveryFee() : BigDecimal.ZERO;
-        deliveryFee = deliveryFee.setScale(2, RoundingMode.HALF_UP);
-        
-        existingOrder.setTotalAmount(subTotal.add(deliveryFee).setScale(2, RoundingMode.HALF_UP));
+        BigDecimal finalDeliveryFee = deliveryFee != null ? deliveryFee : BigDecimal.ZERO;
+        finalDeliveryFee = finalDeliveryFee.setScale(2, RoundingMode.HALF_UP);
 
-        return orderRepository.save(existingOrder);
+        return subTotal.add(finalDeliveryFee).setScale(2, RoundingMode.HALF_UP);
     }
 
     @Override
