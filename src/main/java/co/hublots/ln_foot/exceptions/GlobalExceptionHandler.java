@@ -10,7 +10,7 @@ import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
-
+import org.springframework.dao.DataIntegrityViolationException;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -22,7 +22,7 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.BAD_REQUEST, e.getMessage());
     }
 
-    @ExceptionHandler(IllegalStateException.class)
+    @ExceptionHandler({ IllegalStateException.class, DataIntegrityViolationException.class })
     public ResponseEntity<ErrorResponse> handleIllegalStateException(IllegalStateException e) {
         return buildResponse(HttpStatus.UNPROCESSABLE_ENTITY, e.getMessage());
     }
@@ -32,7 +32,7 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.NOT_FOUND, e.getMessage());
     }
 
-    @ExceptionHandler({OAuth2AuthenticationException.class, AuthenticationException.class})
+    @ExceptionHandler({ OAuth2AuthenticationException.class, AuthenticationException.class })
     public ResponseEntity<ErrorResponse> handleOAuth2Exception(Exception e) {
         log.warn("Authentication failure: {}", e.getMessage());
         return buildResponse(HttpStatus.UNAUTHORIZED, "Authentication failed: " + e.getMessage());
