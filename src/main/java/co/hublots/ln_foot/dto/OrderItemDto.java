@@ -1,8 +1,11 @@
 package co.hublots.ln_foot.dto;
 
+import java.math.BigDecimal;
+
 import co.hublots.ln_foot.models.Order;
 import co.hublots.ln_foot.models.OrderItem;
 import co.hublots.ln_foot.models.ProductVariant;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -17,12 +20,12 @@ public class OrderItemDto {
     @NotBlank(message = "Product id is required")
     private String productVariantId;
 
-    @NotBlank(message = "Quantity is required")
+    @Min(value = 1, message = "Quantity must be at least 1")
     private int quantity;
 
     private String size;
     private String orderId;
-    private double price;
+    private BigDecimal price;
 
     public static OrderItemDto fromEntity(OrderItem orderItem) {
         return OrderItemDto.builder()
@@ -35,10 +38,10 @@ public class OrderItemDto {
                 .build();
     }
 
-    public OrderItem toEntity(String orderId) {
+    public OrderItem toEntity(Order order) {
         return OrderItem.builder()
                 .id(id)
-                .order(Order.builder().id(orderId).build())
+                .order(order)
                 .productVariant(ProductVariant.builder().id(productVariantId).build())
                 .quantity(quantity)
                 .price(price)

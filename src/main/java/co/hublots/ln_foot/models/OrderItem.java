@@ -1,11 +1,13 @@
 package co.hublots.ln_foot.models;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.UuidGenerator;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
@@ -16,9 +18,11 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 
 @Entity
 @Table(name = "order_items")
+@ToString(exclude = "order")
 @Data
 @Builder
 @AllArgsConstructor
@@ -37,7 +41,8 @@ public class OrderItem {
     private ProductVariant productVariant;
 
     private String size;
-    private double price;
+    @Column(precision = 19, scale = 4)
+    private BigDecimal price;
     private int quantity;
 
     @CreationTimestamp

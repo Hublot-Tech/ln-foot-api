@@ -1,5 +1,6 @@
 package co.hublots.ln_foot.models;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -20,9 +21,11 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 
 @Entity
 @Table(name = "orders")
+@ToString(exclude = "orderItems")
 @Data
 @Builder
 @NoArgsConstructor
@@ -46,8 +49,16 @@ public class Order {
     @Column(nullable = false)
     private String status = "pending";
 
-    // Authorization server (Keycloak) user id
     @Column(nullable = false)
     @Nonnull
-    private String userId;
+    private String userId; // Keycloak user id
+
+    @Column(nullable = true, precision = 19, scale = 4)
+    private BigDecimal deliveryFee;
+
+    @Column(nullable = true)
+    private String deliveryAddress;
+
+    @Column(nullable = true, precision = 19, scale = 4)
+    private BigDecimal totalAmount;
 }

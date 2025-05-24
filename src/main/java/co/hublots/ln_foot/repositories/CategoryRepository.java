@@ -9,6 +9,5 @@ import co.hublots.ln_foot.models.Category;
 
 @Repository
 public interface CategoryRepository extends JpaRepository<Category, String> {
-    // case‐insensitive
     Optional<Category> findByNameIgnoreCase(String name);
 }

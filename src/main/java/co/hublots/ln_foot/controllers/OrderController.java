@@ -1,20 +1,13 @@
 package co.hublots.ln_foot.controllers;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import co.hublots.ln_foot.annotations.KeycloakUserId;
 import co.hublots.ln_foot.dto.NotchPayDto;
@@ -43,73 +36,61 @@ public class OrderController {
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<OrderDto>> getAllOrders(@KeycloakUserId @Parameter(hidden = true) String userId) {
-        List<Order> Orders = orderService.getAllOrders();
-        return new ResponseEntity<>(Orders.stream()
-                .map(OrderDto::fromEntity)
-                .collect(Collectors.toList()), HttpStatus.OK);
+        List<Order> orders = orderService.getAllOrders();
+        return ResponseEntity.ok(
+                orders.stream().map(OrderDto::fromEntity).collect(Collectors.toList()));
     }
 
     @GetMapping("/user/orders")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<OrderDto>> getUserOrders(@KeycloakUserId @Parameter(hidden = true) String userId) {
-
-        List<Order> Orders = orderService.getUserOrders(userId);
-        return new ResponseEntity<>(Orders.stream()
-                .map(OrderDto::fromEntity)
-                .collect(Collectors.toList()), HttpStatus.OK);
+        List<Order> orders = orderService.getUserOrders(userId);
+        return ResponseEntity.ok(
+                orders.stream().map(OrderDto::fromEntity).collect(Collectors.toList()));
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<OrderDto> getOrderById(@PathVariable String id) {
-        Order Order = orderService.getOrderById(id);
-        return new ResponseEntity<>(
-                OrderDto.fromEntity(Order),
-                HttpStatus.OK);
+        Order order = orderService.getOrderById(id);
+        return ResponseEntity.ok(OrderDto.fromEntity(order));
     }
 
-    @ResponseStatus(HttpStatus.CREATED)
     @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<OrderDto> createOrder(
             @KeycloakUserId @Parameter(hidden = true) String userId,
             @Valid @RequestBody OrderDto orderDto) {
-        Order order = orderDto.toEntity(userId);
-        order.setOrderItems(orderDto.getOrderItems().stream()
-                .map(item -> {
-                    String productVariantId = item.getProductVariantId();
-                    if (productVariantId == null || productVariantId.isEmpty()) {
-                        throw new IllegalArgumentException(
-                                "Product variant ID cannot be null or empty");
-                    }
 
-                    ProductVariant productVariant = productVariantService
-                            .getProductVariantById(item.getProductVariantId());
-                    if (productVariant == null) {
-                        throw new IllegalArgumentException("Invalid product variant ID: "
-                                + item.getProductVariantId());
-                    }
-                    if (productVariant.getStockQuantity() < item.getQuantity()) {
-                        throw new IllegalArgumentException(
-                                "Not enough stock for product variant ID: "
-                                        + item.getProductVariantId());
-                    }
-                    // Update the stock quantity
-                    return OrderItem.builder()
-                            .id(item.getId())
-                            .order(order)
-                            .productVariant(productVariant)
-                            .price(productVariant.getPrice())
-                            .quantity(item.getQuantity())
-                            .size(item.getSize())
-                            .build();
-                })
-                .collect(Collectors.toList()));
+        Order order = orderDto.toEntity(userId);
+        order.setOrderItems(orderDto.getOrderItems().stream().map(item -> {
+            String productVariantId = item.getProductVariantId();
+            if (productVariantId == null || productVariantId.isEmpty()) {
+                throw new IllegalArgumentException("Product variant ID cannot be null or empty");
+            }
+
+            ProductVariant variant = productVariantService.getProductVariantById(productVariantId);
+            if (variant == null) {
+                throw new IllegalArgumentException("Invalid product variant ID: " + productVariantId);
+            }
+
+            if (variant.getStockQuantity() < item.getQuantity()) {
+                throw new IllegalArgumentException("Not enough stock for product variant ID: " + productVariantId);
+            }
+
+            return OrderItem.builder()
+                    .id(item.getId())
+                    .order(order)
+                    .productVariant(variant)
+                    .price(variant.getPrice())
+                    .quantity(item.getQuantity())
+                    .size(item.getSize())
+                    .build();
+        }).collect(Collectors.toList()));
 
         orderService.createOrder(order);
-        return new ResponseEntity<>(
-                OrderDto.fromEntity(order),
-                HttpStatus.CREATED);
+        return new ResponseEntity<>(OrderDto.fromEntity(order), HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
@@ -118,88 +99,77 @@ public class OrderController {
             @KeycloakUserId @Parameter(hidden = true) String userId,
             @PathVariable String id,
             @Valid @RequestBody OrderDto orderDto) {
+
         Order order = orderDto.toEntity(userId);
-        order.setOrderItems(orderDto.getOrderItems().stream()
-                .map(item -> {
-                    ProductVariant productVariant = productVariantService
-                            .getProductVariantById(item.getProductVariantId());
-                    if (productVariant == null) {
-                        throw new IllegalArgumentException("Invalid product variant ID: "
-                                + item.getProductVariantId());
-                    }
-                    if (productVariant.getStockQuantity() < item.getQuantity()) {
-                        throw new IllegalArgumentException(
-                                "Not enough stock for product variant ID: "
-                                        + item.getProductVariantId());
-                    }
-                    // Update the stock quantity
-                    return OrderItem.builder()
-                            .id(item.getId())
-                            .productVariant(productVariant)
-                            .price(productVariant.getPrice())
-                            .quantity(item.getQuantity())
-                            .size(item.getSize())
-                            .build();
-                })
-                .collect(Collectors.toList()));
+        order.setOrderItems(orderDto.getOrderItems().stream().map(item -> {
+            ProductVariant variant = productVariantService.getProductVariantById(item.getProductVariantId());
+            if (variant == null) {
+                throw new IllegalArgumentException("Invalid product variant ID: " + item.getProductVariantId());
+            }
+
+            if (variant.getStockQuantity() < item.getQuantity()) {
+                throw new IllegalArgumentException(
+                        "Not enough stock for product variant ID: " + item.getProductVariantId());
+            }
+
+            return OrderItem.builder()
+                    .id(item.getId())
+                    .productVariant(variant)
+                    .price(variant.getPrice())
+                    .quantity(item.getQuantity())
+                    .size(item.getSize())
+                    .build();
+        }).collect(Collectors.toList()));
 
         Order updatedOrder = orderService.updateOrder(id, order);
-        return new ResponseEntity<>(
-                OrderDto.fromEntity(updatedOrder),
-                HttpStatus.OK);
+        return ResponseEntity.ok(OrderDto.fromEntity(updatedOrder));
     }
 
-    @ResponseStatus(HttpStatus.ACCEPTED)
     @PutMapping("/{id}/confirm")
+    @ResponseStatus(HttpStatus.ACCEPTED)
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<PaymentResponseDto> comfirmOrder(
+    public ResponseEntity<PaymentResponseDto> confirmOrder(
             @PathVariable String id,
             @Valid @RequestBody NotchPayDto.InitiatePaymentRequest.Customer customer) {
+
         Order order = orderService.getOrderById(id);
-        if (order == null) {
-            return new ResponseEntity<>(
-                    HttpStatus.NOT_FOUND);
-        }
-        if (order.getStatus().equals("completed")) {
-            return new ResponseEntity<>(
-                    HttpStatus.BAD_REQUEST);
-        }
-        // validate the order items (quantity, sizes)
-        List<ProductVariant> productVariants = productVariantService
-                .getProductVariantsByIds(order.getOrderItems().stream()
+        if (order == null)
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        if ("completed".equals(order.getStatus()))
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+
+        List<ProductVariant> variants = productVariantService.getProductVariantsByIds(
+                order.getOrderItems().stream()
                         .map(item -> item.getProductVariant().getId())
                         .collect(Collectors.toList()));
 
-        // Calculate the total amount of the order
-        List<OrderItem> orderItems = order.getOrderItems();
-        double amount = 0.0;
-        for (var item : orderItems) {
-            String productVariantId = item.getProductVariant().getId();
-            ProductVariant productVariant = productVariants.stream()
-                    .filter(cp -> cp.getId().equals(productVariantId))
+        for (OrderItem item : order.getOrderItems()) {
+            ProductVariant variant = variants.stream()
+                    .filter(pv -> pv.getId().equals(item.getProductVariant().getId()))
                     .findFirst()
                     .orElseThrow(() -> new IllegalArgumentException(
-                            "Invalid product ID: " + item.getId()));
+                            "Invalid product variant ID in order: " + item.getProductVariant().getId()));
 
-            if (productVariant.getStockQuantity() < item.getQuantity()) {
+            if (variant.getStockQuantity() < item.getQuantity()) {
                 throw new IllegalArgumentException(
-                        "Not enough stock for product ID: " + productVariantId);
+                        "Not enough stock for product variant ID: " + variant.getId()
+                                + ". Requested: " + item.getQuantity()
+                                + ", Available: " + variant.getStockQuantity());
             }
-
-            amount += item.getPrice() * item.getQuantity();
         }
 
-        Payment payment = paymentService.confirmOrder(id, amount, customer.getEmail(), customer.getName(),
-                customer.getPhone());
+        BigDecimal amount = order.getTotalAmount() != null ? order.getTotalAmount() : BigDecimal.ZERO;
+        Payment payment = paymentService.confirmOrder(
+                id, amount.doubleValue(), customer.getEmail(), customer.getName(), customer.getPhone());
 
         return new ResponseEntity<>(PaymentResponseDto.fromEntity(payment), HttpStatus.ACCEPTED);
     }
 
-    @ResponseStatus(HttpStatus.NO_CONTENT)
     @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> deleteOrder(@PathVariable String id) {
         orderService.deleteOrder(id);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        return ResponseEntity.noContent().build();
     }
 }

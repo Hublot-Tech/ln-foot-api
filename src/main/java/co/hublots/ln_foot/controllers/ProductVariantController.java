@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import co.hublots.ln_foot.dto.BulkProductVariantDto;
 import co.hublots.ln_foot.dto.ProductVariantDto;
 import co.hublots.ln_foot.models.ProductVariant;
 import co.hublots.ln_foot.services.MinioService;
@@ -81,7 +82,8 @@ public class ProductVariantController {
     @PostMapping(value = "/bulk", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<ProductVariantDto>> createProductVariants(
-            @Valid @RequestBody List<ProductVariantDto> variantDtos) {
+            @Valid @RequestBody BulkProductVariantDto bulkProductVariantDto) {
+        List<ProductVariantDto> variantDtos = bulkProductVariantDto.getVariants();
 
         // Convert to entities and assign images
         List<ProductVariant> variants = new ArrayList<>();
@@ -101,7 +103,6 @@ public class ProductVariantController {
         // Persist in bulk
         List<ProductVariant> saved = productVariantService.createProductVariants(variants);
 
-        // Return result
         return new ResponseEntity<>(
                 saved.stream().map(ProductVariantDto::fromEntity).toList(),
                 HttpStatus.CREATED);

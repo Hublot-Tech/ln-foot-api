@@ -38,7 +38,6 @@ public class ProductVariantServiceImpl implements ProductVariantService {
 
     @Override
     public ProductVariant createProductVariant(ProductVariant productVariant) {
-        // Update sizes
         if (productVariant.getSizes() != null) {
             List<Size> sizes = productVariant.getSizes().stream()
                     .map(size -> sizeRepository.findByNameIgnoreCase(size.getName())
@@ -52,17 +51,14 @@ public class ProductVariantServiceImpl implements ProductVariantService {
 
     @Override
     public List<ProductVariant> createProductVariants(List<ProductVariant> productVariants) {
-        // Preload all unique size names
         Set<String> sizeNames = productVariants.stream()
                 .flatMap(variant -> variant.getSizes() != null ? variant.getSizes().stream() : Stream.empty())
                 .map(size -> size.getName().toLowerCase())
                 .collect(Collectors.toSet());
 
-        // Fetch existing sizes from the DB
         Map<String, Size> existingSizes = sizeRepository.findAllByNameInIgnoreCase(sizeNames).stream()
                 .collect(Collectors.toMap(size -> size.getName().toLowerCase(), Function.identity()));
 
-        // Resolve or create sizes, and update each product variant
         for (ProductVariant variant : productVariants) {
             if (variant.getSizes() != null) {
                 List<Size> resolvedSizes = variant.getSizes().stream()
@@ -86,7 +82,7 @@ public class ProductVariantServiceImpl implements ProductVariantService {
         Optional.of(productVariant.getImageUrl()).ifPresent(existingProductVariant::setImageUrl);
         Optional.of(productVariant.getStockQuantity()).ifPresent(existingProductVariant::setStockQuantity);
         Optional.of(productVariant.getPrice()).ifPresent(existingProductVariant::setPrice);
-        // Update sizes
+
         if (productVariant.getSizes() != null) {
             List<Size> sizes = productVariant.getSizes().stream()
                     .map(size -> sizeRepository.findById(size.getId())

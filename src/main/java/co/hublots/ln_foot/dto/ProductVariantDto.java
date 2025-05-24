@@ -1,5 +1,6 @@
 package co.hublots.ln_foot.dto;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -8,7 +9,10 @@ import org.springframework.web.multipart.MultipartFile;
 import co.hublots.ln_foot.models.ProductVariant;
 import co.hublots.ln_foot.models.Product;
 import co.hublots.ln_foot.models.Size;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -29,10 +33,11 @@ public class ProductVariantDto {
     @NotBlank(message = "Product id is required")
     private String productId;
 
-    @NotBlank(message = "Colored product is required")
-    private double price;
+    @NotNull(message = "Price is required")
+    @DecimalMin(value = "0.0", inclusive = false, message = "Price must be greater than zero")
+    @Digits(integer = 15, fraction = 4, message = "Price has invalid format")
+    private BigDecimal price;
 
-    @NotBlank(message = "Stock quantity is required")
     @Positive(message = "Stock quantity must be positive")
     private int stockQuantity;
 

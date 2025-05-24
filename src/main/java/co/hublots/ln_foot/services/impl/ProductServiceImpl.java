@@ -41,7 +41,6 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public Product createProduct(Product product) {
-        // Update categories
         if (product.getCategories() != null) {
             List<Category> categories = product.getCategories().stream()
                     .map(category -> categoryRepository.findByNameIgnoreCase(category.getName())
@@ -50,7 +49,6 @@ public class ProductServiceImpl implements ProductService {
             product.setCategories(categories);
         }
 
-        // Update sizes
         if (product.getSizes() != null) {
             List<Size> sizes = product.getSizes().stream()
                     .map(size -> sizeRepository.findByNameIgnoreCase(size.getName())
@@ -68,14 +66,12 @@ public class ProductServiceImpl implements ProductService {
         Product existingProduct = productRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Product not found with id: " + id));
 
-        // Update basic fields if present in DTO
         Optional.ofNullable(product.getName()).ifPresent(existingProduct::setName);
         Optional.ofNullable(product.getDescription()).ifPresent(existingProduct::setDescription);
         Optional.ofNullable(product.getPrice()).ifPresent(existingProduct::setPrice);
         Optional.ofNullable(product.getImageUrl()).ifPresent(existingProduct::setImageUrl);
         Optional.ofNullable(product.getStockQuantity()).ifPresent(existingProduct::setStockQuantity);
 
-        // Update categories
         if (product.getCategories() != null) {
             List<Category> categories = product.getCategories().stream()
                     .map(category -> categoryRepository.findById(category.getId())
@@ -85,7 +81,6 @@ public class ProductServiceImpl implements ProductService {
             existingProduct.setCategories(categories);
         }
 
-        // Update sizes
         if (product.getSizes() != null) {
             List<Size> sizes = product.getSizes().stream()
                     .map(size -> sizeRepository.findById(size.getId())

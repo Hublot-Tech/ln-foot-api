@@ -57,7 +57,6 @@ public class PaymentServiceImpl implements PaymentService {
                             && !status.equalsIgnoreCase("cancelled");
                 })
                 .orElseGet(() -> {
-                    // Initiate payment
                     InitiatePaymentRequest initiateReq = InitiatePaymentRequest.builder()
                             .amount(amount)
                             .currency("XAF")
@@ -83,7 +82,6 @@ public class PaymentServiceImpl implements PaymentService {
 
         switch (payment.getStatus()) {
             case "pending":
-                // proceed to charge immediately
                 ChargePaymentRequest chargeReq = ChargePaymentRequest.builder()
                         .channel("cm.mobile")
                         .data(ChargePaymentRequest.ChargeData.builder()
@@ -98,19 +96,16 @@ public class PaymentServiceImpl implements PaymentService {
                 break;
 
             case "processing":
-                // Payment is processing, wait for callback or polling
                 log.info("Payment for order {} is processing, waiting for completion.", orderId);
                 break;
 
             case "complete":
-                // Payment done, no action
                 log.info("Payment for order {} completed.", orderId);
                 break;
 
             case "failed":
             case "canceled":
             case "expired":
-                // Failed or canceled payments ignored or logged
                 log.warn("Payment for order {} is in status {} - no further action.", orderId, payment.getStatus());
                 break;
 
