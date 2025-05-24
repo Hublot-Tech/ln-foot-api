@@ -83,10 +83,6 @@ public class ProductVariantController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<ProductVariantDto>> createProductVariants(
             @Valid @RequestBody BulkProductVariantDto bulkProductVariantDto) {
-        // Validate input
-        if (bulkProductVariantDto.getVariants() == null || bulkProductVariantDto.getVariants().isEmpty()) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }
         List<ProductVariantDto> variantDtos = bulkProductVariantDto.getVariants();
 
         // Convert to entities and assign images
