@@ -1,4 +1,3 @@
-// src/main/java/co/hublots/ln_foot/services/ReviewService.java
 package co.hublots.ln_foot.services;
 
 import co.hublots.ln_foot.models.Review;

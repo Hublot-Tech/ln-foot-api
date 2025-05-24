@@ -35,7 +35,7 @@ public class Product {
     private BigDecimal price;
     private int stockQuantity;
 
-    private String imageUrl; // URL to the product image
+    private String imageUrl;
 
     @ManyToMany
     @Builder.Default

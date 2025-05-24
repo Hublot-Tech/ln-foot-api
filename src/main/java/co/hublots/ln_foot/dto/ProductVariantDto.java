@@ -36,9 +36,9 @@ public class ProductVariantDto {
     @NotNull(message = "Price is required")
     @DecimalMin(value = "0.0", inclusive = false, message = "Price must be greater than zero")
     @Digits(integer = 15, fraction = 4, message = "Price has invalid format")
-    private BigDecimal price; // Changed to BigDecimal
+    private BigDecimal price;
 
-    @Positive(message = "Stock quantity must be positive") // Comment removed
+    @Positive(message = "Stock quantity must be positive")
     private int stockQuantity;
 
     @Builder.Default
@@ -49,7 +49,7 @@ public class ProductVariantDto {
                 .id(productVariant.getId())
                 .colorCode(productVariant.getColorCode())
                 .stockQuantity(productVariant.getStockQuantity())
-                .price(productVariant.getPrice()) // Assuming ProductVariant entity is updated
+                .price(productVariant.getPrice())
                 .imageUrl(productVariant.getImageUrl())
                 .sizes(productVariant.getSizes().stream().map(Size::getName).collect(Collectors.toList()))
                 .productId(productVariant.getProduct().getId())
@@ -61,7 +61,7 @@ public class ProductVariantDto {
                 .id(id)
                 .colorCode(colorCode)
                 .stockQuantity(stockQuantity)
-                .price(price) // This will be BigDecimal
+                .price(price)
                 .imageUrl(imageUrl)
                 .sizes(sizes.stream().map(size -> Size.builder().name(size).build()).collect(Collectors.toList()))
                 .product(Product.builder().id(productId).build())

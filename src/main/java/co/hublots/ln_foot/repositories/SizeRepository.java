@@ -10,7 +10,6 @@ import co.hublots.ln_foot.models.Size;
 
 @Repository
 public interface SizeRepository extends JpaRepository<Size, String> {
-    // case‐insensitive
     Optional<Size> findByNameIgnoreCase(String name);
     Optional<Size> findAllByNameInIgnoreCase(Set<String> names);
 }

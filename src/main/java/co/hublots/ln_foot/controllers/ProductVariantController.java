@@ -103,7 +103,6 @@ public class ProductVariantController {
         // Persist in bulk
         List<ProductVariant> saved = productVariantService.createProductVariants(variants);
 
-        // Return result
         return new ResponseEntity<>(
                 saved.stream().map(ProductVariantDto::fromEntity).toList(),
                 HttpStatus.CREATED);

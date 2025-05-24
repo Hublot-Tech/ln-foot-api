@@ -1,6 +1,6 @@
 package co.hublots.ln_foot.models;
 
-import java.math.BigDecimal; // Added import
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -33,7 +33,7 @@ public class ProductVariant {
     @UuidGenerator
     private String id;
 
-    @Column(precision = 19, scale = 4) // Added precision and scale
+    @Column(precision = 19, scale = 4)
     private BigDecimal price;
     private int stockQuantity;
     private String colorCode;

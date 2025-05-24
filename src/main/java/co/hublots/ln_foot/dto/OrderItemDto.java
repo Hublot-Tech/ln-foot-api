@@ -1,11 +1,11 @@
 package co.hublots.ln_foot.dto;
 
-import java.math.BigDecimal; // Added import
+import java.math.BigDecimal;
 
 import co.hublots.ln_foot.models.Order;
 import co.hublots.ln_foot.models.OrderItem;
 import co.hublots.ln_foot.models.ProductVariant;
-import jakarta.validation.constraints.Min; // Added import
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -20,12 +20,12 @@ public class OrderItemDto {
     @NotBlank(message = "Product id is required")
     private String productVariantId;
 
-    @Min(value = 1, message = "Quantity must be at least 1") // Replaced @NotBlank
+    @Min(value = 1, message = "Quantity must be at least 1")
     private int quantity;
 
     private String size;
     private String orderId;
-    private BigDecimal price; // Changed to BigDecimal
+    private BigDecimal price;
 
     public static OrderItemDto fromEntity(OrderItem orderItem) {
         return OrderItemDto.builder()
@@ -33,7 +33,7 @@ public class OrderItemDto {
                 .productVariantId(orderItem.getProductVariant().getId())
                 .quantity(orderItem.getQuantity())
                 .orderId(orderItem.getOrder().getId())
-                .price(orderItem.getPrice()) // Assuming OrderItem entity is updated
+                .price(orderItem.getPrice())
                 .size(orderItem.getSize())
                 .build();
     }
@@ -44,7 +44,7 @@ public class OrderItemDto {
                 .order(order)
                 .productVariant(ProductVariant.builder().id(productVariantId).build())
                 .quantity(quantity)
-                .price(price) // This will be BigDecimal
+                .price(price)
                 .size(size)
                 .build();
     }

@@ -22,7 +22,6 @@ class LnFootApplicationTests {
 	static class SecurityTestConfig {
 		@Bean
 		public JwtDecoder jwtDecoder() {
-			// Return a dummy JwtDecoder that allows context to load during tests.
 			return token -> Jwt.withTokenValue(token)
 					.header("alg", "none")
 					.claim("sub", "test")
