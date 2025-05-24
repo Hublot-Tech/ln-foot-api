@@ -71,7 +71,7 @@ public class OrderServiceImplTest {
                 .quantity(1) // 1 * 20 = 20
                 .order(order)
                 .build();
-        
+
         orderItems = new ArrayList<>(Arrays.asList(item1, item2));
         order.setOrderItems(orderItems);
     }
@@ -91,8 +91,10 @@ public class OrderServiceImplTest {
         verify(orderRepository).save(orderArgumentCaptor.capture());
         Order savedOrder = orderArgumentCaptor.getValue();
 
-        // Expected total: (10.00 * 2) + (20.00 * 1) + 5.00 (deliveryFee) = 20 + 20 + 5 = 45.00
-        assertTrue(new BigDecimal("45.00").compareTo(savedOrder.getTotalAmount()) == 0, "Total amount should be sum of items and delivery fee.");
+        // Expected total: (10.00 * 2) + (20.00 * 1) + 5.00 (deliveryFee) = 20 + 20 + 5
+        // = 45.00
+        assertTrue(new BigDecimal("45.00").compareTo(savedOrder.getTotalAmount()) == 0,
+                "Total amount should be sum of items and delivery fee.");
         assertTrue(new BigDecimal("5.00").compareTo(savedOrder.getDeliveryFee()) == 0, "Delivery fee should be saved.");
         assertEquals("123 Test St", savedOrder.getDeliveryAddress(), "Delivery address should be saved.");
         assertEquals(order.getId(), createdOrder.getId(), "Returned order ID should match input.");
@@ -109,18 +111,17 @@ public class OrderServiceImplTest {
         List<OrderItem> existingItems = new ArrayList<>();
         for (OrderItem oi : orderItems) {
             existingItems.add(OrderItem.builder()
-                .id(oi.getId())
-                .productVariant(oi.getProductVariant()) // pv1 and pv2 already have BigDecimal prices
-                .price(oi.getPrice()) // price is already BigDecimal from setUp
-                .quantity(oi.getQuantity())
-                .order(existingOrder)
-                .build());
+                    .id(oi.getId())
+                    .productVariant(oi.getProductVariant()) // pv1 and pv2 already have BigDecimal prices
+                    .price(oi.getPrice()) // price is already BigDecimal from setUp
+                    .quantity(oi.getQuantity())
+                    .order(existingOrder)
+                    .build());
         }
-        existingOrder.setOrderItems(existingItems); 
+        existingOrder.setOrderItems(existingItems);
         existingOrder.setDeliveryFee(new BigDecimal("5.00")); // BigDecimal
         // Calculate initial total for existingOrder: (10*2) + (20*1) + 5 = 45.00
         existingOrder.setTotalAmount(new BigDecimal("45.00")); // BigDecimal
-
 
         ProductVariant pv3 = new ProductVariant();
         pv3.setId("pv3");
@@ -142,7 +143,8 @@ public class OrderServiceImplTest {
 
         when(orderRepository.findById("order123")).thenReturn(java.util.Optional.of(existingOrder));
         when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        // Mocking orderItemRepository.deleteAll and saveAll as they are called in the service
+        // Mocking orderItemRepository.deleteAll and saveAll as they are called in the
+        // service
 
         // Act
         Order resultOrder = orderService.updateOrder("order123", updatedDetails);
@@ -152,11 +154,16 @@ public class OrderServiceImplTest {
         verify(orderRepository).save(orderArgumentCaptor.capture());
         Order savedOrder = orderArgumentCaptor.getValue();
 
-        // Expected total for updated order: (15.00 * 1) + 10.00 (new deliveryFee) = 15 + 10 = 25.00
-        assertTrue(new BigDecimal("25.00").compareTo(savedOrder.getTotalAmount()) == 0, "Total amount should be recalculated.");
-        assertTrue(new BigDecimal("10.00").compareTo(savedOrder.getDeliveryFee()) == 0, "Delivery fee should be updated.");
+        // Expected total for updated order: (15.00 * 1) + 10.00 (new deliveryFee) = 15
+        // + 10 = 25.00
+        assertTrue(new BigDecimal("25.00").compareTo(savedOrder.getTotalAmount()) == 0,
+                "Total amount should be recalculated.");
+        assertTrue(new BigDecimal("10.00").compareTo(savedOrder.getDeliveryFee()) == 0,
+                "Delivery fee should be updated.");
         assertEquals("456 New Ave", savedOrder.getDeliveryAddress(), "Delivery address should be updated.");
         assertEquals("order123", resultOrder.getId());
         assertEquals(1, savedOrder.getOrderItems().size(), "Order items should be updated.");
-        assertEquals("pv3", savedOrder.getOrderItems().get(0).getProductVariant().getId(), "Updated product variant ID should match.");}
+        assertEquals("pv3", savedOrder.getOrderItems().get(0).getProductVariant().getId(),
+                "Updated product variant ID should match.");
+    }
 }
