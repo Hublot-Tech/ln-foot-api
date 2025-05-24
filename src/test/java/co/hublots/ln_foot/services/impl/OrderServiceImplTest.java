@@ -1,12 +1,19 @@
 package co.hublots.ln_foot.services.impl;
 
-import java.math.BigDecimal;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-import co.hublots.ln_foot.models.Order;
-import co.hublots.ln_foot.models.OrderItem;
-import co.hublots.ln_foot.models.ProductVariant;
-import co.hublots.ln_foot.repositories.OrderItemRepository;
-import co.hublots.ln_foot.repositories.OrderRepository;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Optional;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,15 +22,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import co.hublots.ln_foot.models.Order;
+import co.hublots.ln_foot.models.OrderItem;
+import co.hublots.ln_foot.models.ProductVariant;
+import co.hublots.ln_foot.repositories.OrderItemRepository;
+import co.hublots.ln_foot.repositories.OrderRepository;
 
 @ExtendWith(MockitoExtension.class)
 public class OrderServiceImplTest {
@@ -146,5 +149,27 @@ public class OrderServiceImplTest {
         assertEquals("order123", resultOrder.getId());
         assertEquals(1, savedOrder.getOrderItems().size());
         assertEquals("pv3", savedOrder.getOrderItems().get(0).getProductVariant().getId());
+    }
+
+    @Test
+    void createOrder_shouldHandleEmptyOrderItems() {
+        Order emptyOrder = new Order();
+        emptyOrder.setDeliveryFee(new BigDecimal("5.00"));
+        emptyOrder.setOrderItems(new ArrayList<>());
+
+        when(orderRepository.save(any(Order.class))).thenReturn(emptyOrder);
+
+        Order result = orderService.createOrder(emptyOrder);
+
+        assertEquals(new BigDecimal("5.00"), result.getTotalAmount());
+    }
+
+    @Test
+    void updateOrder_shouldThrowExceptionForNonExistentOrder() {
+        when(orderRepository.findById("nonexistent")).thenReturn(Optional.empty());
+
+        assertThrows(NoSuchElementException.class, () -> {
+            orderService.updateOrder("nonexistent", new Order());
+        });
     }
 }
