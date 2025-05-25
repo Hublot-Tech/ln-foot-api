@@ -54,13 +54,19 @@ jobs:
             ${{ env.IMAGE_NAME }}:${{ github.ref_name }}
           target: runner
 
-      - name: Trigger deploy tag in lnfoot-infra-deploy
-        env:
-          DEPLOY_REPO: hublot-tech/lnfoot-infra-deploy
-          VERSION_TAG: api-${{ github.ref_name }}
-        run: |
-          curl -X POST \
-            -H "Authorization: token ${{ secrets.INFRA_DEPLOY_TOKEN }}" \
-            -H "Accept: application/vnd.github.v3+json" \
-            https://api.github.com/repos/${{ env.DEPLOY_REPO }}/git/refs \
-            -d '{"ref":"refs/tags/${{ env.VERSION_TAG }}","sha":"refs/heads/main"}'
+      - name: Trigger deploy tag in lnfoot-infra-deploy  
+        env:  
+          DEPLOY_REPO: hublot-tech/lnfoot-infra-deploy  
+          VERSION_TAG: admin-${{ github.ref_name }}  
+        run: |  
+          # Retrieve the SHA of the main branch  
+          MAIN_SHA=$(git ls-remote https://github.com/${{ env.DEPLOY_REPO }} refs/heads/main | cut -f1)  
+          # Create the tag  
+          curl -X POST \  
+            -H "Authorization: token ${{ secrets.INFRA_DEPLOY_TOKEN }}" \  
+            -H "Accept: application/vnd.github.v3+json" \  
+            https://api.github.com/repos/${{ env.DEPLOY_REPO }}/git/refs \  
+            -d "$(jq -nc \  
+                  --arg ref "refs/tags/${{ env.VERSION_TAG }}" \  
+                  --arg sha "$MAIN_SHA" \  
+                  '{ref: $ref, sha: $sha}')"  
