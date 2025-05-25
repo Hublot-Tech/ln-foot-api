@@ -57,7 +57,7 @@ jobs:
       - name: Trigger deploy tag in lnfoot-infra-deploy
         env:
           DEPLOY_REPO: hublot-tech/lnfoot-infra-deploy
-          VERSION_TAG: landing-${{ github.ref_name }}
+          VERSION_TAG: api-${{ github.ref_name }}
         run: |
           curl -X POST \
             -H "Authorization: token ${{ secrets.INFRA_DEPLOY_TOKEN }}" \
