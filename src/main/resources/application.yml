@@ -2,7 +2,7 @@ spring:
   application:
     name: ln-foot 
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/lnfootdb}?search_path=lnfoot_api
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/lnfootdb}
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:mysecretpassword}
     schema: lnfoot_api
