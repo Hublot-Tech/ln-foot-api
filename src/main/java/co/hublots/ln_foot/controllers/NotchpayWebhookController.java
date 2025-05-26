@@ -41,6 +41,12 @@ public class NotchpayWebhookController {
     public ResponseEntity<String> handleWebhook(
             @RequestBody String payload,
             @RequestHeader(value = "x-notch-signature", required = false) String signature) {
+
+        log.info("Received Notchpay payload: " + payload);
+        log.info("Received Notchpay signature: " + signature);
+        log.info("Received Notchpay webhook secret: " + webhookSecret);
+
+        // Validate the signature
         if (signature == null || !verifySignature(payload, signature, webhookSecret)) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid signature");
         }
