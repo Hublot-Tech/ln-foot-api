@@ -3,6 +3,7 @@ package co.hublots.ln_foot.controllers;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.data.repository.query.Param;
@@ -38,9 +39,9 @@ public class ProductVariantController {
     private final ProductVariantService productVariantService;
 
     @GetMapping
-    public ResponseEntity<List<ProductVariantDto>> getProductVariants(@Param("productId") String productId) {
-        if (productId != null) {
-            List<ProductVariant> productVariants = productVariantService.getProductVariantsByProductId(productId);
+    public ResponseEntity<List<ProductVariantDto>> getProductVariants(@Param("productId") Optional<String> productId) {
+        if (productId.isPresent()) {
+            List<ProductVariant> productVariants = productVariantService.getProductVariantsByProductId(productId.get());
             return new ResponseEntity<>(
                     productVariants.stream().map(ProductVariantDto::fromEntity).collect(Collectors.toList()),
                     HttpStatus.OK);
