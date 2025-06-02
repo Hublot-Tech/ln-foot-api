@@ -1,7 +1,7 @@
 package co.hublots.ln_foot.services;
 
 import java.util.List;
-
+import java.util.Optional;
 
 import co.hublots.ln_foot.models.Order;
 
@@ -10,7 +10,7 @@ public interface OrderService {
 
     List<Order> getUserOrders(String userId);
 
-    Order getOrderById(String id);
+    Optional<Order> getOrderById(String id);
 
     Order createOrder(Order order);
 
