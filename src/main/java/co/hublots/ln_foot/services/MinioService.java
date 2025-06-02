@@ -9,6 +9,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import io.minio.BucketExistsArgs;
+import io.minio.SetBucketPolicyArgs;
+import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
 import io.minio.UploadObjectArgs;
 import lombok.RequiredArgsConstructor;
@@ -24,11 +27,32 @@ public class MinioService {
     @Value("${minio.url}")
     private String minioUrl;
 
-    @Value("${minio.bucket}")
-    private String bucketName;
-
-    public String uploadFile(MultipartFile file) {
+    public String uploadFile(String bucketName, MultipartFile file) {
         try {
+            boolean doesBucketExits = minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucketName).build());
+            if (!doesBucketExits) {
+                minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build());
+
+                String publicReadPolicy = "{\n"
+                        + "    \"Version\": \"2012-10-17\",\n"
+                        + "    \"Statement\": [\n"
+                        + "        {\n"
+                        + "            \"Effect\": \"Allow\",\n"
+                        + "            \"Principal\": {\n"
+                        + "                \"AWS\": [\"*\"]\n"
+                        + "            },\n"
+                        + "            \"Action\": [\"s3:GetObject\"],\n"
+                        + "            \"Resource\": [\"arn:aws:s3:::" + bucketName + "/*\"]\n"
+                        + "        }\n"
+                        + "    ]\n"
+                        + "}";
+                minioClient
+                        .setBucketPolicy(
+                                SetBucketPolicyArgs.builder().bucket(bucketName).config(publicReadPolicy).build());
+            } else {
+                log.info("Bucket %s already exists.", bucketName);
+            }
+
             String originalFilename = file.getOriginalFilename().replaceAll(" ", "");
             String uniqueName = UUID.randomUUID() + "-" + originalFilename;
 

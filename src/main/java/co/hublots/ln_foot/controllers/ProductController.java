@@ -33,7 +33,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @RequestMapping("/api/products")
 public class ProductController {
-
+    private final String bucketName = "products";
     private final MinioService minioService;
     private final ProductService productService;
     private final ProductVariantService productVariantService;
@@ -65,7 +65,7 @@ public class ProductController {
         MultipartFile file = productDto.getFile();
 
         if (file != null && !file.isEmpty()) {
-            String imageUrl = minioService.uploadFile(file);
+            String imageUrl = minioService.uploadFile(bucketName, file);
             product.setImageUrl(imageUrl);
         }
 
@@ -97,7 +97,7 @@ public class ProductController {
 
         if (file != null && !file.isEmpty()) {
             log.debug(file.toString());
-            String imageUrl = minioService.uploadFile(file);
+            String imageUrl = minioService.uploadFile(bucketName, file);
             product.setImageUrl(imageUrl);
         }
 

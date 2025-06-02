@@ -33,7 +33,6 @@ minio:
   url: ${MINIO_API_URL:http://localhost:9000}
   access-key: ${MINIO_ACCESS_KEY:access-key}
   secret-key: ${MINIO_SECRET_KEY:secret-key}
-  bucket: uploads
 
 logging:
   level:

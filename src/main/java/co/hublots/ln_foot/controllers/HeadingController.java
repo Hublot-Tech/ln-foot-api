@@ -30,7 +30,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @RequestMapping("/api/headings")
 public class HeadingController {
-
+    private final String bucketName = "headings";
     private final MinioService minioService;
     private final HeadingRepository headingRepository;
 
@@ -61,7 +61,7 @@ public class HeadingController {
             @Valid @RequestBody HeadingDto headingDto) {
         MultipartFile file = headingDto.getFile();
         if (file != null && !file.isEmpty()) {
-            String imageUrl = minioService.uploadFile(file);
+            String imageUrl = minioService.uploadFile(bucketName, file);
             headingDto.setImageUrl(imageUrl);
         }
         Heading heading = headingRepository.save(headingDto.toEntity());
