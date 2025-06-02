@@ -4,10 +4,8 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.springframework.web.multipart.MultipartFile;
-
-import co.hublots.ln_foot.models.ProductVariant;
 import co.hublots.ln_foot.models.Product;
+import co.hublots.ln_foot.models.ProductVariant;
 import co.hublots.ln_foot.models.Size;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
@@ -25,7 +23,6 @@ public class ProductVariantDto {
     private String id;
 
     private String imageUrl;
-    private MultipartFile file;
 
     @NotBlank(message = "Color name is required")
     private String colorCode;

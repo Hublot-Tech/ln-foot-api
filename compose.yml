@@ -16,22 +16,19 @@ services:
       - KC_ISSUER_URI=${KC_ISSUER_URI}
     depends_on:
       - postgres
-    networks:
-      - lnfoot
+      - minio
 
   postgres:
     image: postgres:alpine
     restart: unless-stopped
     ports:
-      - "5432:5432"
+      - '5432:5432'
     environment:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
       - pgdata:/var/lib/postgresql/data
-    networks:
-      - lnfoot
 
   adminer:
     image: adminer
@@ -40,44 +37,39 @@ services:
       - 8082:8080
     environment:
       ADMINER_DEFAULT_SERVER: postgres
-    networks:
-      - lnfoot
 
   keycloak:
     image: ghcr.io/marcjazz/keycloak-auth-theme:latest
     env_file:
-      - keycloak/keycloak.env
+      - .docker/keycloak/keycloak.env
     ports:
-      - "8081:8080"
-    networks:
-      - lnfoot
+      - '8081:8080'
     command:
-      - "start-dev"
-      - "--import-realm"
-      - "--spi-theme-static-max-age=-1"
-      - "--spi-theme-cache-themes=false"
-      - "--spi-theme-cache-templates=false"
+      - 'start-dev'
+      - '--import-realm'
+      - '--spi-theme-static-max-age=-1'
+      - '--spi-theme-cache-themes=false'
+      - '--spi-theme-cache-templates=false'
     restart: unless-stopped
     volumes:
-      - ./keycloak/config/:/opt/keycloak/data/import/:ro
+      - ./.docker/keycloak/config/:/opt/keycloak/data/import/:ro
 
   minio:
     image: minio/minio
+    entrypoint: ['/usr/local/bin/docker-entrypoint.sh']
     command: server /data --console-address ":9001"
     ports:
-      - "9000-9001:9000-9001"
+      - '9000-9001:9000-9001'
+    env_file:
+      - .docker/minio/.env
     environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      - APP_CLIENT_ACCESS_KEY=${MINIO_ACCESS_KEY}
+      - APP_CLIENT_SECRET_KEY=${MINIO_SECRET_KEY}
     volumes:
       - minio-data:/data
-    networks:
-      - lnfoot
+      - ./.docker/minio/entrypoint.sh:/usr/local/bin/docker-entrypoint.sh
+      - ./.docker/minio/app-client-policy.json:/app_client_policy.json
 
 volumes:
   pgdata:
   minio-data:
-
-networks:
-  lnfoot:
-    driver: bridge

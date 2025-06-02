@@ -4,8 +4,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import io.minio.BucketExistsArgs;
-import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
 import lombok.extern.slf4j.Slf4j;
 
@@ -22,27 +20,12 @@ public class MinioConfig {
     @Value("${minio.secret-key}")
     private String secretKey;
 
-    @Value("${minio.bucket}")
-    private String bucketName;
-
     @Bean
     public MinioClient minioClient() {
         MinioClient minioClient = MinioClient.builder()
                 .endpoint(endpoint)
                 .credentials(accessKey, secretKey)
                 .build();
-
-        try {
-            boolean doesBucketExits = minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucketName).build());
-            if (!doesBucketExits) {
-                minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build());
-            } else {
-                log.info("Bucket %s already exists.", bucketName);
-            }
-
-        } catch (Exception e) {
-            throw new RuntimeException("Unexception error: " + e.getMessage());
-        }
 
         return minioClient;
     }
