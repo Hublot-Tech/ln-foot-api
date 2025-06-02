@@ -74,7 +74,7 @@ public class ProductVariantController {
     @PostMapping("/bulk")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<ProductVariantDto>> createProductVariants(
-            @RequestBody @Valid BulkProductVariantDto bulkProductVariantDto) {
+            @Valid @RequestBody BulkProductVariantDto bulkProductVariantDto) {
         List<ProductVariantDto> variantDtos = bulkProductVariantDto.getVariants();
         log.debug("Bulk Object: " + bulkProductVariantDto);
         // Convert to entities and assign images

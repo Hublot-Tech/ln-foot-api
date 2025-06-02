@@ -5,6 +5,7 @@ import java.math.RoundingMode;
 import java.util.InputMismatchException;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
@@ -32,9 +33,8 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public Order getOrderById(String id) {
-        return orderRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Order not found with id: " + id));
+    public Optional<Order> getOrderById(String id) {
+        return orderRepository.findById(id);
     }
 
     @Override

@@ -2,6 +2,8 @@ package co.hublots.ln_foot.controllers;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
@@ -52,7 +54,8 @@ public class OrderController {
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<OrderDto> getOrderById(@PathVariable String id) {
-        Order order = orderService.getOrderById(id);
+        Order order = orderService.getOrderById(id)
+                .orElseThrow(() -> new NoSuchElementException("Order not found with id: " + id));
         return ResponseEntity.ok(OrderDto.fromEntity(order));
     }
 
@@ -132,10 +135,12 @@ public class OrderController {
             @PathVariable String id,
             @Valid @RequestBody NotchPayDto.InitiatePaymentRequest.Customer customer) {
 
-        Order order = orderService.getOrderById(id);
-        if (order == null)
+        Optional<Order> optionalOrder = orderService.getOrderById(id);
+        if (optionalOrder == null)
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        if ("completed".equals(order.getStatus()))
+
+        Order order = optionalOrder.get();
+        if (!"pending".equals(order.getStatus()))
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 
         List<ProductVariant> variants = productVariantService.getProductVariantsByIds(
@@ -169,6 +174,12 @@ public class OrderController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> deleteOrder(@PathVariable String id) {
+        Optional<Order> order = orderService.getOrderById(id);
+        if (order == null)
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        if (!"pending".equals(order.get().getStatus()))
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+
         orderService.deleteOrder(id);
         return ResponseEntity.noContent().build();
     }

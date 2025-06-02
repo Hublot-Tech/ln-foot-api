@@ -23,6 +23,7 @@ import org.springframework.http.ResponseEntity;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -79,7 +80,7 @@ public class OrderControllerTest {
 
     @Test
     void confirmOrder_shouldUseTotalAmountFromOrderEntity() {
-        when(orderService.getOrderById("orderTest123")).thenReturn(sampleOrder);
+        when(orderService.getOrderById("orderTest123")).thenReturn(Optional.of(sampleOrder));
 
         List<ProductVariant> productVariantsInOrder = sampleOrder.getOrderItems().stream()
             .map(OrderItem::getProductVariant)
