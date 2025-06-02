@@ -26,7 +26,9 @@ import co.hublots.ln_foot.services.ProductVariantService;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/product-variants")
@@ -74,7 +76,7 @@ public class ProductVariantController {
     public ResponseEntity<List<ProductVariantDto>> createProductVariants(
             @RequestBody @Valid BulkProductVariantDto bulkProductVariantDto) {
         List<ProductVariantDto> variantDtos = bulkProductVariantDto.getVariants();
-
+        log.debug("Bulk Object: " + bulkProductVariantDto);
         // Convert to entities and assign images
         List<ProductVariant> variants = new ArrayList<>();
         for (int i = 0; i < variantDtos.size(); i++) {

@@ -14,7 +14,8 @@ import lombok.Data;
 @AllArgsConstructor
 public class BulkProductVariantDto {
     @Valid
+    @Builder.Default
     @NotNull(message = "Variants list is required")
     @NotEmpty(message = "Variants list cannot be empty")
-    private List<ProductVariantDto> variants;
+    private List<ProductVariantDto> variants  = List.of();
 }
