@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
@@ -23,7 +24,6 @@ import co.hublots.ln_foot.dto.BulkProductVariantDto;
 import co.hublots.ln_foot.dto.ProductVariantDto;
 import co.hublots.ln_foot.models.ProductVariant;
 import co.hublots.ln_foot.services.ProductVariantService;
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -54,15 +54,16 @@ public class ProductVariantController {
 
     @GetMapping("/{id}")
     public ResponseEntity<ProductVariantDto> getProductVariant(@PathVariable String id) {
-        ProductVariant productVariant = productVariantService.getProductVariantById(id);
+        ProductVariant productVariant = productVariantService.getProductVariantById(id)
+                .orElseThrow(() -> new NoSuchElementException("Product variant not found with id: " + id));
         return new ResponseEntity<>(ProductVariantDto.fromEntity(productVariant), HttpStatus.OK);
     }
 
-    @ResponseStatus(HttpStatus.CREATED)
     @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ProductVariantDto> createProductVariant(
-            @RequestBody @Valid ProductVariantDto productVariantDto) {
+            @Valid @RequestBody ProductVariantDto productVariantDto) {
 
         ProductVariant productVariant = productVariantDto.toEntity();
 
@@ -70,13 +71,12 @@ public class ProductVariantController {
         return new ResponseEntity<>(ProductVariantDto.fromEntity(createdColor), HttpStatus.CREATED);
     }
 
-    @ResponseStatus(HttpStatus.CREATED)
     @PostMapping("/bulk")
+    @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<ProductVariantDto>> createProductVariants(
             @Valid @RequestBody BulkProductVariantDto bulkProductVariantDto) {
         List<ProductVariantDto> variantDtos = bulkProductVariantDto.getVariants();
-        log.debug("Bulk Object: " + bulkProductVariantDto);
         // Convert to entities and assign images
         List<ProductVariant> variants = new ArrayList<>();
         for (int i = 0; i < variantDtos.size(); i++) {

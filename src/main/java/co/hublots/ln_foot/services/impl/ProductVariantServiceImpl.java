@@ -31,9 +31,8 @@ public class ProductVariantServiceImpl implements ProductVariantService {
     }
 
     @Override
-    public ProductVariant getProductVariantById(String id) {
-        return productVariantRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Color not found with id: " + id));
+    public Optional<ProductVariant> getProductVariantById(String id) {
+        return productVariantRepository.findById(id);
     }
 
     @Override

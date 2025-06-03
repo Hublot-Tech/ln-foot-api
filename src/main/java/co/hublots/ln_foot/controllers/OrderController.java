@@ -9,19 +9,27 @@ import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 
 import co.hublots.ln_foot.annotations.KeycloakUserId;
 import co.hublots.ln_foot.dto.NotchPayDto;
 import co.hublots.ln_foot.dto.OrderDto;
 import co.hublots.ln_foot.dto.PaymentResponseDto;
-import co.hublots.ln_foot.models.ProductVariant;
 import co.hublots.ln_foot.models.Order;
 import co.hublots.ln_foot.models.OrderItem;
 import co.hublots.ln_foot.models.Payment;
-import co.hublots.ln_foot.services.ProductVariantService;
+import co.hublots.ln_foot.models.ProductVariant;
 import co.hublots.ln_foot.services.OrderService;
 import co.hublots.ln_foot.services.PaymentService;
+import co.hublots.ln_foot.services.ProductVariantService;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -73,11 +81,12 @@ public class OrderController {
                 throw new IllegalArgumentException("Product variant ID cannot be null or empty");
             }
 
-            ProductVariant variant = productVariantService.getProductVariantById(productVariantId);
-            if (variant == null) {
+            Optional<ProductVariant> variantOptional = productVariantService.getProductVariantById(productVariantId);
+            if (variantOptional.isEmpty()) {
                 throw new IllegalArgumentException("Invalid product variant ID: " + productVariantId);
             }
 
+            ProductVariant variant = variantOptional.get();
             if (variant.getStockQuantity() < item.getQuantity()) {
                 throw new IllegalArgumentException("Not enough stock for product variant ID: " + productVariantId);
             }
@@ -105,11 +114,13 @@ public class OrderController {
 
         Order order = orderDto.toEntity(userId);
         order.setOrderItems(orderDto.getOrderItems().stream().map(item -> {
-            ProductVariant variant = productVariantService.getProductVariantById(item.getProductVariantId());
-            if (variant == null) {
+            Optional<ProductVariant> variantOptional = productVariantService
+                    .getProductVariantById(item.getProductVariantId());
+            if (variantOptional.isEmpty()) {
                 throw new IllegalArgumentException("Invalid product variant ID: " + item.getProductVariantId());
             }
-
+            
+            ProductVariant variant = variantOptional.get();
             if (variant.getStockQuantity() < item.getQuantity()) {
                 throw new IllegalArgumentException(
                         "Not enough stock for product variant ID: " + item.getProductVariantId());

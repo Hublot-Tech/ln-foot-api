@@ -2,6 +2,7 @@ package co.hublots.ln_foot.services;
 
 import co.hublots.ln_foot.models.ProductVariant;
 import java.util.List;
+import java.util.Optional;
 
 
 public interface ProductVariantService {
@@ -9,7 +10,7 @@ public interface ProductVariantService {
     List<ProductVariant> getProductVariantsByIds(List<String> ids);
     List<ProductVariant> getProductVariantsByProductId(String productId);
 
-    ProductVariant getProductVariantById(String id);
+    Optional<ProductVariant> getProductVariantById(String id);
 
     ProductVariant createProductVariant(ProductVariant color);
 
