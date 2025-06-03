@@ -40,6 +40,7 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional
     public Order createOrder(Order order) {
+        order.setStatus("pending");
         if (order.getOrderItems() != null) {
             for (OrderItem item : order.getOrderItems()) {
                 item.setOrder(order);
