@@ -1,8 +1,6 @@
 package co.hublots.ln_foot.controllers;
 
-import co.hublots.ln_foot.dto.CreateNewsArticleDto;
-import co.hublots.ln_foot.dto.NewsArticleDto;
-import co.hublots.ln_foot.dto.UpdateNewsArticleDto;
+import co.hublots.ln_foot.dto.*; // Import all DTOs from the package
 import co.hublots.ln_foot.services.NewsArticleService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -42,12 +40,18 @@ class NewsArticleControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    private NewsArticleDto createMockNewsArticleDto(String id) {
+    private NewsArticleDto createMockNewsArticleDto(String id, String authorId, String authorName) {
+        UserDto authorDto = null;
+        if (authorId != null) {
+            authorDto = UserDto.builder().id(authorId).name(authorName).role("EDITOR").build();
+        }
         return NewsArticleDto.builder()
                 .id(id)
                 .title("Test Article")
                 .content("Test content.")
-                .author("Tester")
+                .author(authorDto) // Now a UserDto object
+                .sourceName("Mock Source")
+                .articleUrl("http://example.com/article/" + id)
                 .publishedAt(OffsetDateTime.now())
                 .tags(Collections.singletonList("test"))
                 .status("published")
@@ -91,10 +95,22 @@ class NewsArticleControllerTest {
     // --- Admin/Editor Endpoint Tests ---
     @Test
     @WithMockUser(roles = {"ADMIN", "EDITOR"})
-    void createNewsArticle_isCreated_withAdminOrEditorRole(String role) throws Exception {
-        CreateNewsArticleDto createDto = CreateNewsArticleDto.builder().title("New Article").build();
-        NewsArticleDto returnedDto = createMockNewsArticleDto(UUID.randomUUID().toString());
+    void createNewsArticle_isCreated_withAdminOrEditorRole() throws Exception { // Removed String role param, not used by @WithMockUser like this
+        String authorId = UUID.randomUUID().toString();
+        CreateNewsArticleDto createDto = CreateNewsArticleDto.builder()
+                .title("New Article")
+                .authorId(authorId) // Set authorId
+                .content("Content")
+                .build();
+
+        NewsArticleDto returnedDto = createMockNewsArticleDto(UUID.randomUUID().toString(), authorId, "Mock Author");
         returnedDto.setTitle("New Article");
+        // Ensure the author in returnedDto matches what would be mapped
+        if (returnedDto.getAuthor() != null) { // Should not be null if authorId was provided
+             assertEquals(authorId, returnedDto.getAuthor().getId());
+        }
+
+
         when(newsArticleService.createNewsArticle(any(CreateNewsArticleDto.class))).thenReturn(returnedDto);
 
         mockMvc.perform(post("/api/v1/news-articles")
@@ -107,9 +123,18 @@ class NewsArticleControllerTest {
     @Test
     @WithMockUser(roles = "EDITOR") // Test specifically with EDITOR
     void createNewsArticle_isCreated_withEditorRole() throws Exception {
-        CreateNewsArticleDto createDto = CreateNewsArticleDto.builder().title("Editor Article").build();
-        NewsArticleDto returnedDto = createMockNewsArticleDto(UUID.randomUUID().toString());
+        String authorId = UUID.randomUUID().toString();
+        CreateNewsArticleDto createDto = CreateNewsArticleDto.builder()
+                .title("Editor Article")
+                .authorId(authorId)
+                .content("Content by editor")
+                .build();
+        NewsArticleDto returnedDto = createMockNewsArticleDto(UUID.randomUUID().toString(), authorId, "Editor Name");
         returnedDto.setTitle("Editor Article");
+        if (returnedDto.getAuthor() != null) {
+             assertEquals(authorId, returnedDto.getAuthor().getId());
+        }
+
         when(newsArticleService.createNewsArticle(any(CreateNewsArticleDto.class))).thenReturn(returnedDto);
 
         mockMvc.perform(post("/api/v1/news-articles")
@@ -121,7 +146,7 @@ class NewsArticleControllerTest {
 
     @Test
     void createNewsArticle_isUnauthorized_withoutAuth() throws Exception {
-        CreateNewsArticleDto createDto = CreateNewsArticleDto.builder().build();
+        CreateNewsArticleDto createDto = CreateNewsArticleDto.builder().title("Attempt").authorId("someAuthor").build();
         mockMvc.perform(post("/api/v1/news-articles")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createDto)))
@@ -131,7 +156,7 @@ class NewsArticleControllerTest {
     @Test
     @WithMockUser(roles = "USER") // A role that is not ADMIN or EDITOR
     void createNewsArticle_isForbidden_withUserRole() throws Exception {
-        CreateNewsArticleDto createDto = CreateNewsArticleDto.builder().build();
+        CreateNewsArticleDto createDto = CreateNewsArticleDto.builder().title("Forbidden Attempt").authorId("userAuthor").build();
         mockMvc.perform(post("/api/v1/news-articles")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createDto)))
@@ -142,8 +167,12 @@ class NewsArticleControllerTest {
     @WithMockUser(roles = "EDITOR")
     void updateNewsArticle_isOk_withEditorRole() throws Exception {
         String articleId = "naToUpdate";
-        UpdateNewsArticleDto updateDto = UpdateNewsArticleDto.builder().title("Updated Title").build();
-        NewsArticleDto returnedDto = createMockNewsArticleDto(articleId);
+        String authorId = UUID.randomUUID().toString();
+        UpdateNewsArticleDto updateDto = UpdateNewsArticleDto.builder()
+                .title("Updated Title")
+                .authorId(authorId) // Assuming author can be updated
+                .build();
+        NewsArticleDto returnedDto = createMockNewsArticleDto(articleId, authorId, "Updated Author Name");
         returnedDto.setTitle("Updated Title");
 
         when(newsArticleService.updateNewsArticle(eq(articleId), any(UpdateNewsArticleDto.class))).thenReturn(returnedDto);
@@ -152,7 +181,8 @@ class NewsArticleControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateDto)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.title", is("Updated Title")));
+                .andExpect(jsonPath("$.title", is("Updated Title")))
+                .andExpect(jsonPath("$.author.id", is(authorId))); // Verify author update in response
     }
 
     @Test

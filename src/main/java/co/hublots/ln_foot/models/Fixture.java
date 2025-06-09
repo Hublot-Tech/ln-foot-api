@@ -17,7 +17,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "fixtures")
+@Table(name = "web_fixtures")
 public class Fixture {
 
     @Id

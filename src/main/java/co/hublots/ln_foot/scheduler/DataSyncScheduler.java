@@ -5,8 +5,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import java.util.List;
-import java.time.Year; // For current year as season placeholder
+
+import java.time.LocalDate;
+import java.time.ZoneOffset;
+import java.util.HashMap;
+import java.util.Map;
+// List and Year are not needed with the new approach
+// import java.util.List;
+// import java.time.Year;
 
 @Slf4j
 @Component
@@ -15,75 +21,52 @@ public class DataSyncScheduler {
 
     private final DataSyncService dataSyncService;
 
-    // Example: Fetching all leagues from DB to sync (if preferred over hardcoded list)
-    // private final LeagueRepository leagueRepository;
-
     /**
-     * Periodically syncs leagues from the external API.
-     * Runs daily at 1:00 AM UTC.
+     * Periodically performs a comprehensive sync of fixtures, typically for the current day.
+     * Configurable via `application.sync.dailyCron`, defaults to daily at 00:05 AM UTC.
      */
-    @Scheduled(cron = "0 0 1 * * ?", zone = "UTC")
-    public void scheduleLeagueSync() {
-        log.info("Starting scheduled league sync...");
+    @Scheduled(cron = "${application.sync.dailyCron:0 5 0 * * ?}", zone = "UTC")
+    public void scheduleDailyFullSync() {
+        log.info("Starting scheduled daily full fixture sync...");
         try {
-            // Hardcoded parameters for demonstration
-            // In a real app, these might come from config or a list of supported sports/countries
-            dataSyncService.syncLeagues("soccer", "Mockland");
-            // Example: dataSyncService.syncLeagues("basketball", "USA");
-            log.info("Scheduled league sync completed successfully.");
+            Map<String, String> queryParams = new HashMap<>();
+            // Sync fixtures for the current day in UTC.
+            // The specific parameter name ("date") depends on the external API.
+            queryParams.put("date", LocalDate.now(ZoneOffset.UTC).toString());
+
+            // Potentially add more parameters if needed for a "full" sync,
+            // e.g., specific leagues if `interestedLeagues` filtering in service is not sufficient
+            // or if API requires league ID for date-based queries.
+            // For now, relying on date and the service-side interestedLeagues filtering.
+
+            dataSyncService.syncMainFixtures(queryParams);
+            log.info("Scheduled daily full fixture sync completed successfully.");
         } catch (Exception e) {
-            log.error("Error during scheduled league sync:", e);
+            log.error("Error during scheduled daily full fixture sync:", e);
         }
     }
 
     /**
-     * Periodically syncs teams for known leagues from the external API.
-     * Runs daily at 2:00 AM UTC, after presumed league sync.
+     * Periodically syncs recent or live fixtures.
+     * Configurable via `application.sync.hourlyCron`, defaults to hourly at the start of the hour UTC.
      */
-    @Scheduled(cron = "0 0 2 * * ?", zone = "UTC")
-    public void scheduleTeamSync() {
-        log.info("Starting scheduled team sync...");
+    @Scheduled(cron = "${application.sync.hourlyCron:0 0 */1 * * ?}", zone = "UTC")
+    public void scheduleHourlyRecentFixturesSync() {
+        log.info("Starting scheduled hourly recent fixtures sync...");
         try {
-            // Using the same externalLeagueApiIds that DataSyncServiceImpl's mock response uses
-            List<String> leagueApiIdsToSync = List.of("ext-league-1", "ext-league-2");
+            Map<String, String> queryParams = new HashMap<>();
+            // Parameter "live=all" is hypothetical and depends on the external API supporting it.
+            // If not supported, this might re-fetch fixtures for the current date,
+            // and the `DataSyncServiceImpl` would handle updates based on changed data.
+            // Alternatively, this could fetch fixtures for a very narrow recent time window.
+            queryParams.put("live", "all");
+            // Or, for example, fetch today's fixtures again, hoping for live updates:
+            // queryParams.put("date", LocalDate.now(ZoneOffset.UTC).toString());
 
-            // Alternative: Fetch all leagues from your DB and sync teams for them
-            // List<League> leagues = leagueRepository.findAll();
-            // for (League league : leagues) {
-            //    if (league.getApiLeagueId() != null && league.getApiSource().equals(externalApiSourceName)) { // Check source
-            //        log.info("Syncing teams for league: {} (API ID: {})", league.getLeagueName(), league.getApiLeagueId());
-            //        dataSyncService.syncTeamsByLeague(league.getApiLeagueId());
-            //    }
-            // }
-
-            for (String leagueApiId : leagueApiIdsToSync) {
-                log.info("Syncing teams for league API ID: {}", leagueApiId);
-                dataSyncService.syncTeamsByLeague(leagueApiId);
-            }
-            log.info("Scheduled team sync completed successfully.");
+            dataSyncService.syncMainFixtures(queryParams);
+            log.info("Scheduled hourly recent fixtures sync completed successfully.");
         } catch (Exception e) {
-            log.error("Error during scheduled team sync:", e);
-        }
-    }
-
-    /**
-     * Periodically syncs fixtures for known leagues from the external API.
-     * Runs every hour at the start of the hour.
-     */
-    @Scheduled(cron = "0 0 * * * ?", zone = "UTC")
-    public void scheduleFixtureSync() {
-        log.info("Starting scheduled fixture sync...");
-        try {
-            List<String> leagueApiIdsToSync = List.of("ext-league-1", "ext-league-2");
-            String currentSeason = String.valueOf(Year.now().getValue()); // e.g., "2024"
-
-            for (String leagueApiId : leagueApiIdsToSync) {
-                log.info("Syncing fixtures for league API ID: {} for season: {}", leagueApiId, currentSeason);
-                dataSyncService.syncFixturesByLeague(leagueApiId, currentSeason);
-            }
-            log.info("Scheduled fixture sync completed successfully.");
-        } catch (Exception e) {
-            log.error("Error during scheduled fixture sync:", e);
+            log.error("Error during scheduled hourly recent fixtures sync:", e);
         }
     }
 }

@@ -16,7 +16,7 @@ import java.time.LocalDateTime; // Corrected from java.time.OffsetDateTime for @
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "publicities") // Matching tRPC PublicitiesTable reference
+@Table(name = "web_advertisements")
 public class Advertisement {
 
     @Id

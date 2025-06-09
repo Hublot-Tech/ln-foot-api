@@ -1,31 +1,36 @@
 package co.hublots.ln_foot.services.impl;
 
-import co.hublots.ln_foot.dto.external.ExternalFixtureDto;
-import co.hublots.ln_foot.dto.external.ExternalLeagueDto;
-import co.hublots.ln_foot.dto.external.ExternalTeamDto;
+import co.hublots.ln_foot.config.SyncConfigProperties;
+import co.hublots.ln_foot.dto.external.*;
 import co.hublots.ln_foot.models.Fixture;
+import co.hublots.ln_foot.models.Highlight; // Assuming Highlight is child of Fixture
 import co.hublots.ln_foot.models.League;
 import co.hublots.ln_foot.models.Team;
-import co.hublots.ln_foot.repositories.FixtureRepository;
-import co.hublots.ln_foot.repositories.LeagueRepository;
-import co.hublots.ln_foot.repositories.TeamRepository;
+import co.hublots.ln_foot.repositories.*;
 import co.hublots.ln_foot.services.DataSyncService;
-import jakarta.persistence.EntityNotFoundException;
+import jakarta.persistence.EntityNotFoundException; // Should already be there
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Flux; // For WebClient
+import org.springframework.web.reactive.function.client.WebClientResponseException;
+import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
+// @RequiredArgsConstructor // Cannot use with WebClient field initialized in constructor from builder
 public class DataSyncServiceImpl implements DataSyncService {
 
     private static final Logger log = LoggerFactory.getLogger(DataSyncServiceImpl.class);
@@ -33,154 +38,235 @@ public class DataSyncServiceImpl implements DataSyncService {
     private final LeagueRepository leagueRepository;
     private final TeamRepository teamRepository;
     private final FixtureRepository fixtureRepository;
-    // private final WebClient.Builder webClientBuilder; // Would use this for real API calls
+    private final HighlightRepository highlightRepository; // Added for clearing
+    private final SyncConfigProperties syncConfigProperties;
+    private final WebClient webClient;
 
-    @Value("${external.api.baseUrl}")
-    private String externalApiBaseUrl;
+    @Value("${external.api.sportsKey}")
+    private String externalApiSportsKey;
 
-    @Value("${external.api.key}")
-    private String externalApiKey;
+    @Value("${external.api.rapidApiHost}")
+    private String externalApiRapidApiHost;
 
     @Value("${external.api.sourceName}")
     private String externalApiSourceName;
 
+    public DataSyncServiceImpl(LeagueRepository leagueRepository,
+                               TeamRepository teamRepository,
+                               FixtureRepository fixtureRepository,
+                               HighlightRepository highlightRepository,
+                               SyncConfigProperties syncConfigProperties,
+                               WebClient.Builder webClientBuilder,
+                               @Value("${external.api.sportsUrl}") String externalApiSportsUrl) {
+        this.leagueRepository = leagueRepository;
+        this.teamRepository = teamRepository;
+        this.fixtureRepository = fixtureRepository;
+        this.highlightRepository = highlightRepository;
+        this.syncConfigProperties = syncConfigProperties;
+        this.webClient = webClientBuilder.baseUrl(externalApiSportsUrl).build();
+    }
+
+
+    // Old syncLeagues, syncTeamsByLeague, syncFixturesByLeague methods are removed as per instruction.
+// import co.hublots.ln_foot.services.DataSyncService; // Already in file
+import co.hublots.ln_foot.dto.SyncStatusDto; // Added for return type
+
+// ... other imports ...
+
+// @Service
+// @RequiredArgsConstructor // Cannot use with WebClient field initialized in constructor from builder
+public class DataSyncServiceImpl implements DataSyncService {
+
+    // ... existing fields ...
+
+    // Old syncLeagues, syncTeamsByLeague, syncFixturesByLeague methods are removed as per instruction.
+    // New method syncMainFixtures will replace them.
+
     @Override
-    @Transactional
     public void syncLeagues(String sportId, String countryName) {
-        log.info("Starting league sync for sportId: {}, countryName: {}", sportId, countryName);
-        // String apiUrl = externalApiBaseUrl + "/leagues?sport=" + sportId + "&country=" + countryName + "&apiKey=" + externalApiKey;
-        // Flux<ExternalLeagueDto> responseFlux = webClientBuilder.build().get().uri(apiUrl).retrieve().bodyToFlux(ExternalLeagueDto.class);
-        // List<ExternalLeagueDto> externalLeagues = responseFlux.collectList().block(); // Simplified blocking call for example
-
-        // Hardcoded response for this subtask
-        List<ExternalLeagueDto> externalLeagues = List.of(
-                ExternalLeagueDto.builder().apiLeagueId("ext-league-1").name("Premier Mock League").country("Mockland").logoUrl("http://logo.url/pml.png").sportId("soccer").tier(1).build(),
-                ExternalLeagueDto.builder().apiLeagueId("ext-league-2").name("Second Mock Division").country("Mockland").logoUrl("http://logo.url/smd.png").sportId("soccer").tier(2).build()
-        );
-
-        if (externalLeagues == null || externalLeagues.isEmpty()) {
-            log.info("No leagues found from external API for sportId: {}, countryName: {}", sportId, countryName);
-            return;
-        }
-
-        for (ExternalLeagueDto extLeague : externalLeagues) {
-            Optional<League> existingLeagueOpt = leagueRepository.findByApiLeagueIdAndApiSource(extLeague.getApiLeagueId(), externalApiSourceName);
-            League league;
-            if (existingLeagueOpt.isPresent()) {
-                league = existingLeagueOpt.get();
-                log.info("Updating existing league: {} (API ID: {})", league.getLeagueName(), extLeague.getApiLeagueId());
-            } else {
-                league = new League();
-                league.setApiLeagueId(extLeague.getApiLeagueId());
-                log.info("Creating new league with API ID: {}", extLeague.getApiLeagueId());
-            }
-            league.setLeagueName(extLeague.getName());
-            league.setCountry(extLeague.getCountry());
-            league.setLogoUrl(extLeague.getLogoUrl());
-            league.setSportId(extLeague.getSportId());
-            league.setTier(extLeague.getTier());
-            league.setApiSource(externalApiSourceName);
-            leagueRepository.save(league);
-        }
-        log.info("Finished league sync. Processed {} leagues.", externalLeagues.size());
+        log.warn("Old syncLeagues(sportId, countryName) called but is deprecated. It now calls syncMainFixtures.");
+        Map<String, String> defaultParams = new HashMap<>();
+        // Defaulting to current date as /fixtures usually requires date, league, or live status.
+        // A general "sync leagues for a country/sport" might need a different API endpoint first
+        // to discover league IDs, then call /fixtures per league.
+        defaultParams.put("date", LocalDateTime.now().format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE));
+        // Potentially add sportId or country if the /fixtures endpoint supports it broadly,
+        // or this method needs to be smarter (e.g. first fetch league IDs for country/sport).
+        log.info("Calling syncMainFixtures with default date param for syncLeagues: {}", defaultParams);
+        syncMainFixtures(defaultParams);
     }
 
     @Override
-    @Transactional
     public void syncTeamsByLeague(String externalLeagueApiId) {
-        log.info("Starting team sync for externalLeagueApiId: {}", externalLeagueApiId);
-        League league = leagueRepository.findByApiLeagueIdAndApiSource(externalLeagueApiId, externalApiSourceName)
-                .orElseThrow(() -> new EntityNotFoundException("League with apiLeagueId " + externalLeagueApiId + " and source " + externalApiSourceName + " not found locally. Sync leagues first."));
-
-        // String apiUrl = externalApiBaseUrl + "/leagues/" + externalLeagueApiId + "/teams?apiKey=" + externalApiKey;
-        // Hardcoded response
-        List<ExternalTeamDto> externalTeams = List.of(
-                ExternalTeamDto.builder().apiTeamId("ext-team-A").name("Mock Team Alpha").countryCode("MCK").logoUrl("http://logo.url/alpha.png").foundedYear(1900).stadiumName("Alpha Park").build(),
-                ExternalTeamDto.builder().apiTeamId("ext-team-B").name("Mock Team Beta").countryCode("MCK").logoUrl("http://logo.url/beta.png").foundedYear(1920).stadiumName("Beta Field").build()
-        );
-
-        if (externalTeams == null || externalTeams.isEmpty()) {
-            log.info("No teams found from external API for league API ID: {}", externalLeagueApiId);
-            return;
-        }
-
-        for (ExternalTeamDto extTeam : externalTeams) {
-            Optional<Team> existingTeamOpt = teamRepository.findByApiTeamIdAndApiSource(extTeam.getApiTeamId(), externalApiSourceName);
-            Team team;
-            if (existingTeamOpt.isPresent()) {
-                team = existingTeamOpt.get();
-                log.info("Updating existing team: {} (API ID: {})", team.getTeamName(), extTeam.getApiTeamId());
-            } else {
-                team = new Team();
-                team.setApiTeamId(extTeam.getApiTeamId());
-                log.info("Creating new team with API ID: {}", extTeam.getApiTeamId());
-            }
-            team.setTeamName(extTeam.getName());
-            team.setCountry(extTeam.getCountryCode()); // Assuming countryCode maps to country string
-            team.setLogoUrl(extTeam.getLogoUrl());
-            team.setFoundedYear(extTeam.getFoundedYear());
-            team.setStadiumName(extTeam.getStadiumName());
-            team.setApiSource(externalApiSourceName);
-            // Note: Link to League entity is not direct on Team model as per current design.
-            // Teams are linked via Fixtures, or if a team has a 'currentLeague' that would be set here.
-            teamRepository.save(team);
-        }
-        log.info("Finished team sync for league {}. Processed {} teams.", league.getLeagueName(), externalTeams.size());
+        log.warn("Old syncTeamsByLeague(externalLeagueApiId) called but is deprecated. It now calls syncMainFixtures.");
+        Map<String, String> params = new HashMap<>();
+        params.put("league", externalLeagueApiId);
+        params.put("season", String.valueOf(LocalDateTime.now().getYear())); // Assume current season
+        log.info("Calling syncMainFixtures for syncTeamsByLeague: {}", params);
+        syncMainFixtures(params);
     }
 
     @Override
-    @Transactional
     public void syncFixturesByLeague(String externalLeagueApiId, String season) {
-        log.info("Starting fixture sync for externalLeagueApiId: {}, season: {}", externalLeagueApiId, season);
-        League league = leagueRepository.findByApiLeagueIdAndApiSource(externalLeagueApiId, externalApiSourceName)
-                .orElseThrow(() -> new EntityNotFoundException("League with apiLeagueId " + externalLeagueApiId + " and source " + externalApiSourceName + " not found locally. Sync leagues first."));
+        log.warn("Old syncFixturesByLeague(externalLeagueApiId, season) called but is deprecated. It now calls syncMainFixtures.");
+        Map<String, String> params = new HashMap<>();
+        params.put("league", externalLeagueApiId);
+        params.put("season", season);
+        log.info("Calling syncMainFixtures for syncFixturesByLeague: {}", params);
+        syncMainFixtures(params);
+    }
 
-        // String apiUrl = externalApiBaseUrl + "/leagues/" + externalLeagueApiId + "/fixtures?season=" + season + "&apiKey=" + externalApiKey;
-        // Hardcoded response
-        LocalDateTime now = LocalDateTime.now();
-        List<ExternalFixtureDto> externalFixtures = List.of(
-            ExternalFixtureDto.builder().apiFixtureId("ext-fix-123").apiLeagueId(externalLeagueApiId).apiHomeTeamId("ext-team-A").apiAwayTeamId("ext-team-B").matchTimestamp(now.plusDays(7)).statusShort("NS").round("Round 1").build(),
-            ExternalFixtureDto.builder().apiFixtureId("ext-fix-456").apiLeagueId(externalLeagueApiId).apiHomeTeamId("ext-team-B").apiAwayTeamId("ext-team-A").matchTimestamp(now.plusDays(14)).statusShort("NS").goalsHome(1).goalsAway(1).round("Round 2").build()
-        );
+    @Override // Added to match interface
+    @Transactional
+    public SyncStatusDto syncMainFixtures(Map<String, String> queryParams) {
+        log.info("Starting main fixtures sync with parameters: {}", queryParams);
+        int itemsProcessedCount = 0;
 
-        if (externalFixtures == null || externalFixtures.isEmpty()) {
-            log.info("No fixtures found from external API for league API ID: {} and season: {}", externalLeagueApiId, season);
-            return;
+        RapidApiFootballResponseDto<FixtureResponseItemDto> apiResponse;
+        try {
+            Mono<RapidApiFootballResponseDto<FixtureResponseItemDto>> responseMono = this.webClient.get()
+                .uri(uriBuilder -> {
+                    uriBuilder.path("/fixtures"); // endpoint path
+                    queryParams.forEach(uriBuilder::queryParam);
+                    return uriBuilder.build();
+                })
+                .header("X-RapidAPI-Key", externalApiSportsKey)
+                .header("x-rapidapi-host", externalApiRapidApiHost)
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<RapidApiFootballResponseDto<FixtureResponseItemDto>>() {});
+
+            apiResponse = responseMono.block(); // Using .block() for simplicity in scheduled task context
+        } catch (WebClientResponseException e) {
+            log.error("Error from external API: {} - {}, Response Body: {}", e.getStatusCode(), e.getMessage(), e.getResponseBodyAsString());
+            return SyncStatusDto.builder().status("ERROR").message("API Error: " + e.getStatusCode()).itemsProcessed(0).build();
+        } catch (Exception e) {
+            log.error("Error during WebClient call: {}", e.getMessage(), e);
+            return SyncStatusDto.builder().status("ERROR").message("WebClient Error: " + e.getMessage()).itemsProcessed(0).build();
         }
 
-        for (ExternalFixtureDto extFixture : externalFixtures) {
-            Optional<Team> homeTeamOpt = teamRepository.findByApiTeamIdAndApiSource(extFixture.getApiHomeTeamId(), externalApiSourceName);
-            Optional<Team> awayTeamOpt = teamRepository.findByApiTeamIdAndApiSource(extFixture.getApiAwayTeamId(), externalApiSourceName);
+        if (apiResponse == null || apiResponse.getResponse() == null || apiResponse.getResponse().isEmpty()) {
+            log.info("No fixtures returned from API for params: {}", queryParams);
+            // Clear relevant tables even if no new data comes.
+            clearAllSyncData();
+            return SyncStatusDto.builder().status("NO_DATA").message("No fixtures returned from API.").itemsProcessed(0).build();
+        }
 
-            if (homeTeamOpt.isEmpty() || awayTeamOpt.isEmpty()) {
-                log.warn("Skipping fixture with API ID: {} because one or both teams not found locally (Home: {}, Away: {}). Sync teams first.",
-                        extFixture.getApiFixtureId(), extFixture.getApiHomeTeamId(), extFixture.getApiAwayTeamId());
-                continue;
+        List<FixtureResponseItemDto> allFixturesFromApi = apiResponse.getResponse();
+        List<FixtureResponseItemDto> filteredFixtures;
+
+        if (syncConfigProperties != null && syncConfigProperties.getInterestedLeagues() != null && !syncConfigProperties.getInterestedLeagues().isEmpty()) {
+            filteredFixtures = allFixturesFromApi.stream()
+                .filter(item -> syncConfigProperties.getInterestedLeagues().stream()
+                    .anyMatch(interestedLeague ->
+                        interestedLeague.getName().equalsIgnoreCase(item.getLeague().getName()) &&
+                        interestedLeague.getCountry().equalsIgnoreCase(item.getLeague().getCountry())
+                    ))
+                .collect(Collectors.toList());
+            log.info("Filtered {} fixtures based on {} interested leagues.", filteredFixtures.size(), syncConfigProperties.getInterestedLeagues().size());
+
+            if (filteredFixtures.isEmpty() && !allFixturesFromApi.isEmpty()) {
+                log.warn("No fixtures matched interested leagues. Using first 10 fixtures from API response as fallback (total from API: {}).", allFixturesFromApi.size());
+                filteredFixtures = allFixturesFromApi.stream().limit(10).collect(Collectors.toList());
             }
+        } else {
+            log.warn("Interested leagues configuration is empty or null. Using first 10 fixtures from API response (total from API: {}).", allFixturesFromApi.size());
+            filteredFixtures = allFixturesFromApi.stream().limit(10).collect(Collectors.toList());
+        }
 
-            Optional<Fixture> existingFixtureOpt = fixtureRepository.findByApiFixtureIdAndApiSource(extFixture.getApiFixtureId(), externalApiSourceName);
-            Fixture fixture;
-            if (existingFixtureOpt.isPresent()) {
-                fixture = existingFixtureOpt.get();
-                log.info("Updating existing fixture (API ID: {})", extFixture.getApiFixtureId());
+
+        if (filteredFixtures.isEmpty()) {
+            log.info("No fixtures to process after filtering (or fallback).");
+            // Clear relevant tables even if no fixtures to process after filtering.
+            clearAllSyncData();
+            return SyncStatusDto.builder().status("SUCCESS").message("No relevant fixtures to process after filtering.").itemsProcessed(0).build();
+        }
+
+        log.info("Proceeding to clear and replace data for {} fixtures.", filteredFixtures.size());
+        clearAllSyncData();
+
+        Map<Long, League> processedLeaguesThisSync = new HashMap<>();
+        Map<Long, Team> processedTeamsThisSync = new HashMap<>();
+
+        for (FixtureResponseItemDto item : filteredFixtures) {
+            ExternalLeagueInFixtureDto extLeague = item.getLeague();
+            League league = processedLeaguesThisSync.computeIfAbsent(extLeague.getLeagueApiId(), (apiId) -> {
+                League newLeague = new League();
+                newLeague.setApiLeagueId(String.valueOf(apiId)); // API ID is long, entity ID is String
+                newLeague.setLeagueName(extLeague.getName());
+                newLeague.setCountry(extLeague.getCountry());
+                newLeague.setLogoUrl(extLeague.getLogo());
+                // newLeague.setSportId(); // Not in ExternalLeagueInFixtureDto
+                newLeague.setTier(null); // Not in ExternalLeagueInFixtureDto, default or fetch separately
+                newLeague.setApiSource(externalApiSourceName);
+                log.info("Saving new league: {} (API ID: {})", newLeague.getLeagueName(), apiId);
+                return leagueRepository.save(newLeague);
+            });
+
+            ExternalTeamInFixtureDto extHomeTeam = item.getTeams().getHome();
+            Team homeTeam = processedTeamsThisSync.computeIfAbsent(extHomeTeam.getTeamApiId(), (apiId) -> {
+                Team newTeam = new Team();
+                newTeam.setApiTeamId(String.valueOf(apiId));
+                newTeam.setTeamName(extHomeTeam.getName());
+                newTeam.setLogoUrl(extHomeTeam.getLogo());
+                // newTeam.setCountry(); // Not in ExternalTeamInFixtureDto
+                newTeam.setApiSource(externalApiSourceName);
+                log.info("Saving new home team: {} (API ID: {})", newTeam.getTeamName(), apiId);
+                return teamRepository.save(newTeam);
+            });
+
+            ExternalTeamInFixtureDto extAwayTeam = item.getTeams().getAway();
+            Team awayTeam = processedTeamsThisSync.computeIfAbsent(extAwayTeam.getTeamApiId(), (apiId) -> {
+                Team newTeam = new Team();
+                newTeam.setApiTeamId(String.valueOf(apiId));
+                newTeam.setTeamName(extAwayTeam.getName());
+                newTeam.setLogoUrl(extAwayTeam.getLogo());
+                // newTeam.setCountry();
+                newTeam.setApiSource(externalApiSourceName);
+                log.info("Saving new away team: {} (API ID: {})", newTeam.getTeamName(), apiId);
+                return teamRepository.save(newTeam);
+            });
+
+            Fixture fixture = new Fixture();
+            ExternalFixtureDetailsDto extFixtureDetails = item.getFixture();
+            fixture.setApiFixtureId(String.valueOf(extFixtureDetails.getFixtureApiId()));
+            if (extFixtureDetails.getDate() != null) {
+                 fixture.setMatchDatetime(extFixtureDetails.getDate().toLocalDateTime());
             } else {
-                fixture = new Fixture();
-                fixture.setApiFixtureId(extFixture.getApiFixtureId());
-                log.info("Creating new fixture with API ID: {}", extFixture.getApiFixtureId());
+                // Fallback to timestamp if date is null, though API should provide 'date'
+                fixture.setMatchDatetime(LocalDateTime.ofEpochSecond(extFixtureDetails.getTimestamp(), 0, ZoneOffset.UTC));
             }
+            fixture.setStatus(extFixtureDetails.getStatus().getShortStatus());
+            // Assuming 'round' might be part of league name or season, or a specific field if API provides it.
+            // For instance, if league.name is "Premier League - Round 10", this needs parsing.
+            // Using a combination from league for now as a placeholder.
+            fixture.setRound(item.getLeague().getName() + " - Season " + item.getLeague().getSeason());
+            fixture.setVenueName(extFixtureDetails.getVenue() != null ? extFixtureDetails.getVenue().getName() : null);
+
+            fixture.setGoalsTeam1(item.getGoals().getHome());
+            fixture.setGoalsTeam2(item.getGoals().getAway());
 
             fixture.setLeague(league);
-            fixture.setTeam1(homeTeamOpt.get());
-            fixture.setTeam2(awayTeamOpt.get());
-            fixture.setMatchDatetime(extFixture.getMatchTimestamp());
-            fixture.setStatus(extFixture.getStatusShort());
-            fixture.setGoalsTeam1(extFixture.getGoalsHome());
-            fixture.setGoalsTeam2(extFixture.getGoalsAway());
-            fixture.setRound(extFixture.getRound());
+            fixture.setTeam1(homeTeam);
+            fixture.setTeam2(awayTeam);
             fixture.setApiSource(externalApiSourceName);
 
             fixtureRepository.save(fixture);
+            itemsProcessedCount++;
+            log.debug("Saved fixture API ID: {}", fixture.getApiFixtureId());
         }
-        log.info("Finished fixture sync for league {}. Processed {} fixtures.", league.getLeagueName(), externalFixtures.size());
+        log.info("Successfully synced {} fixtures.", itemsProcessedCount);
+        return SyncStatusDto.builder().status("SUCCESS").message("Successfully synced fixtures.").itemsProcessed(itemsProcessedCount).build();
+    }
+
+    private void clearAllSyncData() {
+        // Clear Data (Order is important)
+        highlightRepository.deleteAllInBatch();
+        log.info("Cleared all highlights.");
+        fixtureRepository.deleteAllInBatch();
+        log.info("Cleared all fixtures.");
+        teamRepository.deleteAllInBatch();
+        log.info("Cleared all teams.");
+        leagueRepository.deleteAllInBatch();
+        log.info("Cleared all leagues.");
     }
 }
