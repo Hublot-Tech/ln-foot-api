@@ -16,9 +16,9 @@ public class NewsArticleDto {
     private String id;
     private String title;
     private String content; // Can be HTML or markdown
-    private String author;
-    private String source; // e.g., "BBC Sport", "Sky Sports"
-    private String url; // URL to the original article
+    private UserDto author; // Changed from String author
+    private String sourceName; // e.g., "BBC Sport", "Sky Sports" (was 'source')
+    private String articleUrl; // URL to the original article (was 'url')
     private String imageUrl;
     private OffsetDateTime publishedAt;
     private List<String> tags; // e.g., ["transfer", "injury", "match-report"]

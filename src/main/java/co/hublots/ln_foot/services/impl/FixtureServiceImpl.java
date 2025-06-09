@@ -4,100 +4,199 @@ import co.hublots.ln_foot.dto.CreateFixtureDto;
 import co.hublots.ln_foot.dto.FixtureDto;
 import co.hublots.ln_foot.dto.SimpleTeamDto;
 import co.hublots.ln_foot.dto.UpdateFixtureDto;
+import co.hublots.ln_foot.models.Fixture;
+import co.hublots.ln_foot.models.League;
+import co.hublots.ln_foot.models.Team;
+import co.hublots.ln_foot.repositories.FixtureRepository;
+import co.hublots.ln_foot.repositories.LeagueRepository;
+import co.hublots.ln_foot.repositories.TeamRepository;
 import co.hublots.ln_foot.services.FixtureService;
+import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class FixtureServiceImpl implements FixtureService {
 
+    private final FixtureRepository fixtureRepository;
+    private final LeagueRepository leagueRepository;
+    private final TeamRepository teamRepository;
+
+    // --- Internal DTO Mapping Helpers ---
+    private SimpleTeamDto mapTeamToSimpleTeamDto(Team entity) {
+        if (entity == null) return null;
+        return SimpleTeamDto.builder()
+                .id(entity.getApiTeamId()) // SimpleTeamDto.id is apiTeamId
+                .name(entity.getTeamName())
+                .logoUrl(entity.getLogoUrl())
+                .build();
+    }
+
+    private FixtureDto mapToDto(Fixture entity) {
+        if (entity == null) return null;
+        return FixtureDto.builder()
+                .id(entity.getApiFixtureId()) // FixtureDto.id is apiFixtureId
+                // referee, timezone, elapsed not in Fixture entity
+                .date(entity.getMatchDatetime() != null ? entity.getMatchDatetime().atOffset(ZoneOffset.UTC) : null)
+                .timestamp(entity.getMatchDatetime() != null ? (int) entity.getMatchDatetime().toEpochSecond(ZoneOffset.UTC) : null)
+                .venueName(entity.getVenueName())
+                // venueCity not in Fixture entity
+                .statusShort(entity.getStatus()) // Assuming status maps to statusShort
+                .statusLong(entity.getStatus())  // Or map to a more descriptive long status if available
+                .leagueId(entity.getLeague() != null ? entity.getLeague().getApiLeagueId() : null)
+                .round(entity.getRound())
+                .homeTeam(mapTeamToSimpleTeamDto(entity.getTeam1()))
+                .awayTeam(mapTeamToSimpleTeamDto(entity.getTeam2()))
+                .goalsHome(entity.getGoalsTeam1())
+                .goalsAway(entity.getGoalsTeam2())
+                // scoreHtHome, scoreHtAway, scoreFtHome, etc. not in Fixture entity
+                .live(List.of("LIVE", "1H", "HT", "2H", "ET", "P").contains(entity.getStatus() != null ? entity.getStatus().toUpperCase() : ""))
+                .createdAt(entity.getCreatedAt() != null ? entity.getCreatedAt().atOffset(ZoneOffset.UTC) : null)
+                .updatedAt(entity.getUpdatedAt() != null ? entity.getUpdatedAt().atOffset(ZoneOffset.UTC) : null)
+                // season not directly on Fixture entity, might come from League or context
+                .build();
+    }
+
+    private void mapToEntityForCreate(CreateFixtureDto dto, Fixture entity, League league, Team homeTeam, Team awayTeam) {
+        entity.setApiFixtureId(dto.getId()); // CreateFixtureDto.id is apiFixtureId
+        entity.setLeague(league);
+        entity.setTeam1(homeTeam);
+        entity.setTeam2(awayTeam);
+        entity.setMatchDatetime(dto.getDate() != null ? dto.getDate().toLocalDateTime() : null);
+        entity.setStatus(dto.getStatusShort() != null ? dto.getStatusShort() : "SCHEDULED"); // Default status
+        entity.setRound(dto.getRound());
+        entity.setVenueName(dto.getVenueName());
+        entity.setGoalsTeam1(dto.getGoalsHome());
+        entity.setGoalsTeam2(dto.getGoalsAway());
+        // apiSource could be set here, e.g., "internal" or from DTO if available
+        // Other fields from CreateFixtureDto (referee, timezone, venueCity, elapsed, other scores) are not in Fixture entity.
+    }
+
+    private void mapToEntityForUpdate(UpdateFixtureDto dto, Fixture entity) {
+        if (dto.getDate() != null) {
+            entity.setMatchDatetime(dto.getDate().toLocalDateTime());
+        }
+        if (dto.getStatusShort() != null) {
+            entity.setStatus(dto.getStatusShort());
+        }
+        if (dto.getVenueName() != null) {
+            entity.setVenueName(dto.getVenueName());
+        }
+        if (dto.getGoalsHome() != null) {
+            entity.setGoalsTeam1(dto.getGoalsHome());
+        }
+        if (dto.getGoalsAway() != null) {
+            entity.setGoalsTeam2(dto.getGoalsAway());
+        }
+        // Other fields from UpdateFixtureDto (referee, timezone, venueCity, elapsed, other scores, round)
+        // are not in Fixture entity or typically not updatable this way (e.g. round).
+    }
+
+    // --- Service Methods ---
+
     @Override
+    @Transactional(readOnly = true)
     public List<FixtureDto> listFixtures(String leagueId, String season) {
-        return Collections.emptyList();
+        // Season is not directly on Fixture entity.
+        // If season is important, it might be part of apiLeagueId, or matchDatetime range.
+        // For now, just fetching by leagueId if provided.
+        List<Fixture> fixtures;
+        if (leagueId != null && !leagueId.isEmpty()) {
+            League league = leagueRepository.findByApiLeagueId(leagueId)
+                .orElseThrow(() -> new EntityNotFoundException("League with apiLeagueId " + leagueId + " not found for listing fixtures."));
+            fixtures = fixtureRepository.findByLeagueId(league.getId()); // Assuming findByLeagueId takes internal UUID
+        } else {
+            fixtures = fixtureRepository.findAll(); // Or decide this is not allowed/too broad
+        }
+        return fixtures.stream().map(this::mapToDto).collect(Collectors.toList());
     }
 
     @Override
-    public Optional<FixtureDto> findFixtureById(String id) {
-        return Optional.empty();
+    @Transactional(readOnly = true)
+    public Optional<FixtureDto> findFixtureById(String apiFixtureId) { // id is apiFixtureId
+        return fixtureRepository.findByApiFixtureId(apiFixtureId).map(this::mapToDto);
     }
 
     @Override
-    public List<FixtureDto> getUpcomingFixtures(Integer days, String leagueId) {
-        return Collections.emptyList();
+    @Transactional(readOnly = true)
+    public List<FixtureDto> getUpcomingFixtures(Integer days, String leagueApiId) {
+        LocalDateTime startDate = LocalDateTime.now();
+        LocalDateTime endDate = LocalDateTime.now().plusDays(days != null ? days : 7); // Default to 7 days
+        List<Fixture> fixtures;
+        if (leagueApiId != null && !leagueApiId.isEmpty()) {
+            League league = leagueRepository.findByApiLeagueId(leagueApiId)
+                .orElseThrow(() -> new EntityNotFoundException("League with apiLeagueId " + leagueApiId + " not found for upcoming fixtures."));
+            fixtures = fixtureRepository.findByLeagueIdAndMatchDatetimeBetween(league.getId(), startDate, endDate);
+        } else {
+            fixtures = fixtureRepository.findByMatchDatetimeBetween(startDate, endDate);
+        }
+        return fixtures.stream().map(this::mapToDto).collect(Collectors.toList());
     }
 
     @Override
-    public List<FixtureDto> getFixturesByDate(LocalDate date, String leagueId) {
-        return Collections.emptyList();
+    @Transactional(readOnly = true)
+    public List<FixtureDto> getFixturesByDate(LocalDate date, String leagueApiId) {
+        LocalDateTime startDate = date.atStartOfDay();
+        LocalDateTime endDate = date.atTime(LocalTime.MAX);
+        List<Fixture> fixtures;
+         if (leagueApiId != null && !leagueApiId.isEmpty()) {
+            League league = leagueRepository.findByApiLeagueId(leagueApiId)
+                .orElseThrow(() -> new EntityNotFoundException("League with apiLeagueId " + leagueApiId + " not found for fixtures by date."));
+            fixtures = fixtureRepository.findByLeagueIdAndMatchDatetimeBetween(league.getId(), startDate, endDate);
+        } else {
+            fixtures = fixtureRepository.findByMatchDatetimeBetween(startDate, endDate);
+        }
+        return fixtures.stream().map(this::mapToDto).collect(Collectors.toList());
     }
 
     @Override
+    @Transactional
     public FixtureDto createFixture(CreateFixtureDto createDto) {
-        SimpleTeamDto homeTeam = SimpleTeamDto.builder().id(createDto.getHomeTeamId()).name("Mock Home Team").logoUrl("").build();
-        SimpleTeamDto awayTeam = SimpleTeamDto.builder().id(createDto.getAwayTeamId()).name("Mock Away Team").logoUrl("").build();
+        fixtureRepository.findByApiFixtureId(createDto.getId()).ifPresent(f -> {
+            throw new IllegalStateException("Fixture with apiFixtureId " + createDto.getId() + " already exists.");
+        });
 
-        return FixtureDto.builder()
-                .id(createDto.getId() != null ? createDto.getId() : UUID.randomUUID().toString()) // Use provided ID or generate new
-                .referee(createDto.getReferee())
-                .timezone(createDto.getTimezone())
-                .date(createDto.getDate())
-                .timestamp(createDto.getTimestamp())
-                .venueName(createDto.getVenueName())
-                .venueCity(createDto.getVenueCity())
-                .statusShort(createDto.getStatusShort())
-                .statusLong(createDto.getStatusLong())
-                .elapsed(createDto.getElapsed())
-                .leagueId(createDto.getLeagueId())
-                .season(createDto.getSeason())
-                .round(createDto.getRound())
-                .homeTeam(homeTeam)
-                .awayTeam(awayTeam)
-                .goalsHome(createDto.getGoalsHome())
-                .goalsAway(createDto.getGoalsAway())
-                .createdAt(OffsetDateTime.now())
-                .updatedAt(OffsetDateTime.now())
-                .live(false)
-                .build();
+        League league = leagueRepository.findByApiLeagueId(createDto.getLeagueId())
+                .orElseThrow(() -> new EntityNotFoundException("League with apiLeagueId " + createDto.getLeagueId() + " not found"));
+        Team homeTeam = teamRepository.findByApiTeamId(createDto.getHomeTeamId())
+                .orElseThrow(() -> new EntityNotFoundException("Home Team with apiTeamId " + createDto.getHomeTeamId() + " not found"));
+        Team awayTeam = teamRepository.findByApiTeamId(createDto.getAwayTeamId())
+                .orElseThrow(() -> new EntityNotFoundException("Away Team with apiTeamId " + createDto.getAwayTeamId() + " not found"));
+
+        Fixture fixture = new Fixture();
+        mapToEntityForCreate(createDto, fixture, league, homeTeam, awayTeam);
+        // Consider setting apiSource if available in DTO or context
+        // fixture.setApiSource("internal");
+        Fixture savedFixture = fixtureRepository.save(fixture);
+        return mapToDto(savedFixture);
     }
 
     @Override
-    public FixtureDto updateFixture(String id, UpdateFixtureDto updateDto) {
-        // Assuming a fetch would happen here in a real scenario
-        SimpleTeamDto homeTeam = SimpleTeamDto.builder().id("homeTeamId").name("Mock Home Team").logoUrl("").build();
-        SimpleTeamDto awayTeam = SimpleTeamDto.builder().id("awayTeamId").name("Mock Away Team").logoUrl("").build();
-
-        return FixtureDto.builder()
-                .id(id)
-                .referee(updateDto.getReferee() != null ? updateDto.getReferee() : "Original Referee")
-                .timezone(updateDto.getTimezone() != null ? updateDto.getTimezone() : "UTC")
-                .date(updateDto.getDate() != null ? updateDto.getDate() : OffsetDateTime.now().plusDays(1))
-                .timestamp(updateDto.getTimestamp() != null ? updateDto.getTimestamp() : (int) (OffsetDateTime.now().plusDays(1).toEpochSecond()))
-                .venueName(updateDto.getVenueName() != null ? updateDto.getVenueName() : "Original Venue")
-                .venueCity(updateDto.getVenueCity() != null ? updateDto.getVenueCity() : "Original City")
-                .statusShort(updateDto.getStatusShort() != null ? updateDto.getStatusShort() : "NS")
-                .statusLong(updateDto.getStatusLong() != null ? updateDto.getStatusLong() : "Not Started")
-                .elapsed(updateDto.getElapsed() != null ? updateDto.getElapsed() : 0)
-                .leagueId("originalLeagueId") // Not typically updatable
-                .season("originalSeason") // Not typically updatable
-                .round("originalRound") // Not typically updatable
-                .homeTeam(homeTeam) // Simplified, actual team data wouldn't change like this
-                .awayTeam(awayTeam) // Simplified
-                .goalsHome(updateDto.getGoalsHome())
-                .goalsAway(updateDto.getGoalsAway())
-                .createdAt(OffsetDateTime.now().minusDays(1)) // Original creation date
-                .updatedAt(OffsetDateTime.now())
-                .live(updateDto.getStatusShort() != null && List.of("1H", "HT", "2H", "ET", "P", "LIVE").contains(updateDto.getStatusShort().toUpperCase()))
-                .build();
+    @Transactional
+    public FixtureDto updateFixture(String apiFixtureId, UpdateFixtureDto updateDto) { // id is apiFixtureId
+        Fixture fixture = fixtureRepository.findByApiFixtureId(apiFixtureId)
+                .orElseThrow(() -> new EntityNotFoundException("Fixture with apiFixtureId " + apiFixtureId + " not found"));
+        mapToEntityForUpdate(updateDto, fixture);
+        Fixture updatedFixture = fixtureRepository.save(fixture);
+        return mapToDto(updatedFixture);
     }
 
     @Override
-    public void deleteFixture(String id) {
-        System.out.println("Deleting fixture with id: " + id);
+    @Transactional
+    public void deleteFixture(String apiFixtureId) { // id is apiFixtureId
+        Fixture fixture = fixtureRepository.findByApiFixtureId(apiFixtureId)
+                .orElseThrow(() -> new EntityNotFoundException("Fixture with apiFixtureId " + apiFixtureId + " not found for deletion."));
+        fixtureRepository.delete(fixture);
     }
 }

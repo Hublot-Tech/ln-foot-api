@@ -15,9 +15,9 @@ import java.util.List;
 public class UpdateNewsArticleDto {
     private String title;
     private String content;
-    private String author;
-    private String source;
-    private String url;
+    private String authorId; // Changed from author
+    private String source; // Name of the source publication e.g. "BBC Sport"
+    private String url; // URL to the original article
     private String imageUrl;
     private OffsetDateTime publishedAt;
     private List<String> tags;

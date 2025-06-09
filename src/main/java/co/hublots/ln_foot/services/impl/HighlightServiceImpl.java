@@ -3,64 +3,123 @@ package co.hublots.ln_foot.services.impl;
 import co.hublots.ln_foot.dto.CreateHighlightDto;
 import co.hublots.ln_foot.dto.HighlightDto;
 import co.hublots.ln_foot.dto.UpdateHighlightDto;
+import co.hublots.ln_foot.models.Fixture;
+import co.hublots.ln_foot.models.Highlight;
+import co.hublots.ln_foot.repositories.FixtureRepository;
+import co.hublots.ln_foot.repositories.HighlightRepository;
 import co.hublots.ln_foot.services.HighlightService;
+import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.time.OffsetDateTime;
-import java.util.Collections;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class HighlightServiceImpl implements HighlightService {
 
+    private final HighlightRepository highlightRepository;
+    private final FixtureRepository fixtureRepository;
+
+    private HighlightDto mapToDto(Highlight entity) {
+        if (entity == null) {
+            return null;
+        }
+        return HighlightDto.builder()
+                .id(entity.getId())
+                .fixtureId(entity.getFixture() != null ? entity.getFixture().getApiFixtureId() : null)
+                .title(entity.getTitle())
+                // description not in Highlight entity
+                .videoUrl(entity.getVideoUrl())
+                .thumbnailUrl(entity.getThumbnailUrl())
+                .durationSeconds(entity.getDuration())
+                // type not in Highlight entity, source from entity not in DTO
+                .createdAt(entity.getCreatedAt() != null ? entity.getCreatedAt().atOffset(ZoneOffset.UTC) : null)
+                .updatedAt(entity.getUpdatedAt() != null ? entity.getUpdatedAt().atOffset(ZoneOffset.UTC) : null)
+                .build();
+    }
+
+    private void mapToEntityForCreate(CreateHighlightDto dto, Highlight entity, Fixture fixture) {
+        entity.setFixture(fixture);
+        entity.setTitle(dto.getTitle());
+        entity.setVideoUrl(dto.getVideoUrl());
+        entity.setThumbnailUrl(dto.getThumbnailUrl());
+        entity.setDuration(dto.getDurationSeconds());
+        // DTO's description and type are not in Highlight entity.
+        // Entity's source could be set here if provided in DTO or from context, e.g. entity.setSource("internal_upload");
+    }
+
+    private void mapToEntityForUpdate(UpdateHighlightDto dto, Highlight entity) {
+        if (dto.getTitle() != null) {
+            entity.setTitle(dto.getTitle());
+        }
+        if (dto.getVideoUrl() != null) {
+            entity.setVideoUrl(dto.getVideoUrl());
+        }
+        if (dto.getThumbnailUrl() != null) {
+            entity.setThumbnailUrl(dto.getThumbnailUrl());
+        }
+        if (dto.getDurationSeconds() != null) {
+            entity.setDuration(dto.getDurationSeconds());
+        }
+        // DTO's description and type are not in Highlight entity.
+    }
+
+
     @Override
-    public List<HighlightDto> listHighlights(String fixtureId) {
-        // Mock: Filter by fixtureId if a list of highlights was present
+    @Transactional(readOnly = true)
+    public List<HighlightDto> listHighlights(String fixtureApiId) {
+        // If fixtureApiId is provided, find the fixture's internal ID first.
+        if (fixtureApiId != null && !fixtureApiId.isEmpty()) {
+            Fixture fixture = fixtureRepository.findByApiFixtureId(fixtureApiId)
+                    .orElseThrow(() -> new EntityNotFoundException("Fixture with apiFixtureId " + fixtureApiId + " not found when listing highlights."));
+            return highlightRepository.findByFixtureId(fixture.getId()).stream()
+                    .map(this::mapToDto)
+                    .collect(Collectors.toList());
+        }
+        // Listing all highlights without a fixture ID might be too broad,
+        // but depends on requirements. Returning empty list if no fixtureId for now.
         return Collections.emptyList();
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<HighlightDto> findHighlightById(String id) {
-        return Optional.empty();
+        return highlightRepository.findById(id).map(this::mapToDto);
     }
 
     @Override
+    @Transactional
     public HighlightDto createHighlight(CreateHighlightDto createDto) {
-        return HighlightDto.builder()
-                .id(UUID.randomUUID().toString())
-                .fixtureId(createDto.getFixtureId())
-                .title(createDto.getTitle())
-                .description(createDto.getDescription())
-                .videoUrl(createDto.getVideoUrl())
-                .thumbnailUrl(createDto.getThumbnailUrl())
-                .durationSeconds(createDto.getDurationSeconds())
-                .type(createDto.getType())
-                .createdAt(OffsetDateTime.now())
-                .updatedAt(OffsetDateTime.now())
-                .build();
+        Fixture fixture = fixtureRepository.findByApiFixtureId(createDto.getFixtureId())
+                .orElseThrow(() -> new EntityNotFoundException("Fixture with apiFixtureId " + createDto.getFixtureId() + " not found"));
+
+        Highlight highlight = new Highlight();
+        mapToEntityForCreate(createDto, highlight, fixture);
+        Highlight savedHighlight = highlightRepository.save(highlight);
+        return mapToDto(savedHighlight);
     }
 
     @Override
+    @Transactional
     public HighlightDto updateHighlight(String id, UpdateHighlightDto updateDto) {
-        // Assume fetch, then update
-        return HighlightDto.builder()
-                .id(id)
-                .fixtureId("originalFixtureId") // Usually not updatable
-                .title(updateDto.getTitle() != null ? updateDto.getTitle() : "Original Title")
-                .description(updateDto.getDescription() != null ? updateDto.getDescription() : "Original Description")
-                .videoUrl(updateDto.getVideoUrl() != null ? updateDto.getVideoUrl() : "http://original.video/url")
-                .thumbnailUrl(updateDto.getThumbnailUrl() != null ? updateDto.getThumbnailUrl() : "http://original.thumb/url")
-                .durationSeconds(updateDto.getDurationSeconds() != null ? updateDto.getDurationSeconds() : 60)
-                .type(updateDto.getType() != null ? updateDto.getType() : "goal")
-                .createdAt(OffsetDateTime.now().minusDays(1))
-                .updatedAt(OffsetDateTime.now())
-                .build();
+        Highlight highlight = highlightRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Highlight with ID " + id + " not found"));
+        mapToEntityForUpdate(updateDto, highlight);
+        Highlight updatedHighlight = highlightRepository.save(highlight);
+        return mapToDto(updatedHighlight);
     }
 
     @Override
+    @Transactional
     public void deleteHighlight(String id) {
-        System.out.println("Deleting highlight with id: " + id);
+        if (!highlightRepository.existsById(id)) {
+            throw new EntityNotFoundException("Highlight with ID " + id + " not found");
+        }
+        highlightRepository.deleteById(id);
     }
 }

@@ -3,87 +3,131 @@ package co.hublots.ln_foot.services.impl;
 import co.hublots.ln_foot.dto.AdvertisementDto;
 import co.hublots.ln_foot.dto.CreateAdvertisementDto;
 import co.hublots.ln_foot.dto.UpdateAdvertisementDto;
+import co.hublots.ln_foot.models.Advertisement;
+import co.hublots.ln_foot.repositories.AdvertisementRepository;
 import co.hublots.ln_foot.services.AdvertisementService;
+import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.time.OffsetDateTime;
-import java.util.Collections;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class AdvertisementServiceImpl implements AdvertisementService {
 
-    @Override
-    public List<AdvertisementDto> getLatestAdvertisements() {
-        // Mock implementation
-        return Collections.emptyList();
-    }
+    private final AdvertisementRepository advertisementRepository;
 
-    @Override
-    public Optional<AdvertisementDto> getAdvertisementById(String id) {
-        // Mock implementation
-        // Example of returning a specific mock DTO if needed for testing:
-        /*
-        if ("test-id".equals(id)) {
-            return Optional.of(AdvertisementDto.builder()
-                .id(id)
-                .title("Test Ad")
-                .content("This is a test ad.")
-                .url("http://example.com")
-                .imageUrl("http://example.com/image.png")
-                .startDate(OffsetDateTime.now().minusDays(1))
-                .endDate(OffsetDateTime.now().plusDays(6))
-                .priority(1)
-                .status("active")
-                .createdAt(OffsetDateTime.now().minusDays(2))
-                .updatedAt(OffsetDateTime.now().minusDays(1))
-                .build());
+    private AdvertisementDto mapToDto(Advertisement entity) {
+        if (entity == null) {
+            return null;
         }
-        */
-        return Optional.empty();
+        return AdvertisementDto.builder()
+                .id(entity.getId())
+                .title(entity.getTitle())
+                .content(entity.getDescription()) // Map description to content
+                .url(entity.getReferenceUrl())   // Map referenceUrl to url
+                .imageUrl(entity.getImageUrl())
+                // startDate, endDate, priority, status are not in the current Advertisement entity
+                // If they were, they would be mapped here:
+                // .startDate(entity.getStartDate() != null ? entity.getStartDate().atOffset(ZoneOffset.UTC) : null)
+                // .endDate(entity.getEndDate() != null ? entity.getEndDate().atOffset(ZoneOffset.UTC) : null)
+                // .priority(entity.getPriority())
+                // .status(entity.getStatus())
+                .createdAt(entity.getCreatedAt() != null ? entity.getCreatedAt().atOffset(ZoneOffset.UTC) : null)
+                .updatedAt(entity.getUpdatedAt() != null ? entity.getUpdatedAt().atOffset(ZoneOffset.UTC) : null)
+                .build();
+    }
+
+    private void mapToEntityForCreate(CreateAdvertisementDto dto, Advertisement entity) {
+        entity.setTitle(dto.getTitle());
+        entity.setDescription(dto.getContent()); // Map content to description
+        entity.setReferenceUrl(dto.getUrl());   // Map url to referenceUrl
+        entity.setImageUrl(dto.getImageUrl());
+        // startDate, endDate, priority, status are not in the current Advertisement entity
+        // If they were, they would be mapped here:
+        // entity.setStartDate(dto.getStartDate() != null ? dto.getStartDate().toLocalDateTime() : null);
+        // entity.setEndDate(dto.getEndDate() != null ? dto.getEndDate().toLocalDateTime() : null);
+        // entity.setPriority(dto.getPriority());
+        // entity.setStatus(dto.getStatus());
+    }
+
+    private void mapToEntityForUpdate(UpdateAdvertisementDto dto, Advertisement entity) {
+        if (dto.getTitle() != null) {
+            entity.setTitle(dto.getTitle());
+        }
+        if (dto.getContent() != null) {
+            entity.setDescription(dto.getContent()); // Map content to description
+        }
+        if (dto.getUrl() != null) {
+            entity.setReferenceUrl(dto.getUrl());   // Map url to referenceUrl
+        }
+        if (dto.getImageUrl() != null) {
+            entity.setImageUrl(dto.getImageUrl());
+        }
+        // startDate, endDate, priority, status are not in the current Advertisement entity
+        // if (dto.getStartDate() != null) {
+        //     entity.setStartDate(dto.getStartDate().toLocalDateTime());
+        // }
+        // if (dto.getEndDate() != null) {
+        //     entity.setEndDate(dto.getEndDate().toLocalDateTime());
+        // }
+        // if (dto.getPriority() != null) {
+        //     entity.setPriority(dto.getPriority());
+        // }
+        // if (dto.getStatus() != null) {
+        //     entity.setStatus(dto.getStatus());
+        // }
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<AdvertisementDto> getLatestAdvertisements() {
+        // Assuming we want top 10 latest based on createdAt, which is available in Advertisement entity
+        PageRequest pageRequest = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "createdAt"));
+        return advertisementRepository.findAll(pageRequest).stream()
+                .map(this::mapToDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<AdvertisementDto> getAdvertisementById(String id) {
+        return advertisementRepository.findById(id).map(this::mapToDto);
+    }
+
+    @Override
+    @Transactional
     public AdvertisementDto createAdvertisement(CreateAdvertisementDto createDto) {
-        // Mock implementation
-        return AdvertisementDto.builder()
-                .id(UUID.randomUUID().toString())
-                .title(createDto.getTitle())
-                .content(createDto.getContent())
-                .url(createDto.getUrl())
-                .imageUrl(createDto.getImageUrl())
-                .startDate(createDto.getStartDate())
-                .endDate(createDto.getEndDate())
-                .priority(createDto.getPriority() != null ? createDto.getPriority() : 1)
-                .status(createDto.getStatus() != null ? createDto.getStatus() : "active")
-                .createdAt(OffsetDateTime.now())
-                .updatedAt(OffsetDateTime.now())
-                .build();
+        Advertisement advertisement = new Advertisement();
+        mapToEntityForCreate(createDto, advertisement);
+        Advertisement savedAdvertisement = advertisementRepository.save(advertisement);
+        return mapToDto(savedAdvertisement);
     }
 
     @Override
+    @Transactional
     public AdvertisementDto updateAdvertisement(String id, UpdateAdvertisementDto updateDto) {
-        // Mock implementation: assumes an existing ad is fetched and then updated
-        return AdvertisementDto.builder()
-                .id(id)
-                .title(updateDto.getTitle() != null ? updateDto.getTitle() : "Original Title")
-                .content(updateDto.getContent() != null ? updateDto.getContent() : "Original Content")
-                .url(updateDto.getUrl() != null ? updateDto.getUrl() : "http://original.url")
-                .imageUrl(updateDto.getImageUrl() != null ? updateDto.getImageUrl() : "http://original.image/img.png")
-                .startDate(updateDto.getStartDate() != null ? updateDto.getStartDate() : OffsetDateTime.now().minusDays(5))
-                .endDate(updateDto.getEndDate() != null ? updateDto.getEndDate() : OffsetDateTime.now().plusDays(5))
-                .priority(updateDto.getPriority() != null ? updateDto.getPriority() : 1)
-                .status(updateDto.getStatus() != null ? updateDto.getStatus() : "active")
-                .createdAt(OffsetDateTime.now().minusDays(10)) // Should be original creation date
-                .updatedAt(OffsetDateTime.now())
-                .build();
+        Advertisement advertisement = advertisementRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Advertisement with ID " + id + " not found"));
+        mapToEntityForUpdate(updateDto, advertisement);
+        Advertisement updatedAdvertisement = advertisementRepository.save(advertisement);
+        return mapToDto(updatedAdvertisement);
     }
 
     @Override
+    @Transactional
     public void deleteAdvertisement(String id) {
-        // Mock implementation: Do nothing
-        System.out.println("Deleting advertisement with id: " + id);
+        if (!advertisementRepository.existsById(id)) {
+            throw new EntityNotFoundException("Advertisement with ID " + id + " not found");
+        }
+        advertisementRepository.deleteById(id);
     }
 }
