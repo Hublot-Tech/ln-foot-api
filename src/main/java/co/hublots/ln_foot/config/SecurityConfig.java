@@ -24,9 +24,24 @@ public class SecurityConfig {
                         .ignoringRequestMatchers("/webhooks/notchpay") // ❌ No CSRF protection for this endpoint
                 )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.POST, "/webhooks/notchpay").permitAll() // ✅ Public access
-                        .requestMatchers(HttpMethod.GET).permitAll()
+                        // Existing public webhook
+                        .requestMatchers(HttpMethod.POST, "/webhooks/notchpay").permitAll()
+
+                        // Secure POST, PUT, DELETE for /api/v1/**
+                        .requestMatchers(HttpMethod.POST, "/api/v1/**").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/**").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/**").authenticated()
+
+                        // Existing authenticated GET for orders
                         .requestMatchers(HttpMethod.GET, "/api/orders/**").authenticated()
+
+                        // General GET permit all (catches all other GET requests not specified above)
+                        // This makes all GET endpoints under /api/v1/ public by default,
+                        // unless a more specific GET rule above makes them authenticated.
+                        // (Currently, no /api/v1/ GET endpoints are marked as authenticated above this line)
+                        .requestMatchers(HttpMethod.GET).permitAll()
+
+                        // Default for any other request not matched above
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter)));

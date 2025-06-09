@@ -1,0 +1,193 @@
+package co.hublots.ln_foot.controllers;
+
+import co.hublots.ln_foot.dto.AdvertisementDto;
+import co.hublots.ln_foot.dto.CreateAdvertisementDto;
+import co.hublots.ln_foot.dto.UpdateAdvertisementDto;
+import co.hublots.ln_foot.services.AdvertisementService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithAnonymousUser;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.MockMvc;
+
+import java.time.OffsetDateTime;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.hasSize;
+
+
+@SpringBootTest
+@AutoConfigureMockMvc
+class AdvertisementControllerTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @MockBean
+    private AdvertisementService advertisementService;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    private AdvertisementDto createMockAdvertisementDto() {
+        return AdvertisementDto.builder()
+                .id(UUID.randomUUID().toString())
+                .title("Test Ad")
+                .content("Test Content")
+                .url("http://example.com")
+                .imageUrl("http://example.com/image.png")
+                .startDate(OffsetDateTime.now())
+                .endDate(OffsetDateTime.now().plusDays(7))
+                .priority(1)
+                .status("active")
+                .createdAt(OffsetDateTime.now())
+                .updatedAt(OffsetDateTime.now())
+                .build();
+    }
+
+    @Test
+    @WithAnonymousUser // Explicitly state this runs as anonymous, expecting public access
+    void getLatestAdvertisements_isOk() throws Exception {
+        List<AdvertisementDto> mockAds = Collections.singletonList(createMockAdvertisementDto());
+        when(advertisementService.getLatestAdvertisements()).thenReturn(mockAds);
+
+        mockMvc.perform(get("/api/v1/advertisements/latest"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].title", is("Test Ad")));
+    }
+
+    @Test
+    @WithAnonymousUser
+    void getAdvertisementById_isOk_whenFound() throws Exception {
+        AdvertisementDto mockAd = createMockAdvertisementDto();
+        when(advertisementService.getAdvertisementById(mockAd.getId())).thenReturn(Optional.of(mockAd));
+
+        mockMvc.perform(get("/api/v1/advertisements/{id}", mockAd.getId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id", is(mockAd.getId())))
+                .andExpect(jsonPath("$.title", is(mockAd.getTitle())));
+    }
+
+    @Test
+    @WithAnonymousUser
+    void getAdvertisementById_isNotFound_whenServiceReturnsEmpty() throws Exception {
+        when(advertisementService.getAdvertisementById("nonexistent-id")).thenReturn(Optional.empty());
+
+        mockMvc.perform(get("/api/v1/advertisements/{id}", "nonexistent-id"))
+                .andExpect(status().isNotFound());
+    }
+
+    // --- Create Advertisement Tests ---
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void createAdvertisement_isCreated_withAdminRole() throws Exception {
+        CreateAdvertisementDto createDto = CreateAdvertisementDto.builder().title("New Ad").build();
+        AdvertisementDto returnedDto = createMockAdvertisementDto(); // Service returns full DTO
+        returnedDto.setTitle("New Ad");
+
+        when(advertisementService.createAdvertisement(any(CreateAdvertisementDto.class))).thenReturn(returnedDto);
+
+        mockMvc.perform(post("/api/v1/advertisements")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createDto)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.title", is("New Ad")));
+    }
+
+    @Test
+    void createAdvertisement_isUnauthorized_withoutAuth() throws Exception {
+        CreateAdvertisementDto createDto = CreateAdvertisementDto.builder().title("New Ad").build();
+        mockMvc.perform(post("/api/v1/advertisements")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createDto)))
+                .andExpect(status().isUnauthorized()); // Default for unauthenticated by Spring Security
+    }
+
+    @Test
+    @WithMockUser(roles = "USER") // Assuming "USER" is a non-admin role
+    void createAdvertisement_isForbidden_withUserRole() throws Exception {
+        CreateAdvertisementDto createDto = CreateAdvertisementDto.builder().title("New Ad").build();
+        mockMvc.perform(post("/api/v1/advertisements")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createDto)))
+                .andExpect(status().isForbidden());
+    }
+
+    // --- Update Advertisement Tests ---
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void updateAdvertisement_isOk_withAdminRole() throws Exception {
+        String adId = "test-id";
+        UpdateAdvertisementDto updateDto = UpdateAdvertisementDto.builder().title("Updated Ad").build();
+        AdvertisementDto returnedDto = createMockAdvertisementDto();
+        returnedDto.setId(adId);
+        returnedDto.setTitle("Updated Ad");
+
+        when(advertisementService.updateAdvertisement(eq(adId), any(UpdateAdvertisementDto.class))).thenReturn(returnedDto);
+
+        mockMvc.perform(put("/api/v1/advertisements/{id}", adId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateDto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title", is("Updated Ad")));
+    }
+
+    @Test
+    void updateAdvertisement_isUnauthorized_withoutAuth() throws Exception {
+        UpdateAdvertisementDto updateDto = UpdateAdvertisementDto.builder().title("Updated Ad").build();
+        mockMvc.perform(put("/api/v1/advertisements/{id}", "test-id")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateDto)))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @WithMockUser(roles = "USER")
+    void updateAdvertisement_isForbidden_withUserRole() throws Exception {
+        UpdateAdvertisementDto updateDto = UpdateAdvertisementDto.builder().title("Updated Ad").build();
+        mockMvc.perform(put("/api/v1/advertisements/{id}", "test-id")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateDto)))
+                .andExpect(status().isForbidden());
+    }
+
+    // --- Delete Advertisement Tests ---
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void deleteAdvertisement_isNoContent_withAdminRole() throws Exception {
+        String adId = "test-id-to-delete";
+        doNothing().when(advertisementService).deleteAdvertisement(adId);
+
+        mockMvc.perform(delete("/api/v1/advertisements/{id}", adId))
+                .andExpect(status().isNoContent());
+        verify(advertisementService, times(1)).deleteAdvertisement(adId);
+    }
+
+    @Test
+    void deleteAdvertisement_isUnauthorized_withoutAuth() throws Exception {
+        mockMvc.perform(delete("/api/v1/advertisements/{id}", "test-id"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @WithMockUser(roles = "USER")
+    void deleteAdvertisement_isForbidden_withUserRole() throws Exception {
+        mockMvc.perform(delete("/api/v1/advertisements/{id}", "test-id"))
+                .andExpect(status().isForbidden());
+    }
+}
