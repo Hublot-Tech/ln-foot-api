@@ -232,12 +232,60 @@ class FixtureServiceImplTest {
 
     @Test
     void createFixture_whenLeagueNotFound_throwsException() {
-        CreateFixtureDto createDto = CreateFixtureDto.builder().id("fix").leagueId("L_FAIL").homeTeamId("H").awayTeamId("A").build();
-        when(fixtureRepository.findByApiFixtureId("fix")).thenReturn(Optional.empty());
+        CreateFixtureDto createDto = CreateFixtureDto.builder().id("fix-league-fail").leagueId("L_FAIL").homeTeamId("H").awayTeamId("A").build();
+        when(fixtureRepository.findByApiFixtureId("fix-league-fail")).thenReturn(Optional.empty());
         when(leagueRepository.findByApiLeagueId("L_FAIL")).thenReturn(Optional.empty());
-        // No need to mock teams if league fails first
 
         assertThrows(EntityNotFoundException.class, () -> fixtureService.createFixture(createDto));
+        verify(leagueRepository).findByApiLeagueId("L_FAIL");
+        verify(teamRepository, never()).findByApiTeamId(anyString());
+        verify(fixtureRepository, never()).save(any(Fixture.class));
+    }
+
+    @Test
+    void createFixture_whenHomeTeamNotFound_throwsEntityNotFoundException() {
+        CreateFixtureDto createDto = CreateFixtureDto.builder()
+                .id("fix-home-team-fail")
+                .leagueId("L_OK")
+                .homeTeamId("HT_FAIL")
+                .awayTeamId("AT_OK")
+                .build();
+        League mockLeague = createMockLeague(UUID.randomUUID().toString(), "L_OK", "OK League");
+
+        when(fixtureRepository.findByApiFixtureId("fix-home-team-fail")).thenReturn(Optional.empty());
+        when(leagueRepository.findByApiLeagueId("L_OK")).thenReturn(Optional.of(mockLeague));
+        when(teamRepository.findByApiTeamId("HT_FAIL")).thenReturn(Optional.empty());
+        // Optional: Mock away team if needed, but failure should happen before that
+        // when(teamRepository.findByApiTeamId("AT_OK")).thenReturn(Optional.of(createMockTeam(UUID.randomUUID().toString(), "AT_OK", "Away Team OK")));
+
+
+        assertThrows(EntityNotFoundException.class, () -> fixtureService.createFixture(createDto));
+        verify(leagueRepository).findByApiLeagueId("L_OK");
+        verify(teamRepository).findByApiTeamId("HT_FAIL");
+        verify(fixtureRepository, never()).save(any(Fixture.class));
+    }
+
+    @Test
+    void createFixture_whenAwayTeamNotFound_throwsEntityNotFoundException() {
+        CreateFixtureDto createDto = CreateFixtureDto.builder()
+                .id("fix-away-team-fail")
+                .leagueId("L_OK")
+                .homeTeamId("HT_OK")
+                .awayTeamId("AT_FAIL")
+                .build();
+        League mockLeague = createMockLeague(UUID.randomUUID().toString(), "L_OK", "OK League");
+        Team mockHomeTeam = createMockTeam(UUID.randomUUID().toString(), "HT_OK", "Home Team OK");
+
+        when(fixtureRepository.findByApiFixtureId("fix-away-team-fail")).thenReturn(Optional.empty());
+        when(leagueRepository.findByApiLeagueId("L_OK")).thenReturn(Optional.of(mockLeague));
+        when(teamRepository.findByApiTeamId("HT_OK")).thenReturn(Optional.of(mockHomeTeam));
+        when(teamRepository.findByApiTeamId("AT_FAIL")).thenReturn(Optional.empty());
+
+        assertThrows(EntityNotFoundException.class, () -> fixtureService.createFixture(createDto));
+        verify(leagueRepository).findByApiLeagueId("L_OK");
+        verify(teamRepository).findByApiTeamId("HT_OK");
+        verify(teamRepository).findByApiTeamId("AT_FAIL");
+        verify(fixtureRepository, never()).save(any(Fixture.class));
     }
 
 
@@ -277,6 +325,17 @@ class FixtureServiceImplTest {
     }
 
     @Test
+    void updateFixture_whenFixtureNotFound_throwsEntityNotFoundException() {
+        String apiFixtureId = "non-existent-fix-id";
+        UpdateFixtureDto updateDto = UpdateFixtureDto.builder().statusShort("FT").build();
+        when(fixtureRepository.findByApiFixtureId(apiFixtureId)).thenReturn(Optional.empty());
+
+        assertThrows(EntityNotFoundException.class, () -> fixtureService.updateFixture(apiFixtureId, updateDto));
+        verify(fixtureRepository).findByApiFixtureId(apiFixtureId);
+        verify(fixtureRepository, never()).save(any(Fixture.class));
+    }
+
+    @Test
     void deleteFixture_whenFound_deletesFixture() { // Param is apiFixtureId
         // Arrange
         String apiFixtureId = "fix-to-delete";
@@ -290,5 +349,16 @@ class FixtureServiceImplTest {
         // Assert
         verify(fixtureRepository).findByApiFixtureId(apiFixtureId);
         verify(fixtureRepository).delete(mockFixture);
+    }
+
+    @Test
+    void deleteFixture_whenFixtureNotFound_throwsEntityNotFoundException() {
+        String apiFixtureId = "non-existent-fix-id-del";
+        when(fixtureRepository.findByApiFixtureId(apiFixtureId)).thenReturn(Optional.empty());
+
+        assertThrows(EntityNotFoundException.class, () -> fixtureService.deleteFixture(apiFixtureId));
+        verify(fixtureRepository).findByApiFixtureId(apiFixtureId);
+        verify(fixtureRepository, never()).delete(any(Fixture.class));
+        verify(fixtureRepository, never()).deleteById(anyString());
     }
 }

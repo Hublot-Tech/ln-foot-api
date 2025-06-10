@@ -25,6 +25,7 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.hamcrest.Matchers.hasSize;
 
 @SpringBootTest
@@ -60,10 +61,18 @@ class NewsArticleControllerTest {
                 .build();
     }
 
+    // Overloaded method to fix calls with single argument (assumed to be ID)
+    private NewsArticleDto createMockNewsArticleDto(String id) {
+        // Provide default author details or null if appropriate for these test cases
+        String defaultAuthorId = "default-author-" + UUID.randomUUID().toString().substring(0,4) ;
+        String defaultAuthorName = "Default Author";
+        return createMockNewsArticleDto(id, defaultAuthorId, defaultAuthorName);
+    }
+
     @Test
     @WithAnonymousUser
     void listNewsArticles_isOk() throws Exception {
-        NewsArticleDto mockArticle = createMockNewsArticleDto("na1");
+        NewsArticleDto mockArticle = createMockNewsArticleDto("na1"); // Now calls the new overloaded method
         when(newsArticleService.listNewsArticles(any(), any())).thenReturn(Collections.singletonList(mockArticle));
 
         mockMvc.perform(get("/api/v1/news-articles").param("status", "published"))

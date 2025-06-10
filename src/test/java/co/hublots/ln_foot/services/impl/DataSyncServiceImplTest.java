@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID; // Added import
 import java.util.function.Function;
 
 import static org.junit.jupiter.api.Assertions.*;
