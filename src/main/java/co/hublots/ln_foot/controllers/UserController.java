@@ -66,7 +66,8 @@ public class UserController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> updateUserRole(@PathVariable String id, @Valid @RequestBody UpdateUserRoleDto updateUserRoleDto) {
         try {
-            UserDto updatedUser = userService.updateUserRole(id, updateUserRoleDto);
+            // Pass the role string directly from the DTO
+            UserDto updatedUser = userService.updateUserRole(id, updateUserRoleDto.getRole());
             return ResponseEntity.ok(updatedUser);
         } catch (EntityNotFoundException e) {
             log.warn("User not found with ID {} when trying to update role: {}", id, e.getMessage());

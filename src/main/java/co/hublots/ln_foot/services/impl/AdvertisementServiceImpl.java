@@ -1,5 +1,7 @@
 package co.hublots.ln_foot.services.impl;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import co.hublots.ln_foot.dto.AdvertisementDto;
 import co.hublots.ln_foot.dto.CreateAdvertisementDto;
 import co.hublots.ln_foot.dto.UpdateAdvertisementDto;
@@ -62,14 +64,20 @@ public class AdvertisementServiceImpl implements AdvertisementService {
         }
     }
 
+    // Removed comment as imports are now at the top
+
     @Override
     @Transactional(readOnly = true)
-    public List<AdvertisementDto> getLatestAdvertisements() {
-        // Assuming we want top 10 latest based on createdAt, which is available in Advertisement entity
-        PageRequest pageRequest = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "createdAt"));
-        return advertisementRepository.findAll(pageRequest).stream()
-                .map(this::mapToDto)
-                .collect(Collectors.toList());
+    public Page<AdvertisementDto> getLatestAdvertisements(Pageable pageable) {
+        Pageable effectivePageable = pageable;
+        if (pageable.getSort().isUnsorted()) {
+            effectivePageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.DESC, "createdAt"));
+        }
+        // If you always want to enforce/override sort, even if client provides one:
+        // effectivePageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.DESC, "createdAt"));
+
+        Page<Advertisement> advertisementPage = advertisementRepository.findAll(effectivePageable);
+        return advertisementPage.map(this::mapToDto);
     }
 
     @Override

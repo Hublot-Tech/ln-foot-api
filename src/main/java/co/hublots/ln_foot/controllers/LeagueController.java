@@ -18,9 +18,11 @@ import org.springframework.dao.DataIntegrityViolationException; // For try-catch
 import org.springframework.dao.DataAccessException; // For try-catch
 // HttpStatus is already imported via ResponseEntity
 
-import java.util.List;
+import java.util.List; // Keep for other methods if they return List, or remove if all paged
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
-@Slf4j // Added
+@Slf4j
 @Validated // Added
 @RestController
 @RequestMapping("/api/v1/leagues")
@@ -32,12 +34,15 @@ public class LeagueController {
         this.leagueService = leagueService;
     }
 
+    // Removed comment as imports are at top
     @GetMapping
-    public List<LeagueDto> listLeagues(
+    public ResponseEntity<Page<LeagueDto>> listLeagues( // Changed return type
             @RequestParam(required = false) @Size(max = 100, message = "Country parameter is too long") String country,
-            @RequestParam(required = false) @Pattern(regexp = "^\\d{4}(-\\d{4})?$", message = "Season must be like YYYY or YYYY-YYYY") String season,
-            @RequestParam(required = false) @Size(max = 50, message = "Type parameter is too long") String type) {
-        return leagueService.listLeagues(country, season, type);
+            // Removed season @RequestParam
+            @RequestParam(required = false) @Size(max = 50, message = "Type parameter is too long") String type,
+            Pageable pageable) { // Added Pageable
+        Page<LeagueDto> leaguePage = leagueService.listLeagues(country, type, pageable);
+        return ResponseEntity.ok(leaguePage);
     }
 
     @GetMapping("/{id}")

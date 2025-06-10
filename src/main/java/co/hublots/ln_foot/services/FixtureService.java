@@ -8,10 +8,13 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page; // Added for Page
+import org.springframework.data.domain.Pageable; // Added for Pageable
+
 public interface FixtureService {
-    List<FixtureDto> listFixtures(String leagueId, String season);
-    Optional<FixtureDto> findFixtureById(String id);
-    List<FixtureDto> getUpcomingFixtures(Integer days, String leagueId);
+    Page<FixtureDto> listFixtures(String leagueApiId, Pageable pageable); // Changed signature
+    Optional<FixtureDto> findFixtureById(String apiFixtureId); // Renamed id to apiFixtureId for clarity
+    List<FixtureDto> getUpcomingFixtures(Integer days, String leagueApiId); // Renamed leagueId
     List<FixtureDto> getFixturesByDate(LocalDate date, String leagueId);
     FixtureDto createFixture(CreateFixtureDto createDto);
     FixtureDto updateFixture(String id, UpdateFixtureDto updateDto);

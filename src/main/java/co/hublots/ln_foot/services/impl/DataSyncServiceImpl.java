@@ -71,9 +71,15 @@ public class DataSyncServiceImpl implements DataSyncService {
         Map<String, String> defaultParams = new HashMap<>();
         defaultParams.put("date", LocalDateTime.now().format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE));
         log.info("Calling syncMainFixtures with default date param for syncLeagues: {}", defaultParams);
-        syncMainFixtures(defaultParams).subscribe( // Subscribe to trigger, errors handled in syncMainFixtures
-            status -> log.info("syncLeagues (via syncMainFixtures) completed with status: {}", status),
-            error -> log.error("Error subscribing to syncMainFixtures from syncLeagues: ", error)
+        syncMainFixtures(defaultParams).subscribe(
+            syncStatusDto -> {
+                log.info("syncMainFixtures (called from syncLeagues with params: {}) completed with status: {}. Message: {}. Items: {}",
+                    defaultParams, syncStatusDto.getStatus(), syncStatusDto.getMessage(), syncStatusDto.getItemsProcessed());
+            },
+            error -> {
+                log.error("Error during syncMainFixtures (called from syncLeagues with params: {}): {}",
+                    defaultParams, error.getMessage(), error);
+            }
         );
     }
 
@@ -85,8 +91,14 @@ public class DataSyncServiceImpl implements DataSyncService {
         params.put("season", String.valueOf(LocalDateTime.now().getYear()));
         log.info("Calling syncMainFixtures for syncTeamsByLeague: {}", params);
         syncMainFixtures(params).subscribe(
-            status -> log.info("syncTeamsByLeague (via syncMainFixtures) completed with status: {}", status),
-            error -> log.error("Error subscribing to syncMainFixtures from syncTeamsByLeague: ", error)
+            syncStatusDto -> {
+                log.info("syncMainFixtures (called from syncTeamsByLeague with params: {}) completed with status: {}. Message: {}. Items: {}",
+                    params, syncStatusDto.getStatus(), syncStatusDto.getMessage(), syncStatusDto.getItemsProcessed());
+            },
+            error -> {
+                log.error("Error during syncMainFixtures (called from syncTeamsByLeague with params: {}): {}",
+                    params, error.getMessage(), error);
+            }
         );
     }
 
@@ -98,8 +110,14 @@ public class DataSyncServiceImpl implements DataSyncService {
         params.put("season", season);
         log.info("Calling syncMainFixtures for syncFixturesByLeague: {}", params);
         syncMainFixtures(params).subscribe(
-            status -> log.info("syncFixturesByLeague (via syncMainFixtures) completed with status: {}", status),
-            error -> log.error("Error subscribing to syncMainFixtures from syncFixturesByLeague: ", error)
+            syncStatusDto -> {
+                log.info("syncMainFixtures (called from syncFixturesByLeague with params: {}) completed with status: {}. Message: {}. Items: {}",
+                    params, syncStatusDto.getStatus(), syncStatusDto.getMessage(), syncStatusDto.getItemsProcessed());
+            },
+            error -> {
+                log.error("Error during syncMainFixtures (called from syncFixturesByLeague with params: {}): {}",
+                    params, error.getMessage(), error);
+            }
         );
     }
 

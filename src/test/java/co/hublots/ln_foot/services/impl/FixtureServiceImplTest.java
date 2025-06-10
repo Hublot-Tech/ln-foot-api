@@ -1,5 +1,9 @@
 package co.hublots.ln_foot.services.impl;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import co.hublots.ln_foot.dto.CreateFixtureDto;
 import co.hublots.ln_foot.dto.FixtureDto;
 import co.hublots.ln_foot.dto.UpdateFixtureDto;
@@ -77,48 +81,65 @@ class FixtureServiceImplTest {
     }
 
     @Test
-    void listFixtures_byLeagueApiId_returnsDtos() {
+    void listFixtures_byLeagueApiId_returnsPagedDtos() { // Renamed and updated
         // Arrange
         String leagueApiId = "L1_API";
-        String internalLeagueId = UUID.randomUUID().toString();
-        League mockLeague = createMockLeague(internalLeagueId, leagueApiId, "Mock League");
+        Pageable pageable = PageRequest.of(0, 10);
+        // League mockLeague = createMockLeague(UUID.randomUUID().toString(), leagueApiId, "Mock League"); // Not directly used by service if repo handles league ID
         Team teamA = createMockTeam(UUID.randomUUID().toString(),"TA_API", "Team A");
         Team teamB = createMockTeam(UUID.randomUUID().toString(),"TB_API", "Team B");
-        Fixture mockFixture = createMockFixture("FX1_API", mockLeague, teamA, teamB, LocalDateTime.now());
+        // Need to associate the mockLeague with the fixture for the DTO mapping to get leagueApiId
+        League mockLeagueForFixture = createMockLeague(UUID.randomUUID().toString(), leagueApiId, "Mock League");
+        Fixture mockFixture = createMockFixture("FX1_API", mockLeagueForFixture, teamA, teamB, LocalDateTime.now());
 
-        when(leagueRepository.findByApiLeagueId(leagueApiId)).thenReturn(Optional.of(mockLeague));
-        when(fixtureRepository.findByLeagueId(internalLeagueId)).thenReturn(List.of(mockFixture));
+        when(fixtureRepository.findByLeagueApiLeagueId(leagueApiId, pageable))
+            .thenReturn(new PageImpl<>(List.of(mockFixture), pageable, 1));
 
         // Act
-        List<FixtureDto> result = fixtureService.listFixtures(leagueApiId, "2023"); // Season not used in current DB query
+        Page<FixtureDto> result = fixtureService.listFixtures(leagueApiId, pageable);
 
         // Assert
         assertNotNull(result);
-        assertEquals(1, result.size());
-        assertEquals("FX1_API", result.get(0).getId());
-        assertEquals(leagueApiId, result.get(0).getLeagueId());
-        verify(leagueRepository).findByApiLeagueId(leagueApiId);
-        verify(fixtureRepository).findByLeagueId(internalLeagueId);
+        assertEquals(1, result.getTotalElements());
+        assertFalse(result.getContent().isEmpty());
+        assertEquals("FX1_API", result.getContent().get(0).getId());
+        assertEquals(leagueApiId, result.getContent().get(0).getLeagueId()); // Check DTO mapping
+        verify(fixtureRepository).findByLeagueApiLeagueId(leagueApiId, pageable);
     }
 
     @Test
-    void listFixtures_leagueNotFound_throwsException() {
-        String leagueApiId = "UNKNOWN_LEAGUE";
-        when(leagueRepository.findByApiLeagueId(leagueApiId)).thenReturn(Optional.empty());
-        assertThrows(EntityNotFoundException.class, () -> fixtureService.listFixtures(leagueApiId, "2023"));
+    void listFixtures_leagueApiIdProvidedButNoFixtures_returnsEmptyPage() { // Renamed
+        String leagueApiId = "LEAGUE_WITH_NO_FIXTURES";
+        Pageable pageable = PageRequest.of(0, 10);
+        when(fixtureRepository.findByLeagueApiLeagueId(leagueApiId, pageable)).thenReturn(Page.empty(pageable));
+
+        // Act
+        Page<FixtureDto> result = fixtureService.listFixtures(leagueApiId, pageable);
+
+        // Assert
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+        verify(fixtureRepository).findByLeagueApiLeagueId(leagueApiId, pageable);
     }
 
     @Test
-    void listFixtures_noLeagueId_returnsAllFixtures() {
+    void listFixtures_noLeagueId_returnsAllFixturesPaged() { // Renamed
+        Pageable pageable = PageRequest.of(0, 10);
         Team teamA = createMockTeam(UUID.randomUUID().toString(),"TA_API", "Team A");
         Team teamB = createMockTeam(UUID.randomUUID().toString(),"TB_API", "Team B");
         League mockLeague = createMockLeague(UUID.randomUUID().toString(), "L1_API", "Mock League");
         Fixture mockFixture = createMockFixture("FX1_API", mockLeague, teamA, teamB, LocalDateTime.now());
-        when(fixtureRepository.findAll()).thenReturn(List.of(mockFixture));
 
-        List<FixtureDto> result = fixtureService.listFixtures(null, "2023");
-        assertEquals(1, result.size());
-        verify(fixtureRepository).findAll();
+        when(fixtureRepository.findAll(pageable)).thenReturn(new PageImpl<>(List.of(mockFixture), pageable, 1));
+
+        // Act
+        Page<FixtureDto> result = fixtureService.listFixtures(null, pageable);
+
+        // Assert
+        assertEquals(1, result.getTotalElements());
+        assertFalse(result.getContent().isEmpty());
+        assertEquals("FX1_API", result.getContent().get(0).getId());
+        verify(fixtureRepository).findAll(pageable);
     }
 
 

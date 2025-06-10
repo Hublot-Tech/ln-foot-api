@@ -155,7 +155,11 @@ class NewsArticleControllerTest {
 
     @Test
     void createNewsArticle_isUnauthorized_withoutAuth() throws Exception {
-        CreateNewsArticleDto createDto = CreateNewsArticleDto.builder().title("Attempt").authorId("someAuthor").build();
+        CreateNewsArticleDto createDto = CreateNewsArticleDto.builder()
+                .title("Attempt")
+                .authorId("someAuthor")
+                .content("Unauthorized content attempt") // Added content
+                .build();
         mockMvc.perform(post("/api/v1/news-articles")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createDto)))
@@ -165,7 +169,11 @@ class NewsArticleControllerTest {
     @Test
     @WithMockUser(roles = "USER") // A role that is not ADMIN or EDITOR
     void createNewsArticle_isForbidden_withUserRole() throws Exception {
-        CreateNewsArticleDto createDto = CreateNewsArticleDto.builder().title("Forbidden Attempt").authorId("userAuthor").build();
+        CreateNewsArticleDto createDto = CreateNewsArticleDto.builder()
+                .title("Forbidden Attempt")
+                .authorId("userAuthor")
+                .content("Forbidden content attempt") // Added content
+                .build();
         mockMvc.perform(post("/api/v1/news-articles")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createDto)))

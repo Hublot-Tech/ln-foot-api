@@ -12,8 +12,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page; // Ensure Page is imported
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable; // Ensure Pageable is imported
 import org.springframework.data.domain.Sort;
 
 import java.time.LocalDateTime;
@@ -53,35 +55,54 @@ class AdvertisementServiceImplTest {
     }
 
     @Test
-    void getLatestAdvertisements_returnsListOfDtos() {
+    void getLatestAdvertisements_returnsPagedDtos_withDefaultSort() {
         // Arrange
+        Pageable requestedPageable = PageRequest.of(0, 5); // Unsorted
+        Pageable expectedRepoPageable = PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "createdAt"));
         Advertisement mockAd = createMockAdvertisement(UUID.randomUUID().toString(), "Latest Ad");
-        PageRequest expectedPageRequest = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "createdAt"));
-        when(advertisementRepository.findAll(expectedPageRequest)).thenReturn(new PageImpl<>(List.of(mockAd)));
+        when(advertisementRepository.findAll(expectedRepoPageable)).thenReturn(new PageImpl<>(List.of(mockAd), expectedRepoPageable, 1));
 
         // Act
-        List<AdvertisementDto> result = advertisementService.getLatestAdvertisements();
+        Page<AdvertisementDto> result = advertisementService.getLatestAdvertisements(requestedPageable);
 
         // Assert
         assertNotNull(result);
-        assertEquals(1, result.size());
-        assertEquals(mockAd.getTitle(), result.get(0).getTitle());
-        verify(advertisementRepository).findAll(expectedPageRequest);
+        assertEquals(1, result.getTotalElements());
+        assertEquals(mockAd.getTitle(), result.getContent().get(0).getTitle());
+        verify(advertisementRepository).findAll(expectedRepoPageable);
     }
 
     @Test
-    void getLatestAdvertisements_returnsEmptyList_whenNoAds() {
+    void getLatestAdvertisements_returnsPagedDtos_withClientSort() {
         // Arrange
-        PageRequest expectedPageRequest = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "createdAt"));
-        when(advertisementRepository.findAll(expectedPageRequest)).thenReturn(new PageImpl<>(Collections.emptyList()));
+        Pageable clientPageable = PageRequest.of(0, 5, Sort.by(Sort.Direction.ASC, "title"));
+        // Service should use this sort if present, not override with default
+        Advertisement mockAd = createMockAdvertisement(UUID.randomUUID().toString(), "Ad A");
+        when(advertisementRepository.findAll(clientPageable)).thenReturn(new PageImpl<>(List.of(mockAd), clientPageable, 1));
 
         // Act
-        List<AdvertisementDto> result = advertisementService.getLatestAdvertisements();
+        Page<AdvertisementDto> result = advertisementService.getLatestAdvertisements(clientPageable);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(1, result.getTotalElements());
+        assertEquals(mockAd.getTitle(), result.getContent().get(0).getTitle());
+        verify(advertisementRepository).findAll(clientPageable);
+    }
+
+    @Test
+    void getLatestAdvertisements_returnsEmptyPage_whenNoAds() {
+        // Arrange
+        Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "createdAt"));
+        when(advertisementRepository.findAll(pageable)).thenReturn(Page.empty(pageable));
+
+        // Act
+        Page<AdvertisementDto> result = advertisementService.getLatestAdvertisements(pageable);
 
         // Assert
         assertNotNull(result);
         assertTrue(result.isEmpty());
-        verify(advertisementRepository).findAll(expectedPageRequest);
+        verify(advertisementRepository).findAll(pageable);
     }
 
     @Test

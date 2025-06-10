@@ -6,9 +6,11 @@ import co.hublots.ln_foot.dto.UpdateAdvertisementDto;
 
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface AdvertisementService {
-    List<AdvertisementDto> getLatestAdvertisements();
+    Page<AdvertisementDto> getLatestAdvertisements(Pageable pageable); // Changed signature
     Optional<AdvertisementDto> getAdvertisementById(String id);
     AdvertisementDto createAdvertisement(CreateAdvertisementDto createDto);
     AdvertisementDto updateAdvertisement(String id, UpdateAdvertisementDto updateDto);

@@ -19,8 +19,12 @@ public class FixtureDto {
     private Integer timestamp;
     private String venueName;
     private String venueCity;
-    private String statusShort;
-    private String statusLong;
+    // private String statusShort; // Renamed
+    // private String statusLong; // To be replaced by statusDescription
+    private String statusShortCode; // Renamed from statusShort
+    private String statusDescription; // New field
+    private boolean isLive; // New field, derived from status
+
     private Integer elapsed;
     private String leagueId; // Corresponds to apiFootballId of the league
     private String season; // e.g., "2023"
@@ -37,7 +41,7 @@ public class FixtureDto {
     private Integer scoreEtAway;
     private Integer scorePtHome;
     private Integer scorePtAway;
-    private Boolean live; // Custom field, true if fixture is ongoing
+    // private Boolean live; // Replaced by isLive derived from FixtureStatus enum
     private OffsetDateTime createdAt;
     private OffsetDateTime updatedAt;
 }

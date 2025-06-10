@@ -14,12 +14,17 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.data.domain.Page; // Added
+import org.springframework.data.domain.PageImpl; // Added
+import org.springframework.data.domain.PageRequest; // Added
+import org.springframework.data.domain.Pageable; // Added
 
 import java.time.OffsetDateTime;
 import java.util.Collections;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq; // Added
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -55,14 +60,20 @@ class LeagueControllerTest {
 
     @Test
     @WithAnonymousUser
-    void listLeagues_isOk() throws Exception {
+    void listLeagues_isOk_returnsPage() throws Exception { // Updated test
         LeagueDto mockLeague = createMockLeagueDto("L1");
-        when(leagueService.listLeagues(any(), any(), any())).thenReturn(Collections.singletonList(mockLeague));
+        Page<LeagueDto> leaguePage = new PageImpl<>(Collections.singletonList(mockLeague), PageRequest.of(0, 1), 1);
 
-        mockMvc.perform(get("/api/v1/leagues").param("country", "Mockland"))
+        when(leagueService.listLeagues(eq("Mockland"), eq(null), any(Pageable.class))).thenReturn(leaguePage);
+
+        mockMvc.perform(get("/api/v1/leagues")
+                        .param("country", "Mockland")
+                        .param("page", "0")
+                        .param("size", "1"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].id", is("L1")));
+                .andExpect(jsonPath("$.content", hasSize(1)))
+                .andExpect(jsonPath("$.content[0].id", is("L1")))
+                .andExpect(jsonPath("$.totalPages", is(1)));
     }
 
     @Test

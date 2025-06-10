@@ -14,10 +14,14 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.data.domain.Page; // Added
+import org.springframework.data.domain.PageImpl; // Added
+import org.springframework.data.domain.PageRequest; // Added
+import org.springframework.data.domain.Pageable; // Added
 
 import java.time.OffsetDateTime;
 import java.util.Collections;
-import java.util.List;
+// import java.util.List; // No longer needed for getLatestAdvertisements return type
 import java.util.Optional;
 import java.util.UUID;
 
@@ -61,14 +65,21 @@ class AdvertisementControllerTest {
 
     @Test
     @WithAnonymousUser // Explicitly state this runs as anonymous, expecting public access
-    void getLatestAdvertisements_isOk() throws Exception {
-        List<AdvertisementDto> mockAds = Collections.singletonList(createMockAdvertisementDto());
-        when(advertisementService.getLatestAdvertisements()).thenReturn(mockAds);
+    void getLatestAdvertisements_isOk_returnsPage() throws Exception {
+        AdvertisementDto mockAd = createMockAdvertisementDto();
+        Page<AdvertisementDto> mockPage = new PageImpl<>(Collections.singletonList(mockAd), PageRequest.of(0, 1), 1);
 
-        mockMvc.perform(get("/api/v1/advertisements/latest"))
+        when(advertisementService.getLatestAdvertisements(any(Pageable.class))).thenReturn(mockPage);
+
+        mockMvc.perform(get("/api/v1/advertisements/latest")
+                        .param("page", "0")
+                        .param("size", "1")
+                        .param("sort", "createdAt,desc"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].title", is("Test Ad")));
+                .andExpect(jsonPath("$.content", hasSize(1)))
+                .andExpect(jsonPath("$.content[0].title", is("Test Ad")))
+                .andExpect(jsonPath("$.totalPages", is(1)))
+                .andExpect(jsonPath("$.totalElements", is(1)));
     }
 
     @Test

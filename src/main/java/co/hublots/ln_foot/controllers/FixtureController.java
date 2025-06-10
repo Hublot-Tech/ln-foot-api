@@ -11,12 +11,16 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid; // Added import
 import jakarta.persistence.EntityNotFoundException; // Added import
-import lombok.extern.slf4j.Slf4j; // Added import for logging
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated; // Added for @Validated
+import org.springframework.data.domain.Page; // Added for Page
+import org.springframework.data.domain.Pageable; // Added for Pageable
 
 import java.time.LocalDate;
 import java.util.List;
 
-@Slf4j // Added for logging
+@Slf4j
+@Validated // Added
 @RestController
 @RequestMapping("/api/v1/fixtures")
 public class FixtureController {
@@ -28,10 +32,11 @@ public class FixtureController {
     }
 
     @GetMapping
-    public List<FixtureDto> listFixtures(
-            @RequestParam(required = false) String leagueId,
-            @RequestParam(required = false) String season) {
-        return fixtureService.listFixtures(leagueId, season);
+    public ResponseEntity<Page<FixtureDto>> listFixtures( // Changed return type
+            @RequestParam(required = false) String leagueApiId, // Renamed for clarity, param name in request is still leagueId unless changed with @RequestParam("leagueId")
+            Pageable pageable) { // Added Pageable
+        Page<FixtureDto> fixturePage = fixtureService.listFixtures(leagueApiId, pageable);
+        return ResponseEntity.ok(fixturePage);
     }
 
     @GetMapping("/{id}")

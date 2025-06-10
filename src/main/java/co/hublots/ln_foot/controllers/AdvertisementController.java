@@ -8,9 +8,16 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid; // Added
+import jakarta.persistence.EntityNotFoundException; // Added
+import org.springframework.dao.DataAccessException; // Added
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page; // Added
+import org.springframework.data.domain.Pageable; // Added
 
-import java.util.List;
+import java.util.List; // Still needed for other methods if any, or can be removed if getLatest is the only list method
 
+@Slf4j
 @RestController
 @RequestMapping("/api/v1/advertisements")
 public class AdvertisementController {
@@ -22,8 +29,9 @@ public class AdvertisementController {
     }
 
     @GetMapping("/latest")
-    public List<AdvertisementDto> getLatestAdvertisements() {
-        return advertisementService.getLatestAdvertisements();
+    public ResponseEntity<Page<AdvertisementDto>> getLatestAdvertisements(Pageable pageable) { // Changed signature
+        Page<AdvertisementDto> advertisementsPage = advertisementService.getLatestAdvertisements(pageable);
+        return ResponseEntity.ok(advertisementsPage);
     }
 
     @GetMapping("/{id}")
@@ -42,16 +50,19 @@ public class AdvertisementController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<AdvertisementDto> updateAdvertisement(@PathVariable String id, @RequestBody UpdateAdvertisementDto updateDto) {
-        AdvertisementDto updatedAd = advertisementService.updateAdvertisement(id, updateDto);
-        // In a real scenario, updateAdvertisement might return Optional or throw an exception if not found
-        // For this mock, we assume it always succeeds if it doesn't throw.
-        if (updatedAd != null) { // Basic check, service could return null if id not found in a more complex mock
-            return ResponseEntity.ok(updatedAd);
-        } else {
-            // This case might not be reached with the current mock AdvertisementServiceImpl,
-            // but good practice for a real implementation.
+    public ResponseEntity<?> updateAdvertisement(@PathVariable String id, @Valid @RequestBody UpdateAdvertisementDto updateDto) {
+        try {
+            AdvertisementDto updatedAdvertisement = advertisementService.updateAdvertisement(id, updateDto);
+            return ResponseEntity.ok(updatedAdvertisement);
+        } catch (EntityNotFoundException e) {
+            log.warn("Attempted to update non-existent advertisement with ID {}: {}", id, e.getMessage());
             return ResponseEntity.notFound().build();
+        } catch (DataAccessException e) {
+            log.error("Database error while updating advertisement with ID {}: {}", id, e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("A database error occurred.");
+        } catch (Exception e) {
+            log.error("Unexpected error while updating advertisement with ID {}: {}", id, e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred.");
         }
     }
 

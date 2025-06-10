@@ -1,5 +1,11 @@
 package co.hublots.ln_foot.services.impl;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.util.StringUtils;
+import lombok.extern.slf4j.Slf4j; // Added for logging
+
 import co.hublots.ln_foot.dto.*;
 import co.hublots.ln_foot.models.Fixture;
 import co.hublots.ln_foot.models.League;
@@ -17,15 +23,18 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+@Slf4j // Added
 @Service
 @RequiredArgsConstructor
 public class LeagueServiceImpl implements LeagueService {
 
+    // private static final Logger log = LoggerFactory.getLogger(LeagueServiceImpl.class); // Replaced by @Slf4j
     private final LeagueRepository leagueRepository;
     // No need for FixtureRepository/TeamRepository for basic League CRUD if not creating/linking them here
 
     // --- Internal DTO Mapping Helpers ---
 
+    // ... private DTO mapping helpers remain unchanged ...
     private SimpleTeamDto mapTeamToSimpleTeamDto(Team entity) {
         if (entity == null) return null;
         return SimpleTeamDto.builder()
@@ -45,8 +54,9 @@ public class LeagueServiceImpl implements LeagueService {
                 .timestamp(entity.getMatchDatetime() != null ? (int) entity.getMatchDatetime().toEpochSecond(ZoneOffset.UTC) : null)
                 .venueName(entity.getVenueName())
                 .venueCity(null) // Fixture entity doesn't have venueCity
-                .statusShort(entity.getStatus()) // Assuming status can map to statusShort
-                .statusLong(entity.getStatus())  // Or map to a more descriptive long status if available
+                .statusShortCode(FixtureStatus.fromShortCode(entity.getStatus()).getShortCode()) // Updated to use FixtureStatus
+                .statusDescription(FixtureStatus.fromShortCode(entity.getStatus()).getDescription()) // Updated
+                .isLive(FixtureStatus.fromShortCode(entity.getStatus()).isLive()) // Updated
                 .elapsed(null) // Fixture entity doesn't have elapsed
                 .leagueId(entity.getLeague() != null ? entity.getLeague().getApiLeagueId() : null)
                 // .season() // Fixture entity doesn't have season directly
@@ -56,7 +66,6 @@ public class LeagueServiceImpl implements LeagueService {
                 .goalsHome(entity.getGoalsTeam1())
                 .goalsAway(entity.getGoalsTeam2())
                 // other score details not in Fixture entity
-                .live(List.of("LIVE", "1H", "HT", "2H", "ET", "P").contains(entity.getStatus())) // Basic live logic
                 .createdAt(entity.getCreatedAt() != null ? entity.getCreatedAt().atOffset(ZoneOffset.UTC) : null)
                 .updatedAt(entity.getUpdatedAt() != null ? entity.getUpdatedAt().atOffset(ZoneOffset.UTC) : null)
                 .build();
@@ -101,20 +110,47 @@ public class LeagueServiceImpl implements LeagueService {
         // sportId, apiSource, tier are not in UpdateLeagueDto.
     }
 
+    // Removed misplaced imports from here
+
     @Override
     @Transactional(readOnly = true)
-    public List<LeagueDto> listLeagues(String country, String season, String type) {
-        // Basic findAll. Filtering by country, season, type would require custom repo methods
-        // or in-memory filtering if the dataset is small.
-        // Example: if (country != null) { return leagueRepository.findByCountry(country)... }
-        return leagueRepository.findAll().stream()
-                .map(this::mapToDto)
-                .collect(Collectors.toList());
+    public Page<LeagueDto> listLeagues(String country, String type, Pageable pageable) { // Removed season, added Pageable
+        log.debug("Listing leagues with country: [{}], type: [{}], pageable: {}", country, type, pageable);
+
+        Specification<League> spec = Specification.where(null);
+
+        if (StringUtils.hasText(country)) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("country"), country));
+        }
+
+        // Assuming 'type' might map to 'sportId' or a conceptual 'type' field if it existed.
+        // League entity has 'sportId' and 'tier'. 'type' from controller is ambiguous here.
+        // If 'type' was meant to be 'sportId':
+        // if (StringUtils.hasText(type)) {
+        //     spec = spec.and((root, query, cb) -> cb.equal(root.get("sportId"), type));
+        // }
+        // If 'type' was meant for something like "Cup", "League" and entity had such a field:
+        // if (StringUtils.hasText(type)) {
+        //     spec = spec.and((root, query, cb) -> cb.equal(root.get("leagueTypeField"), type)); // Assuming 'leagueTypeField'
+        // }
+        if (StringUtils.hasText(type)) {
+            log.warn("Filtering by 'type' ('{}') is not fully implemented as League entity may not have a direct 'type' field. This filter might be ignored or adapted.", type);
+            // For now, let's assume 'type' could filter by 'sportId' if that's the intent
+             spec = spec.and((root, query, cb) -> cb.equal(root.get("sportId"), type));
+        }
+
+        // Season filter is removed as League entity does not have a season field.
+        // Filtering leagues by season often implies looking at associated fixtures for that season,
+        // which is more complex than a direct attribute filter on League.
+
+        Page<League> leaguePage = leagueRepository.findAll(spec, pageable);
+        log.debug("Found {} leagues matching criteria.", leaguePage.getTotalElements());
+        return leaguePage.map(this::mapToDto);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<LeagueDto> findLeagueById(String apiLeagueId) { // id is apiLeagueId
+    public Optional<LeagueDto> findLeagueById(String apiLeagueId) {
         return leagueRepository.findByApiLeagueId(apiLeagueId).map(this::mapToDto);
     }
 

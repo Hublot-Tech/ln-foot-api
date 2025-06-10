@@ -1,5 +1,10 @@
 package co.hublots.ln_foot.services.impl;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification; // For mocking findAll(spec, pageable)
 import co.hublots.ln_foot.dto.CreateLeagueDto;
 import co.hublots.ln_foot.dto.LeagueDto;
 import co.hublots.ln_foot.dto.UpdateLeagueDto;
@@ -76,21 +81,47 @@ class LeagueServiceImplTest {
 
 
     @Test
-    void listLeagues_returnsListOfDtos() {
+    void listLeagues_noFilters_returnsPagedDtos() { // Updated test
         // Arrange
+        Pageable pageable = PageRequest.of(0, 10);
         League mockLeague1 = createMockLeague(UUID.randomUUID().toString(), "L1_API", "League One", Collections.emptyList());
         League mockLeague2 = createMockLeague(UUID.randomUUID().toString(), "L2_API", "League Two", Collections.emptyList());
-        when(leagueRepository.findAll()).thenReturn(List.of(mockLeague1, mockLeague2));
+        Page<League> leaguePage = new PageImpl<>(List.of(mockLeague1, mockLeague2), pageable, 2);
+
+        when(leagueRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(leaguePage);
 
         // Act
-        List<LeagueDto> result = leagueService.listLeagues(null, null, null); // Params currently not used by repo call
+        Page<LeagueDto> result = leagueService.listLeagues(null, null, pageable);
 
         // Assert
         assertNotNull(result);
-        assertEquals(2, result.size());
-        assertEquals("L1_API", result.get(0).getId()); // DTO id is apiLeagueId
-        assertEquals("League One", result.get(0).getName());
-        verify(leagueRepository).findAll();
+        assertEquals(2, result.getTotalElements());
+        assertEquals("L1_API", result.getContent().get(0).getId());
+        assertEquals("League One", result.getContent().get(0).getName());
+        verify(leagueRepository).findAll(any(Specification.class), eq(pageable));
+    }
+
+    @Test
+    void listLeagues_withCountryFilter_returnsFilteredPagedDtos() { // New test for filtering
+        // Arrange
+        Pageable pageable = PageRequest.of(0, 10);
+        String countryFilter = "Mockland";
+        League mockLeague1 = createMockLeague(UUID.randomUUID().toString(), "L1_API", "League One", Collections.emptyList());
+        mockLeague1.setCountry(countryFilter);
+        Page<League> leaguePage = new PageImpl<>(List.of(mockLeague1), pageable, 1);
+
+        // ArgumentCaptor for Specification can be complex, so we trust the service builds it.
+        // We verify the interaction with the repository.
+        when(leagueRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(leaguePage);
+
+        // Act
+        Page<LeagueDto> result = leagueService.listLeagues(countryFilter, null, pageable);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(1, result.getTotalElements());
+        assertEquals(countryFilter, result.getContent().get(0).getCountry());
+        verify(leagueRepository).findAll(any(Specification.class), eq(pageable));
     }
 
     @Test

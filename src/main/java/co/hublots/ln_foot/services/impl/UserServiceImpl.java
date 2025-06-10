@@ -69,15 +69,22 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public UserDto updateUserRole(String id, UpdateUserRoleDto updateUserRoleDto) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("User with ID " + id + " not found"));
-
-        if (updateUserRoleDto.getRole() != null) {
-            user.setRole(updateUserRoleDto.getRole());
+    public UserDto updateUserRole(String userId, String newRole) { // Signature updated
+        if (newRole == null || newRole.isBlank()) {
+            // This case should ideally be caught by @Valid on UpdateUserRoleDto in the controller due to @NotBlank.
+            // If this service method is called directly (e.g. internally) with invalid role, this check is a safeguard.
+            throw new IllegalArgumentException("Role cannot be null or blank.");
         }
-        // 'permissions' from DTO are not mapped as User entity doesn't have a persistence field for it yet.
-        // If it did, it would be: user.setPermissions(updateUserRoleDto.getPermissions());
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("User with ID " + userId + " not found"));
+
+        // Optional: Add validation here if 'newRole' must be one of a predefined set of roles
+        // e.g., if (!ValidRolesEnum.isValid(newRole)) { throw new IllegalArgumentException("Invalid role: " + newRole); }
+
+        user.setRole(newRole);
+        // 'permissions' from the original DTO are not handled here as this method now only receives the role string.
+        // If permissions were to be updated, the DTO would need to be passed or another method created.
 
         User updatedUser = userRepository.save(user);
         return mapToDto(updatedUser);

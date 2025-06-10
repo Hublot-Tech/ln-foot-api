@@ -9,6 +9,8 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @Repository
 public interface FixtureRepository extends JpaRepository<Fixture, String> {
@@ -33,4 +35,6 @@ public interface FixtureRepository extends JpaRepository<Fixture, String> {
     List<Fixture> findByLeagueIdAndStatus(String leagueId, String status);
 
     Optional<Fixture> findByApiFixtureIdAndApiSource(String apiFixtureId, String apiSource);
+
+    Page<Fixture> findByLeagueApiLeagueId(String leagueApiId, Pageable pageable); // Added for paginated search by league API ID
 }

@@ -1,5 +1,8 @@
 package co.hublots.ln_foot.services.impl;
 
+import co.hublots.ln_foot.models.enums.FixtureStatus; // Added import
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import co.hublots.ln_foot.dto.CreateFixtureDto;
 import co.hublots.ln_foot.dto.FixtureDto;
 import co.hublots.ln_foot.dto.SimpleTeamDto;
@@ -49,22 +52,29 @@ public class FixtureServiceImpl implements FixtureService {
                 .id(entity.getApiFixtureId()) // FixtureDto.id is apiFixtureId
                 // referee, timezone, elapsed not in Fixture entity
                 .date(entity.getMatchDatetime() != null ? entity.getMatchDatetime().atOffset(ZoneOffset.UTC) : null)
+import co.hublots.ln_foot.models.enums.FixtureStatus; // Added import
+
+// ... (inside the class)
+    private FixtureDto mapToDto(Fixture entity) {
+        if (entity == null) return null;
+        FixtureStatus statusEnum = FixtureStatus.fromShortCode(entity.getStatus());
+        return FixtureDto.builder()
+                .id(entity.getApiFixtureId())
+                .date(entity.getMatchDatetime() != null ? entity.getMatchDatetime().atOffset(ZoneOffset.UTC) : null)
                 .timestamp(entity.getMatchDatetime() != null ? (int) entity.getMatchDatetime().toEpochSecond(ZoneOffset.UTC) : null)
                 .venueName(entity.getVenueName())
-                // venueCity not in Fixture entity
-                .statusShort(entity.getStatus()) // Assuming status maps to statusShort
-                .statusLong(entity.getStatus())  // Or map to a more descriptive long status if available
+                .statusShortCode(statusEnum.getShortCode()) // Use enum
+                .statusDescription(statusEnum.getDescription()) // Use enum
+                .isLive(statusEnum.isLive()) // Use enum
                 .leagueId(entity.getLeague() != null ? entity.getLeague().getApiLeagueId() : null)
                 .round(entity.getRound())
                 .homeTeam(mapTeamToSimpleTeamDto(entity.getTeam1()))
                 .awayTeam(mapTeamToSimpleTeamDto(entity.getTeam2()))
                 .goalsHome(entity.getGoalsTeam1())
                 .goalsAway(entity.getGoalsTeam2())
-                // scoreHtHome, scoreHtAway, scoreFtHome, etc. not in Fixture entity
-                .live(List.of("LIVE", "1H", "HT", "2H", "ET", "P").contains(entity.getStatus() != null ? entity.getStatus().toUpperCase() : ""))
+                // referee, timezone, elapsed, venueCity, score details not in Fixture entity, remain null in DTO if not set otherwise
                 .createdAt(entity.getCreatedAt() != null ? entity.getCreatedAt().atOffset(ZoneOffset.UTC) : null)
                 .updatedAt(entity.getUpdatedAt() != null ? entity.getUpdatedAt().atOffset(ZoneOffset.UTC) : null)
-                // season not directly on Fixture entity, might come from League or context
                 .build();
     }
 
@@ -105,26 +115,29 @@ public class FixtureServiceImpl implements FixtureService {
 
     // --- Service Methods ---
 
+    // ... (other methods) // Imports moved to top
+
     @Override
     @Transactional(readOnly = true)
-    public List<FixtureDto> listFixtures(String leagueId, String season) {
-        // Season is not directly on Fixture entity.
-        // If season is important, it might be part of apiLeagueId, or matchDatetime range.
-        // For now, just fetching by leagueId if provided.
-        List<Fixture> fixtures;
-        if (leagueId != null && !leagueId.isEmpty()) {
-            League league = leagueRepository.findByApiLeagueId(leagueId)
-                .orElseThrow(() -> new EntityNotFoundException("League with apiLeagueId " + leagueId + " not found for listing fixtures."));
-            fixtures = fixtureRepository.findByLeagueId(league.getId()); // Assuming findByLeagueId takes internal UUID
+    public Page<FixtureDto> listFixtures(String leagueApiId, Pageable pageable) { // Changed signature
+        Page<Fixture> fixturePage;
+        if (leagueApiId != null && !leagueApiId.isEmpty()) {
+            // Assuming the repository method findByLeagueApiLeagueId handles the case where league might not exist
+            // by returning an empty page, or we trust leagueApiId is valid from prior checks/context.
+            // If strict check needed:
+            // League league = leagueRepository.findByApiLeagueId(leagueApiId)
+            // .orElseThrow(() -> new EntityNotFoundException("League with apiLeagueId " + leagueApiId + " not found."));
+            // fixturePage = fixtureRepository.findByLeagueId(league.getId(), pageable); // if using internal ID
+            fixturePage = fixtureRepository.findByLeagueApiLeagueId(leagueApiId, pageable);
         } else {
-            fixtures = fixtureRepository.findAll(); // Or decide this is not allowed/too broad
+            fixturePage = fixtureRepository.findAll(pageable);
         }
-        return fixtures.stream().map(this::mapToDto).collect(Collectors.toList());
+        return fixturePage.map(this::mapToDto);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<FixtureDto> findFixtureById(String apiFixtureId) { // id is apiFixtureId
+    public Optional<FixtureDto> findFixtureById(String apiFixtureId) {
         return fixtureRepository.findByApiFixtureId(apiFixtureId).map(this::mapToDto);
     }
 
@@ -132,11 +145,14 @@ public class FixtureServiceImpl implements FixtureService {
     @Transactional(readOnly = true)
     public List<FixtureDto> getUpcomingFixtures(Integer days, String leagueApiId) {
         LocalDateTime startDate = LocalDateTime.now();
-        LocalDateTime endDate = LocalDateTime.now().plusDays(days != null ? days : 7); // Default to 7 days
+        LocalDateTime endDate = LocalDateTime.now().plusDays(days != null ? days : 7);
         List<Fixture> fixtures;
         if (leagueApiId != null && !leagueApiId.isEmpty()) {
             League league = leagueRepository.findByApiLeagueId(leagueApiId)
                 .orElseThrow(() -> new EntityNotFoundException("League with apiLeagueId " + leagueApiId + " not found for upcoming fixtures."));
+            // The repository method findByLeagueIdAndMatchDatetimeBetween is not paginated.
+            // If this list can be large, it should also be paginated or limited.
+            // For now, keeping as List, but noting this for potential future enhancement if needed.
             fixtures = fixtureRepository.findByLeagueIdAndMatchDatetimeBetween(league.getId(), startDate, endDate);
         } else {
             fixtures = fixtureRepository.findByMatchDatetimeBetween(startDate, endDate);
@@ -146,13 +162,14 @@ public class FixtureServiceImpl implements FixtureService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<FixtureDto> getFixturesByDate(LocalDate date, String leagueApiId) {
+    public List<FixtureDto> getFixturesByDate(LocalDate date, String leagueApiId) { // Renamed leagueId to leagueApiId for consistency
         LocalDateTime startDate = date.atStartOfDay();
         LocalDateTime endDate = date.atTime(LocalTime.MAX);
         List<Fixture> fixtures;
          if (leagueApiId != null && !leagueApiId.isEmpty()) {
             League league = leagueRepository.findByApiLeagueId(leagueApiId)
                 .orElseThrow(() -> new EntityNotFoundException("League with apiLeagueId " + leagueApiId + " not found for fixtures by date."));
+            // Similar to getUpcomingFixtures, this is not paginated.
             fixtures = fixtureRepository.findByLeagueIdAndMatchDatetimeBetween(league.getId(), startDate, endDate);
         } else {
             fixtures = fixtureRepository.findByMatchDatetimeBetween(startDate, endDate);
