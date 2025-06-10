@@ -9,10 +9,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid; // Added import
+import jakarta.persistence.EntityNotFoundException; // Added import
+import lombok.extern.slf4j.Slf4j; // Added import for logging
 
 import java.time.LocalDate;
 import java.util.List;
 
+@Slf4j // Added for logging
 @RestController
 @RequestMapping("/api/v1/fixtures")
 public class FixtureController {
@@ -53,26 +57,32 @@ public class FixtureController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<FixtureDto> createFixture(@RequestBody CreateFixtureDto createDto) {
+    public ResponseEntity<FixtureDto> createFixture(@Valid @RequestBody CreateFixtureDto createDto) {
         FixtureDto createdFixture = fixtureService.createFixture(createDto);
         return new ResponseEntity<>(createdFixture, HttpStatus.CREATED);
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/{id}") // Path variable should be apiFixtureId if that's what service expects
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<FixtureDto> updateFixture(@PathVariable String id, @RequestBody UpdateFixtureDto updateDto) {
-        FixtureDto updatedFixture = fixtureService.updateFixture(id, updateDto);
-        if (updatedFixture != null) {
+    public ResponseEntity<FixtureDto> updateFixture(@PathVariable String id, @Valid @RequestBody UpdateFixtureDto updateDto) {
+        try {
+            FixtureDto updatedFixture = fixtureService.updateFixture(id, updateDto); // Service throws if not found
             return ResponseEntity.ok(updatedFixture);
-        } else {
+        } catch (EntityNotFoundException e) {
+            log.warn("Attempted to update non-existent fixture with id {}: {}", id, e.getMessage());
             return ResponseEntity.notFound().build();
         }
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{id}") // Path variable should be apiFixtureId
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteFixture(@PathVariable String id) {
-        fixtureService.deleteFixture(id);
-        return ResponseEntity.noContent().build();
+        try {
+            fixtureService.deleteFixture(id); // Service throws EntityNotFoundException if not found
+            return ResponseEntity.noContent().build();
+        } catch (EntityNotFoundException e) {
+            log.warn("Attempted to delete non-existent fixture with id {}: {}", id, e.getMessage());
+            return ResponseEntity.notFound().build();
+        }
     }
 }

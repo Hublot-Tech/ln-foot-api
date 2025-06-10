@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
+import jakarta.validation.constraints.NotBlank;
 import java.util.List;
 
 @Data
@@ -14,7 +15,9 @@ import java.util.List;
 public class UpdateUserRoleDto {
     // userId is typically passed as a path parameter, e.g., /users/{userId}/role
     // So, it might not be needed in the DTO body.
-    // private String userId;
+
+    @NotBlank(message = "Role must be provided.")
     private String role; // The new role to assign
-    private List<String> permissions; // Optional: if permissions are updated alongside role
+
+    private List<String> permissions; // Optional: if permissions are updated alongside role. Could add @Size if needed.
 }

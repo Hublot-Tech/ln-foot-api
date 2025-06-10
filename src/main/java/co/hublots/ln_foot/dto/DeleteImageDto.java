@@ -10,9 +10,21 @@ import lombok.AllArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class DeleteImageDto {
-    private String key; // The S3 key of the image to delete
-    // OR
-    private String imageUrl; // The full URL of the image to delete (backend can parse key from it)
+    /**
+     * The S3 object key of the image to delete.
+     * Provide this OR imageUrl, but not both.
+     */
+    private String key;
+
+    /**
+     * The full URL of the image to delete. The backend service will attempt to parse the object key from this URL.
+     * Provide this OR key, but not both.
+     */
+    private String imageUrl;
+
+    // TODO: Implement class-level validation to ensure either 'key' or 'imageUrl' is provided, but not both.
+    // For now, service layer (UploadServiceImpl) should handle this logic.
+
     private String entityType; // Optional: for logging or specific deletion logic
     private String entityId; // Optional: for logging or specific deletion logic
 }

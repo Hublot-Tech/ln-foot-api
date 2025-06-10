@@ -35,12 +35,6 @@ public class AdvertisementServiceImpl implements AdvertisementService {
                 .content(entity.getDescription()) // Map description to content
                 .url(entity.getReferenceUrl())   // Map referenceUrl to url
                 .imageUrl(entity.getImageUrl())
-                // startDate, endDate, priority, status are not in the current Advertisement entity
-                // If they were, they would be mapped here:
-                // .startDate(entity.getStartDate() != null ? entity.getStartDate().atOffset(ZoneOffset.UTC) : null)
-                // .endDate(entity.getEndDate() != null ? entity.getEndDate().atOffset(ZoneOffset.UTC) : null)
-                // .priority(entity.getPriority())
-                // .status(entity.getStatus())
                 .createdAt(entity.getCreatedAt() != null ? entity.getCreatedAt().atOffset(ZoneOffset.UTC) : null)
                 .updatedAt(entity.getUpdatedAt() != null ? entity.getUpdatedAt().atOffset(ZoneOffset.UTC) : null)
                 .build();
@@ -51,12 +45,6 @@ public class AdvertisementServiceImpl implements AdvertisementService {
         entity.setDescription(dto.getContent()); // Map content to description
         entity.setReferenceUrl(dto.getUrl());   // Map url to referenceUrl
         entity.setImageUrl(dto.getImageUrl());
-        // startDate, endDate, priority, status are not in the current Advertisement entity
-        // If they were, they would be mapped here:
-        // entity.setStartDate(dto.getStartDate() != null ? dto.getStartDate().toLocalDateTime() : null);
-        // entity.setEndDate(dto.getEndDate() != null ? dto.getEndDate().toLocalDateTime() : null);
-        // entity.setPriority(dto.getPriority());
-        // entity.setStatus(dto.getStatus());
     }
 
     private void mapToEntityForUpdate(UpdateAdvertisementDto dto, Advertisement entity) {
@@ -72,19 +60,6 @@ public class AdvertisementServiceImpl implements AdvertisementService {
         if (dto.getImageUrl() != null) {
             entity.setImageUrl(dto.getImageUrl());
         }
-        // startDate, endDate, priority, status are not in the current Advertisement entity
-        // if (dto.getStartDate() != null) {
-        //     entity.setStartDate(dto.getStartDate().toLocalDateTime());
-        // }
-        // if (dto.getEndDate() != null) {
-        //     entity.setEndDate(dto.getEndDate().toLocalDateTime());
-        // }
-        // if (dto.getPriority() != null) {
-        //     entity.setPriority(dto.getPriority());
-        // }
-        // if (dto.getStatus() != null) {
-        //     entity.setStatus(dto.getStatus());
-        // }
     }
 
     @Override

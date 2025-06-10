@@ -44,16 +44,8 @@ public class Fixture {
     @Column(name = "goals_team2")
     private Integer goalsTeam2;
 
-    // Additional score fields from FixtureDto if needed
-    // private Integer scoreHtHome; // Half-time home goals
-    // private Integer scoreHtAway; // Half-time away goals
-    // private Integer scoreFtHome; // Full-time home goals (usually same as goalsTeam1)
-    // private Integer scoreFtAway; // Full-time away goals (usually same as goalsTeam2)
-    // private Integer scoreEtHome; // Extra-time home goals
-    // private Integer scoreEtAway; // Extra-time away goals
-    // private Integer scorePtHome; // Penalty shootout home goals
-    // private Integer scorePtAway; // Penalty shootout away goals
-
+    // Detailed scores (halftime, extratime, penalty) are available from external DTOs (e.g. ScoreDto)
+    // but not persisted directly on the Fixture entity for now, only final scores (goalsTeam1, goalsTeam2).
 
     @Column(name = "venue_name")
     private String venueName;

@@ -50,9 +50,8 @@ public class TeamServiceImpl implements TeamService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<TeamDto> listTeamsByLeague(String leagueApiId, String season) {
-        // Season is not used in this logic yet, as Team/Fixture entities don't store it directly
-        // in a way that's easily queryable for this specific purpose without more complex date logic.
+    public List<TeamDto> listTeamsByLeague(String leagueApiId) { // Removed season parameter
+        // Season was not used in the previous logic.
         League league = leagueRepository.findByApiLeagueId(leagueApiId)
             .orElseThrow(() -> new EntityNotFoundException("League with apiLeagueId " + leagueApiId + " not found."));
 

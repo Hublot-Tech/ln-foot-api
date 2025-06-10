@@ -29,6 +29,9 @@ public class UploadServiceImpl implements UploadService {
     private static final Logger log = LoggerFactory.getLogger(UploadServiceImpl.class);
     private final MinioClient minioClient;
 
+    private static final long DEFAULT_MIN_UPLOAD_SIZE = 1024; // 1KB
+    private static final long DEFAULT_MAX_UPLOAD_SIZE = 10 * 1024 * 1024; // 10MB
+
     @Value("${minio.bucket}")
     private String bucketName;
 
@@ -58,9 +61,11 @@ public class UploadServiceImpl implements UploadService {
                 policy.addStartsWithCondition("Content-Type", "image/"); // Default to image/*
             }
 
-            long minSize = requestDto.getContentLength() != null && requestDto.getContentLength() > 0 ? Math.min(1024, requestDto.getContentLength()) : 1024; // Min 1KB or actual if smaller
-            long maxSize = requestDto.getContentLength() != null && requestDto.getContentLength() > 0 ? Math.max(10 * 1024 * 1024, requestDto.getContentLength()) : 10 * 1024 * 1024; // Max 10MB or actual if larger
-            policy.addContentLengthRangeCondition(minSize, maxSize);
+            // Enforce server-defined limits for the policy.
+            // The client should be informed of these limits out-of-band or via error if they violate them.
+            // requestDto.getContentLength() could be used for logging or pre-validation if desired,
+            // but the policy itself should use server-defined limits.
+            policy.addContentLengthRangeCondition(DEFAULT_MIN_UPLOAD_SIZE, DEFAULT_MAX_UPLOAD_SIZE);
 
 
             Map<String, String> formData = minioClient.getPresignedPostFormData(policy);

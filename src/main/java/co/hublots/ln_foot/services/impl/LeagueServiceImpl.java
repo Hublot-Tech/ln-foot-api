@@ -72,9 +72,7 @@ public class LeagueServiceImpl implements LeagueService {
                 .country(entity.getCountry())
                 .logoUrl(entity.getLogoUrl())
                 // flagUrl, season, type are not in League entity
-                .fixtures(entity.getFixtures() != null ?
-                        entity.getFixtures().stream().map(this::mapFixtureToDto).collect(Collectors.toList()) :
-                        Collections.emptyList())
+                // .fixtures( ... ) // Removed: fixtures list is no longer part of LeagueDto
                 .createdAt(entity.getCreatedAt() != null ? entity.getCreatedAt().atOffset(ZoneOffset.UTC) : null)
                 .updatedAt(entity.getUpdatedAt() != null ? entity.getUpdatedAt().atOffset(ZoneOffset.UTC) : null)
                 .build();

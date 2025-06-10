@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.ZoneOffset;
+import java.util.Collections; // Added import
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -33,11 +34,12 @@ public class HighlightServiceImpl implements HighlightService {
                 .id(entity.getId())
                 .fixtureId(entity.getFixture() != null ? entity.getFixture().getApiFixtureId() : null)
                 .title(entity.getTitle())
-                // description not in Highlight entity
+                .description(entity.getDescription()) // Added mapping
                 .videoUrl(entity.getVideoUrl())
                 .thumbnailUrl(entity.getThumbnailUrl())
                 .durationSeconds(entity.getDuration())
-                // type not in Highlight entity, source from entity not in DTO
+                .type(entity.getType()) // Added mapping
+                // source from entity not in DTO
                 .createdAt(entity.getCreatedAt() != null ? entity.getCreatedAt().atOffset(ZoneOffset.UTC) : null)
                 .updatedAt(entity.getUpdatedAt() != null ? entity.getUpdatedAt().atOffset(ZoneOffset.UTC) : null)
                 .build();
@@ -49,7 +51,8 @@ public class HighlightServiceImpl implements HighlightService {
         entity.setVideoUrl(dto.getVideoUrl());
         entity.setThumbnailUrl(dto.getThumbnailUrl());
         entity.setDuration(dto.getDurationSeconds());
-        // DTO's description and type are not in Highlight entity.
+        entity.setDescription(dto.getDescription()); // Added mapping
+        entity.setType(dto.getType());           // Added mapping
         // Entity's source could be set here if provided in DTO or from context, e.g. entity.setSource("internal_upload");
     }
 
@@ -66,7 +69,12 @@ public class HighlightServiceImpl implements HighlightService {
         if (dto.getDurationSeconds() != null) {
             entity.setDuration(dto.getDurationSeconds());
         }
-        // DTO's description and type are not in Highlight entity.
+        if (dto.getDescription() != null) { // Added mapping
+            entity.setDescription(dto.getDescription());
+        }
+        if (dto.getType() != null) { // Added mapping
+            entity.setType(dto.getType());
+        }
     }
 
 

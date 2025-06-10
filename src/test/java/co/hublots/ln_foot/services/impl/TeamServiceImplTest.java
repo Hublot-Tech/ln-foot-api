@@ -84,7 +84,7 @@ class TeamServiceImplTest {
 
 
         // Act & Assert
-        assertThrows(EntityNotFoundException.class, () -> teamService.listTeamsByLeague(leagueApiId, "2023"));
+        assertThrows(EntityNotFoundException.class, () -> teamService.listTeamsByLeague(leagueApiId)); // Removed season
         verify(leagueRepository).findByApiLeagueId(leagueApiId);
     }
 
@@ -99,7 +99,7 @@ class TeamServiceImplTest {
         when(fixtureRepository.findByLeagueId(internalLeagueId)).thenReturn(Collections.emptyList());
 
         // Act
-        List<TeamDto> result = teamService.listTeamsByLeague(leagueApiId, "2023");
+        List<TeamDto> result = teamService.listTeamsByLeague(leagueApiId); // Removed season
 
         // Assert
         assertNotNull(result);
@@ -127,7 +127,7 @@ class TeamServiceImplTest {
         when(fixtureRepository.findByLeagueId(internalLeagueId)).thenReturn(List.of(fixture1, fixture2, fixture3));
 
         // Act
-        List<TeamDto> result = teamService.listTeamsByLeague(leagueApiId, "2023");
+        List<TeamDto> result = teamService.listTeamsByLeague(leagueApiId); // Removed season
 
         // Assert
         assertNotNull(result);

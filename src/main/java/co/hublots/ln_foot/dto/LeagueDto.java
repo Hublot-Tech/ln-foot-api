@@ -22,5 +22,5 @@ public class LeagueDto {
     private String type; // e.g., "League", "Cup"
     private OffsetDateTime createdAt;
     private OffsetDateTime updatedAt;
-    private List<FixtureDto> fixtures; // List of fixtures for this league
+    // private List<FixtureDto> fixtures; // Removed to prevent circular serialization and keep LeagueDto lean
 }

@@ -18,12 +18,11 @@ public class TeamController {
         this.teamService = teamService;
     }
 
-    // Example: /api/v1/teams?leagueId=XYZ&season=2023
+    // Example: /api/v1/teams?leagueId=XYZ
     @GetMapping
     public List<TeamDto> listTeamsByLeague(
-            @RequestParam String leagueId, // Assuming leagueId is mandatory for listing teams
-            @RequestParam(required = false) String season) {
-        return teamService.listTeamsByLeague(leagueId, season);
+            @RequestParam String leagueId) { // Removed season @RequestParam
+        return teamService.listTeamsByLeague(leagueId); // Call updated service method
     }
 
     @GetMapping("/{id}")
