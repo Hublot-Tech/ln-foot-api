@@ -143,9 +143,13 @@ class DataSyncServiceImplTest {
         });
 
         // Act
-        dataSyncService.syncMainFixtures(new HashMap<>());
+        SyncStatusDto statusDto = dataSyncService.syncMainFixtures(new HashMap<>()).block();
 
         // Assert
+        assertNotNull(statusDto);
+        assertEquals("SUCCESS", statusDto.getStatus());
+        assertEquals(1, statusDto.getItemsProcessed()); // Only one fixture matched the filter
+
         verify(highlightRepositoryMock).deleteAllInBatch();
         verify(fixtureRepositoryMock).deleteAllInBatch();
         verify(teamRepositoryMock).deleteAllInBatch();
@@ -189,7 +193,12 @@ class DataSyncServiceImplTest {
         when(fixtureRepositoryMock.save(any(Fixture.class))).thenAnswer(inv -> inv.getArgument(0));
 
 
-        dataSyncService.syncMainFixtures(new HashMap<>());
+        SyncStatusDto statusDto = dataSyncService.syncMainFixtures(new HashMap<>()).block();
+
+        // Assert
+        assertNotNull(statusDto);
+        assertEquals("SUCCESS", statusDto.getStatus());
+        assertEquals(10, statusDto.getItemsProcessed()); // Fallback processes 10
 
         // Fallback is 10 items
         verify(fixtureRepositoryMock, times(10)).save(any(Fixture.class));
@@ -205,7 +214,12 @@ class DataSyncServiceImplTest {
         when(responseSpecMock.bodyToMono(any(ParameterizedTypeReference.class)))
             .thenReturn(Mono.error(new WebClientResponseException("API Error", 500, "Internal Server Error", null, null, null)));
 
-        dataSyncService.syncMainFixtures(new HashMap<>());
+        SyncStatusDto statusDto = dataSyncService.syncMainFixtures(new HashMap<>()).block();
+
+        // Assert
+        assertNotNull(statusDto);
+        assertEquals("ERROR", statusDto.getStatus());
+        assertTrue(statusDto.getMessage().contains("API Error: 500"));
 
         // Verify no DB interactions after API error
         verify(highlightRepositoryMock, never()).deleteAllInBatch();
@@ -221,7 +235,12 @@ class DataSyncServiceImplTest {
         mockApiResponse.setResults(0);
         when(responseSpecMock.bodyToMono(any(ParameterizedTypeReference.class))).thenReturn(Mono.just(mockApiResponse));
 
-        dataSyncService.syncMainFixtures(new HashMap<>());
+        SyncStatusDto statusDto = dataSyncService.syncMainFixtures(new HashMap<>()).block();
+
+        // Assert
+        assertNotNull(statusDto);
+        assertEquals("NO_DATA", statusDto.getStatus()); // Or SUCCESS with 0 items, depends on impl. Current impl returns NO_DATA.
+        assertEquals(0, statusDto.getItemsProcessed());
 
         verify(highlightRepositoryMock).deleteAllInBatch();
         verify(fixtureRepositoryMock).deleteAllInBatch();
@@ -239,12 +258,75 @@ class DataSyncServiceImplTest {
         mockApiResponse.setResponse(null); // Null response list
         when(responseSpecMock.bodyToMono(any(ParameterizedTypeReference.class))).thenReturn(Mono.just(mockApiResponse));
 
-        dataSyncService.syncMainFixtures(new HashMap<>());
+        SyncStatusDto statusDto = dataSyncService.syncMainFixtures(new HashMap<>()).block();
+
+        // Assert
+        assertNotNull(statusDto);
+        assertEquals("NO_DATA", statusDto.getStatus());
+        assertEquals(0, statusDto.getItemsProcessed());
 
         verify(highlightRepositoryMock).deleteAllInBatch();
         // ... other deleteAllInBatch verify ...
         verify(fixtureRepositoryMock, never()).save(any(Fixture.class));
     }
+
+    @Test
+    void syncMainFixtures_whenDbClearFails_returnsErrorStatusDtoAndLogsError() {
+        // Arrange
+        RapidApiFootballResponseDto<FixtureResponseItemDto> mockApiResponse = new RapidApiFootballResponseDto<>();
+        mockApiResponse.setResponse(List.of(createMockFixtureResponseItem(1L, "L1", "C1", 10L, "T1", 11L, "T2", 100L, "FT")));
+        mockApiResponse.setResults(1);
+        when(responseSpecMock.bodyToMono(any(ParameterizedTypeReference.class))).thenReturn(Mono.just(mockApiResponse));
+
+        // Mock one of the deleteAllInBatch methods to throw an exception
+        doThrow(new RuntimeException("DB clear error")).when(highlightRepositoryMock).deleteAllInBatch();
+
+        // Act
+        SyncStatusDto statusDto = dataSyncService.syncMainFixtures(new HashMap<>()).block();
+
+        // Assert
+        assertNotNull(statusDto);
+        assertEquals("ERROR", statusDto.getStatus());
+        assertTrue(statusDto.getMessage().contains("Error clearing existing data: DB clear error"));
+
+        verify(highlightRepositoryMock).deleteAllInBatch(); // This one was called and threw
+        verify(fixtureRepositoryMock, never()).deleteAllInBatch(); // Subsequent clear should not be called
+        verify(leagueRepositoryMock, never()).save(any(League.class)); // No saves should happen
+    }
+
+    @Test
+    void syncMainFixtures_whenLeagueSaveFails_returnsErrorStatusDtoAndLogsError() {
+        // Arrange
+        when(syncConfigPropertiesMock.getInterestedLeagues()).thenReturn(Collections.emptyList()); // Use fallback to simplify fixture data
+        List<FixtureResponseItemDto> apiItems = new ArrayList<>();
+        apiItems.add(createMockFixtureResponseItem(1L, "League Save Fail", "CountrySF", 10L, "Team SFH", 11L, "Team SFA", 100L, "NS"));
+        RapidApiFootballResponseDto<FixtureResponseItemDto> mockApiResponse = new RapidApiFootballResponseDto<>();
+        mockApiResponse.setResponse(apiItems);
+        mockApiResponse.setResults(1); // Service will take first (up to 10) due to empty interestedLeagues
+
+        when(responseSpecMock.bodyToMono(any(ParameterizedTypeReference.class))).thenReturn(Mono.just(mockApiResponse));
+
+        doNothing().when(highlightRepositoryMock).deleteAllInBatch();
+        doNothing().when(fixtureRepositoryMock).deleteAllInBatch();
+        doNothing().when(teamRepositoryMock).deleteAllInBatch();
+        doNothing().when(leagueRepositoryMock).deleteAllInBatch();
+
+        when(leagueRepositoryMock.save(any(League.class))).thenThrow(new RuntimeException("League save error"));
+
+        // Act
+        SyncStatusDto statusDto = dataSyncService.syncMainFixtures(new HashMap<>()).block();
+
+        // Assert
+        assertNotNull(statusDto);
+        assertEquals("ERROR", statusDto.getStatus());
+        assertTrue(statusDto.getMessage().contains("Error during DB processing: League save error"));
+
+        verify(leagueRepositoryMock).deleteAllInBatch(); // Clears should have happened
+        verify(leagueRepositoryMock).save(any(League.class)); // Save was attempted
+        verify(teamRepositoryMock, never()).save(any(Team.class)); // Subsequent saves should not happen
+        verify(fixtureRepositoryMock, never()).save(any(Fixture.class));
+    }
+
 
     // Test deprecated methods to ensure they call syncMainFixtures
     @Test

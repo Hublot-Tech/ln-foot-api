@@ -30,16 +30,16 @@ class TeamServiceImplTest {
 
     @Mock
     private TeamRepository teamRepository;
-    @Mock
-    private FixtureRepository fixtureRepository;
-    @Mock
-    private LeagueRepository leagueRepository;
+    // FixtureRepository and LeagueRepository mocks are no longer needed for listTeamsByLeague
+    // @Mock private FixtureRepository fixtureRepository;
+    // @Mock private LeagueRepository leagueRepository;
 
     private TeamServiceImpl teamService;
 
     @BeforeEach
     void setUp() {
-        teamService = new TeamServiceImpl(teamRepository, fixtureRepository, leagueRepository);
+        // Updated constructor call
+        teamService = new TeamServiceImpl(teamRepository);
     }
 
     private Team createMockTeam(String apiTeamId, String name) {
@@ -73,68 +73,49 @@ class TeamServiceImplTest {
 
 
     @Test
-    void listTeamsByLeague_whenLeagueNotFound_throwsEntityNotFoundException() {
-        // Arrange
-        String leagueApiId = "non-existent-league";
-        when(leagueRepository.findByApiLeagueIdAndApiSource(leagueApiId, null)).thenReturn(Optional.empty());
-        // Note: TeamServiceImpl uses findByApiLeagueIdAndApiSource, but apiSource is not passed.
-        // The current TeamServiceImpl uses leagueRepository.findByApiLeagueId(leagueApiId) which should be findByApiLeagueIdAndApiSource
-        // For this test to work as intended with current TeamServiceImpl, let's adjust the mock for findByApiLeagueId
-        when(leagueRepository.findByApiLeagueId(leagueApiId)).thenReturn(Optional.empty());
+    void listTeamsByLeague_leagueApiIdNullOrBlank_throwsIllegalArgumentException() {
+        Exception eNull = assertThrows(IllegalArgumentException.class, () -> teamService.listTeamsByLeague(null));
+        assertEquals("League API ID cannot be null or empty.", eNull.getMessage());
 
+        Exception eBlank = assertThrows(IllegalArgumentException.class, () -> teamService.listTeamsByLeague("  "));
+        assertEquals("League API ID cannot be null or empty.", eBlank.getMessage());
 
-        // Act & Assert
-        assertThrows(EntityNotFoundException.class, () -> teamService.listTeamsByLeague(leagueApiId)); // Removed season
-        verify(leagueRepository).findByApiLeagueId(leagueApiId);
+        verify(teamRepository, never()).findDistinctTeamsByLeagueApiId(anyString());
     }
 
     @Test
-    void listTeamsByLeague_whenNoFixtures_returnsEmptyList() {
+    void listTeamsByLeague_whenRepositoryReturnsEmpty_returnsEmptyList() {
         // Arrange
         String leagueApiId = "league1";
-        String internalLeagueId = UUID.randomUUID().toString();
-        League mockLeague = createMockLeague(internalLeagueId, leagueApiId);
-
-        when(leagueRepository.findByApiLeagueId(leagueApiId)).thenReturn(Optional.of(mockLeague));
-        when(fixtureRepository.findByLeagueId(internalLeagueId)).thenReturn(Collections.emptyList());
+        when(teamRepository.findDistinctTeamsByLeagueApiId(leagueApiId)).thenReturn(Collections.emptyList());
 
         // Act
-        List<TeamDto> result = teamService.listTeamsByLeague(leagueApiId); // Removed season
+        List<TeamDto> result = teamService.listTeamsByLeague(leagueApiId);
 
         // Assert
         assertNotNull(result);
         assertTrue(result.isEmpty());
-        verify(leagueRepository).findByApiLeagueId(leagueApiId);
-        verify(fixtureRepository).findByLeagueId(internalLeagueId);
+        verify(teamRepository).findDistinctTeamsByLeagueApiId(leagueApiId);
     }
 
     @Test
-    void listTeamsByLeague_returnsTeamDtosFromFixtures() {
+    void listTeamsByLeague_returnsMappedTeamDtos() {
         // Arrange
-        String leagueApiId = "league-with-fixtures";
-        String internalLeagueId = UUID.randomUUID().toString();
-        League mockLeague = createMockLeague(internalLeagueId, leagueApiId);
-
+        String leagueApiId = "league-with-teams";
         Team teamA = createMockTeam("teamA-api", "Team Alpha");
         Team teamB = createMockTeam("teamB-api", "Team Beta");
-        Team teamC = createMockTeam("teamC-api", "Team Charlie");
 
-        Fixture fixture1 = createMockFixture(mockLeague, teamA, teamB);
-        Fixture fixture2 = createMockFixture(mockLeague, teamB, teamC);
-        Fixture fixture3 = createMockFixture(mockLeague, teamA, teamC); // teamA and teamC appear again
-
-        when(leagueRepository.findByApiLeagueId(leagueApiId)).thenReturn(Optional.of(mockLeague));
-        when(fixtureRepository.findByLeagueId(internalLeagueId)).thenReturn(List.of(fixture1, fixture2, fixture3));
+        when(teamRepository.findDistinctTeamsByLeagueApiId(leagueApiId)).thenReturn(List.of(teamA, teamB));
 
         // Act
-        List<TeamDto> result = teamService.listTeamsByLeague(leagueApiId); // Removed season
+        List<TeamDto> result = teamService.listTeamsByLeague(leagueApiId);
 
         // Assert
         assertNotNull(result);
-        assertEquals(3, result.size()); // Unique teams: A, B, C
+        assertEquals(2, result.size());
         assertTrue(result.stream().anyMatch(dto -> dto.getName().equals("Team Alpha") && dto.getId().equals("teamA-api")));
         assertTrue(result.stream().anyMatch(dto -> dto.getName().equals("Team Beta") && dto.getId().equals("teamB-api")));
-        assertTrue(result.stream().anyMatch(dto -> dto.getName().equals("Team Charlie") && dto.getId().equals("teamC-api")));
+        verify(teamRepository).findDistinctTeamsByLeagueApiId(leagueApiId);
     }
 
 

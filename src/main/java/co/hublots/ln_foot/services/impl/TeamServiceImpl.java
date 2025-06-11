@@ -1,5 +1,7 @@
 package co.hublots.ln_foot.services.impl;
 
+import org.springframework.util.StringUtils; // Added
+import java.util.Collections; // Added
 import co.hublots.ln_foot.dto.TeamDto;
 import co.hublots.ln_foot.models.Fixture;
 import co.hublots.ln_foot.models.League;
@@ -23,12 +25,14 @@ import java.util.stream.Collectors;
 
 
 @Service
+// Removed mid-file imports as they are at the top now
 @RequiredArgsConstructor
 public class TeamServiceImpl implements TeamService {
 
     private final TeamRepository teamRepository;
-    private final FixtureRepository fixtureRepository; // Added
-    private final LeagueRepository leagueRepository;   // Added
+    // FixtureRepository and LeagueRepository are no longer needed here if listTeamsByLeague is optimized
+    // private final FixtureRepository fixtureRepository;
+    // private final LeagueRepository leagueRepository;
 
     private TeamDto mapToDto(Team entity) {
         if (entity == null) {
@@ -50,24 +54,13 @@ public class TeamServiceImpl implements TeamService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<TeamDto> listTeamsByLeague(String leagueApiId) { // Removed season parameter
-        // Season was not used in the previous logic.
-        League league = leagueRepository.findByApiLeagueId(leagueApiId)
-            .orElseThrow(() -> new EntityNotFoundException("League with apiLeagueId " + leagueApiId + " not found."));
-
-        List<Fixture> fixtures = fixtureRepository.findByLeagueId(league.getId()); // Uses internal league UUID
-        if (fixtures.isEmpty()) {
-            return Collections.emptyList();
+    public List<TeamDto> listTeamsByLeague(String leagueApiId) {
+        if (!StringUtils.hasText(leagueApiId)) {
+            throw new IllegalArgumentException("League API ID cannot be null or empty.");
         }
-
-        Set<Team> teams = new HashSet<>();
-        for (Fixture fixture : fixtures) {
-            if (fixture.getTeam1() != null) {
-                teams.add(fixture.getTeam1());
-            }
-            if (fixture.getTeam2() != null) {
-                teams.add(fixture.getTeam2());
-            }
+        List<Team> teams = teamRepository.findDistinctTeamsByLeagueApiId(leagueApiId);
+        if (teams == null || teams.isEmpty()) {
+            return Collections.emptyList();
         }
         return teams.stream().map(this::mapToDto).collect(Collectors.toList());
     }

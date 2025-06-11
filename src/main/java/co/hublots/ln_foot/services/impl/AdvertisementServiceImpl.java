@@ -104,9 +104,24 @@ public class AdvertisementServiceImpl implements AdvertisementService {
     @Override
     @Transactional
     public AdvertisementDto updateAdvertisement(String id, UpdateAdvertisementDto updateDto) {
+        if (updateDto == null) {
+            throw new IllegalArgumentException("UpdateAdvertisementDto cannot be null.");
+        }
+
+        // Check if at least one field that maps to the entity is provided for update
+        if (updateDto.getTitle() == null &&
+            updateDto.getContent() == null && // Maps to description
+            updateDto.getUrl() == null &&     // Maps to referenceUrl
+            updateDto.getImageUrl() == null) {
+            // Note: startDate, endDate, priority, status from DTO are not currently mapped to entity
+            throw new IllegalArgumentException("No updateable fields provided in UpdateAdvertisementDto.");
+        }
+
         Advertisement advertisement = advertisementRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Advertisement with ID " + id + " not found"));
-        mapToEntityForUpdate(updateDto, advertisement);
+
+        mapToEntityForUpdate(updateDto, advertisement); // This method already handles null checks for individual fields
+
         Advertisement updatedAdvertisement = advertisementRepository.save(advertisement);
         return mapToDto(updatedAdvertisement);
     }

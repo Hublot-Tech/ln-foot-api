@@ -11,6 +11,10 @@ import org.hibernate.annotations.UuidGenerator;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects; // For Objects.equals
+
+import jakarta.validation.constraints.AssertTrue; // Added import
+import com.fasterxml.jackson.annotation.JsonIgnore; // Added import
 
 @Data
 @Builder
@@ -74,4 +78,22 @@ public class Fixture {
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    @AssertTrue(message = "Home team (team1) and away team (team2) cannot be the same.")
+    @JsonIgnore // Avoid this appearing in JSON output if Fixture is ever directly serialized
+    public boolean isTeam1AndTeam2Different() {
+        // This validation is meaningful only if both teams are set.
+        // The @JoinColumn for team1 and team2 are nullable = false, so they should always be present for a valid Fixture.
+        if (this.team1 == null || this.team2 == null) {
+            // This case should ideally not happen if team1 and team2 are non-nullable.
+            // If they could be null for some reason (e.g. fixture planned but teams TBD),
+            // then this validation should only apply when both are set.
+            // Given nullable=false on JoinColumn, they should not be null.
+            return true; // Or handle as an invalid state if this check is reached with nulls despite constraints.
+                         // For AssertTrue, returning true means "passes validation" for this specific check.
+                         // If one is null, they are "different" from the non-null one. If both null, "different" is moot.
+        }
+        // Compare by their primary IDs. Assumes Team entity has getId().
+        return !Objects.equals(this.team1.getId(), this.team2.getId());
+    }
 }

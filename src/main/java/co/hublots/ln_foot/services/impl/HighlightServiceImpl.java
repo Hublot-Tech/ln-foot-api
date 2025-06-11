@@ -1,5 +1,8 @@
 package co.hublots.ln_foot.services.impl;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.util.StringUtils;
 import co.hublots.ln_foot.dto.CreateHighlightDto;
 import co.hublots.ln_foot.dto.HighlightDto;
 import co.hublots.ln_foot.dto.UpdateHighlightDto;
@@ -78,20 +81,18 @@ public class HighlightServiceImpl implements HighlightService {
     }
 
 
+    // Removed comment as imports are now at the top
+
     @Override
     @Transactional(readOnly = true)
-    public List<HighlightDto> listHighlights(String fixtureApiId) {
-        // If fixtureApiId is provided, find the fixture's internal ID first.
-        if (fixtureApiId != null && !fixtureApiId.isEmpty()) {
-            Fixture fixture = fixtureRepository.findByApiFixtureId(fixtureApiId)
-                    .orElseThrow(() -> new EntityNotFoundException("Fixture with apiFixtureId " + fixtureApiId + " not found when listing highlights."));
-            return highlightRepository.findByFixtureId(fixture.getId()).stream()
-                    .map(this::mapToDto)
-                    .collect(Collectors.toList());
+    public Page<HighlightDto> listHighlightsByFixture(String fixtureApiId, Pageable pageable) { // Changed signature
+        if (!StringUtils.hasText(fixtureApiId)) {
+            throw new IllegalArgumentException("fixtureApiId cannot be null or empty when listing highlights.");
         }
-        // Listing all highlights without a fixture ID might be too broad,
-        // but depends on requirements. Returning empty list if no fixtureId for now.
-        return Collections.emptyList();
+        // The repository method findByFixture_ApiFixtureId directly uses the fixture's API ID.
+        // No need to fetch Fixture entity first to get its internal ID if repo method handles it.
+        Page<Highlight> highlightPage = highlightRepository.findByFixture_ApiFixtureId(fixtureApiId, pageable);
+        return highlightPage.map(this::mapToDto);
     }
 
     @Override

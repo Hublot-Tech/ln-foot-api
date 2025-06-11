@@ -1,5 +1,11 @@
 package co.hublots.ln_foot.services.impl;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.util.StringUtils; // For checking if this class is used by service
+
 import co.hublots.ln_foot.dto.CreateHighlightDto;
 import co.hublots.ln_foot.dto.HighlightDto;
 import co.hublots.ln_foot.dto.UpdateHighlightDto;
@@ -60,43 +66,48 @@ class HighlightServiceImplTest {
     }
 
     @Test
-    void listHighlights_whenFixtureFound_returnsDtos() {
+    void listHighlightsByFixture_whenFixtureApiIdProvided_returnsPagedDtos() { // Renamed test
         // Arrange
         String fixtureApiId = "FX_API_1";
-        String internalFixtureId = UUID.randomUUID().toString();
-        Fixture mockFixture = createMockFixture(internalFixtureId, fixtureApiId);
+        Pageable pageable = PageRequest.of(0, 10);
+        Fixture mockFixture = createMockFixture(UUID.randomUUID().toString(), fixtureApiId); // Fixture mock still useful for context if needed by mapToDto indirectly
         Highlight mockHighlight = createMockHighlight(UUID.randomUUID().toString(), mockFixture, "Goal!");
+        Page<Highlight> highlightPage = new PageImpl<>(List.of(mockHighlight), pageable, 1);
 
-        when(fixtureRepository.findByApiFixtureId(fixtureApiId)).thenReturn(Optional.of(mockFixture));
-        when(highlightRepository.findByFixtureId(internalFixtureId)).thenReturn(List.of(mockHighlight));
+        when(highlightRepository.findByFixture_ApiFixtureId(fixtureApiId, pageable)).thenReturn(highlightPage);
 
         // Act
-        List<HighlightDto> result = highlightService.listHighlights(fixtureApiId);
+        Page<HighlightDto> result = highlightService.listHighlightsByFixture(fixtureApiId, pageable);
 
         // Assert
         assertNotNull(result);
-        assertEquals(1, result.size());
-        assertEquals(mockHighlight.getTitle(), result.get(0).getTitle());
-        assertEquals(fixtureApiId, result.get(0).getFixtureId()); // DTO fixtureId is apiFixtureId
-        verify(fixtureRepository).findByApiFixtureId(fixtureApiId);
-        verify(highlightRepository).findByFixtureId(internalFixtureId);
+        assertEquals(1, result.getTotalElements());
+        assertEquals(mockHighlight.getTitle(), result.getContent().get(0).getTitle());
+        assertEquals(fixtureApiId, result.getContent().get(0).getFixtureId());
+        verify(highlightRepository).findByFixture_ApiFixtureId(fixtureApiId, pageable);
     }
 
     @Test
-    void listHighlights_whenFixtureNotFound_throwsException() {
-        String fixtureApiId = "UNKNOWN_FIX";
-        when(fixtureRepository.findByApiFixtureId(fixtureApiId)).thenReturn(Optional.empty());
-        assertThrows(EntityNotFoundException.class, () -> highlightService.listHighlights(fixtureApiId));
+    void listHighlightsByFixture_whenFixtureApiIdNullOrBlank_throwsIllegalArgumentException() { // Updated test
+        Pageable pageable = PageRequest.of(0, 10);
+        Exception eNull = assertThrows(IllegalArgumentException.class, () -> highlightService.listHighlightsByFixture(null, pageable));
+        assertEquals("fixtureApiId cannot be null or empty when listing highlights.", eNull.getMessage());
+
+        Exception eBlank = assertThrows(IllegalArgumentException.class, () -> highlightService.listHighlightsByFixture("  ", pageable));
+        assertEquals("fixtureApiId cannot be null or empty when listing highlights.", eBlank.getMessage());
+
+        verify(highlightRepository, never()).findByFixture_ApiFixtureId(anyString(), any(Pageable.class));
     }
 
     @Test
-    void listHighlights_noFixtureApiId_returnsEmptyList() {
-        List<HighlightDto> result = highlightService.listHighlights(null);
+    void listHighlightsByFixture_whenNoHighlightsFound_returnsEmptyPage() { // New test
+        String fixtureApiId = "FX_API_NO_HIGHLIGHTS";
+        Pageable pageable = PageRequest.of(0,10);
+        when(highlightRepository.findByFixture_ApiFixtureId(fixtureApiId, pageable)).thenReturn(Page.empty(pageable));
+
+        Page<HighlightDto> result = highlightService.listHighlightsByFixture(fixtureApiId, pageable);
+        assertNotNull(result);
         assertTrue(result.isEmpty());
-        result = highlightService.listHighlights("");
-        assertTrue(result.isEmpty());
-        verify(fixtureRepository, never()).findByApiFixtureId(anyString());
-        verify(highlightRepository, never()).findByFixtureId(anyString());
     }
 
 

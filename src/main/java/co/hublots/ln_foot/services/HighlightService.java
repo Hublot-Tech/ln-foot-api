@@ -7,8 +7,11 @@ import co.hublots.ln_foot.dto.UpdateHighlightDto;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 public interface HighlightService {
-    List<HighlightDto> listHighlights(String fixtureId);
+    Page<HighlightDto> listHighlightsByFixture(String fixtureApiId, Pageable pageable); // Changed signature
     Optional<HighlightDto> findHighlightById(String id);
     HighlightDto createHighlight(CreateHighlightDto createDto);
     HighlightDto updateHighlight(String id, UpdateHighlightDto updateDto);

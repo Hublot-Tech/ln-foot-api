@@ -1,5 +1,6 @@
 package co.hublots.ln_foot.controllers;
 
+import jakarta.validation.Valid; // Added import
 import co.hublots.ln_foot.dto.CreateHighlightDto;
 import co.hublots.ln_foot.dto.HighlightDto;
 import co.hublots.ln_foot.dto.UpdateHighlightDto;
@@ -8,9 +9,18 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.constraints.NotBlank; // Added
+import org.springframework.validation.annotation.Validated; // Added
+import org.springframework.data.domain.Page; // Added
+import org.springframework.data.domain.Pageable; // Added
+import lombok.extern.slf4j.Slf4j; // Added
+import jakarta.persistence.EntityNotFoundException; // Added for future try-catch if service throws it for fixtureId
+import java.util.Map; // For error response
 
-import java.util.List;
+import java.util.List; // Keep if other methods return List
 
+@Slf4j // Added
+@Validated // Added
 @RestController
 @RequestMapping("/api/v1/highlights")
 public class HighlightController {
@@ -22,10 +32,19 @@ public class HighlightController {
     }
 
     @GetMapping
-    public List<HighlightDto> listHighlights(@RequestParam(required = false) String fixtureId) {
-        // If fixtureId is provided, the service should filter by it.
-        // For now, service mock returns all or empty.
-        return highlightService.listHighlights(fixtureId);
+    public ResponseEntity<?> listHighlightsByFixture( // Renamed method, changed return type
+            @RequestParam @NotBlank(message = "fixtureApiId is required.") String fixtureApiId, // Made mandatory & validated
+            Pageable pageable) {
+        try {
+            Page<HighlightDto> highlights = highlightService.listHighlightsByFixture(fixtureApiId, pageable);
+            return ResponseEntity.ok(highlights);
+        } catch (IllegalArgumentException e) { // From service if fixtureApiId is blank
+            log.warn("Invalid argument for listing highlights: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (EntityNotFoundException e) { // If service throws this for fixtureApiId not found
+            log.warn("Fixture not found when listing highlights for fixtureApiId {}: {}", fixtureApiId, e.getMessage());
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @GetMapping("/{id}")
@@ -36,22 +55,30 @@ public class HighlightController {
     }
 
     // @PreAuthorize("hasRole('ADMIN') or hasPermission(#createDto.fixtureId, 'FIXTURE', 'EDIT_HIGHLIGHTS')") // Example more granular permission
+
+    // Removed comment as import is now at top
+
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<HighlightDto> createHighlight(@RequestBody CreateHighlightDto createDto) {
+    public ResponseEntity<HighlightDto> createHighlight(@Valid @RequestBody CreateHighlightDto createDto) {
+        // Assuming service might throw EntityNotFoundException if referenced fixtureId in createDto is invalid
+        // Or IllegalArgumentException for other issues not caught by @Valid
+        // For now, relying on @Valid for DTO level and basic service exceptions.
         HighlightDto createdHighlight = highlightService.createHighlight(createDto);
         return new ResponseEntity<>(createdHighlight, HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<HighlightDto> updateHighlight(@PathVariable String id, @RequestBody UpdateHighlightDto updateDto) {
-        HighlightDto updatedHighlight = highlightService.updateHighlight(id, updateDto);
-        if (updatedHighlight != null) {
+    public ResponseEntity<HighlightDto> updateHighlight(@PathVariable String id, @Valid @RequestBody UpdateHighlightDto updateDto) {
+        try {
+            HighlightDto updatedHighlight = highlightService.updateHighlight(id, updateDto);
             return ResponseEntity.ok(updatedHighlight);
-        } else {
+        } catch (EntityNotFoundException e) {
+            log.warn("Attempted to update non-existent Highlight with ID {}: {}", id, e.getMessage());
             return ResponseEntity.notFound().build();
         }
+        // Add other relevant exception catches if needed, e.g., DataAccessException
     }
 
     @DeleteMapping("/{id}")
