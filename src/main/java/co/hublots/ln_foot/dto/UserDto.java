@@ -14,6 +14,7 @@ import java.util.List;
 @AllArgsConstructor
 public class UserDto {
     private String id;
+    private String keycloakId; // Added field
     private String email;
     private String name;
     private String avatarUrl;

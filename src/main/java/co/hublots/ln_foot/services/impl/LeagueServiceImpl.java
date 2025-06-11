@@ -7,6 +7,7 @@ import org.springframework.util.StringUtils;
 import lombok.extern.slf4j.Slf4j; // Added for logging
 
 import co.hublots.ln_foot.dto.*;
+import co.hublots.ln_foot.models.enums.FixtureStatus; // Added import
 import co.hublots.ln_foot.models.Fixture;
 import co.hublots.ln_foot.models.League;
 import co.hublots.ln_foot.models.Team;

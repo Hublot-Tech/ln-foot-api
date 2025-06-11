@@ -1,6 +1,8 @@
 package co.hublots.ln_foot.models;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank; // Added import
+import jakarta.validation.constraints.NotNull;   // Added import
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -24,6 +26,8 @@ public class Team {
     @UuidGenerator
     private String id;
 
+    @jakarta.validation.constraints.NotNull
+    @jakarta.validation.constraints.NotBlank
     @Column(name = "team_name", nullable = false)
     private String teamName;
 

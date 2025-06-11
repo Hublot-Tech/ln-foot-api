@@ -1,5 +1,6 @@
 package co.hublots.ln_foot.services.impl;
 
+import java.lang.IllegalArgumentException; // Explicit import
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import co.hublots.ln_foot.dto.AdvertisementDto;
@@ -86,9 +87,14 @@ public class AdvertisementServiceImpl implements AdvertisementService {
         return advertisementRepository.findById(id).map(this::mapToDto);
     }
 
+    // Removed comment
+
     @Override
     @Transactional
     public AdvertisementDto createAdvertisement(CreateAdvertisementDto createDto) {
+        if (createDto == null) {
+            throw new IllegalArgumentException("CreateAdvertisementDto cannot be null.");
+        }
         Advertisement advertisement = new Advertisement();
         mapToEntityForCreate(createDto, advertisement);
         Advertisement savedAdvertisement = advertisementRepository.save(advertisement);

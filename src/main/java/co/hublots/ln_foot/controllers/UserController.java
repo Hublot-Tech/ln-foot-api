@@ -45,7 +45,7 @@ public class UserController {
 
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> findUserById(@PathVariable String id) { // Return type changed for error body
+    public ResponseEntity<UserDto> findUserById(@PathVariable String id) { // Return type changed to specific DTO
         try {
             return userService.findUserById(id)
                     .map(ResponseEntity::ok)
@@ -55,18 +55,17 @@ public class UserController {
                     });
         } catch (IllegalArgumentException e) {
             log.warn("Invalid ID format for User: {}", id, e);
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest().build(); // No body for bad request with specific DTO type
         } catch (Exception e) {
             log.error("Error finding user with ID {}: {}", id, e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build(); // No body for 500
         }
     }
 
     @PutMapping("/{id}/role")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> updateUserRole(@PathVariable String id, @Valid @RequestBody UpdateUserRoleDto updateUserRoleDto) {
+    public ResponseEntity<UserDto> updateUserRole(@PathVariable String id, @Valid @RequestBody UpdateUserRoleDto updateUserRoleDto) { // Return type UserDto
         try {
-            // Pass the role string directly from the DTO
             UserDto updatedUser = userService.updateUserRole(id, updateUserRoleDto.getRole());
             return ResponseEntity.ok(updatedUser);
         } catch (EntityNotFoundException e) {
@@ -74,40 +73,34 @@ public class UserController {
             return ResponseEntity.notFound().build();
         } catch (IllegalArgumentException e) {
             log.warn("Invalid role value provided for user ID {}: {}", id, updateUserRoleDto.getRole(), e);
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest().build(); // No body
         } catch (DataAccessException e) {
             log.error("Database error while updating role for user ID {}: {}", id, e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Database error during role update.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build(); // No body
         }
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> deleteUser(@PathVariable String id, Authentication authentication) {
-        String currentUserId = null;
+    public ResponseEntity<Void> deleteUser(@PathVariable String id, Authentication authentication) { // Return type Void
+        String authenticatedUserKeycloakId = null;
         boolean isCurrentUserAdmin = false;
 
         if (authentication != null && authentication.isAuthenticated()) {
-            // Assuming the principal's name is the Keycloak subject ID, which matches our User.keycloakId
-            // or if User.id is directly the Keycloak subject ID.
-            // This needs to align with how User entities are identified (by their own UUID or by Keycloak subject ID).
-            // For this example, let's assume authentication.getName() is the ID used in the path.
-            currentUserId = authentication.getName();
+            authenticatedUserKeycloakId = authentication.getName(); // This is typically the Keycloak subject ID
             isCurrentUserAdmin = authentication.getAuthorities().stream()
                                      .anyMatch(grantedAuthority -> grantedAuthority.getAuthority().equals("ROLE_ADMIN"));
         }
 
-        // Fetch the user to be deleted to check if it's linked to the current admin via keycloakId
-        // This check is a bit complex if User.id (path variable) is different from User.keycloakId (from Auth principal)
-        // If User.id *is* the keycloakId, the check is simpler: id.equals(currentUserId)
-        // For now, let's assume 'id' in path is the User entity's primary key (UUID).
-        // We'd need to fetch the User entity for 'id' and check its 'keycloakId' against 'currentUserId'.
-        // This is too complex without knowing the exact ID strategy.
-        // Simplified check: if the 'id' in path is the same as the authenticated principal's name AND they are admin.
-        // This assumes 'id' from path IS the same identifier as authentication.getName().
-        if (id.equals(currentUserId) && isCurrentUserAdmin) {
-             log.warn("Admin user {} (principal name) attempted to delete their own account (path ID {}).", currentUserId, id);
-             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Admins cannot delete their own account using this endpoint.");
+        if (isCurrentUserAdmin) {
+            // Fetch the user to be deleted to compare its Keycloak ID
+            Optional<UserDto> userToDeleteOpt = userService.findUserById(id); // findUserById uses internal app ID
+            if (userToDeleteOpt.isPresent() && userToDeleteOpt.get().getKeycloakId() != null &&
+                userToDeleteOpt.get().getKeycloakId().equals(authenticatedUserKeycloakId)) {
+                log.warn("Admin user (Keycloak ID: {}) attempted to delete their own account (User ID: {}).", authenticatedUserKeycloakId, id);
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build(); // No body for 403
+            }
+            // If userToDeleteOpt is empty, it will be caught as EntityNotFoundException by deleteUser service call
         }
 
         try {
@@ -118,7 +111,7 @@ public class UserController {
             return ResponseEntity.notFound().build();
         } catch (DataAccessException e) {
             log.error("Database error while deleting user with ID {}: {}", id, e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Database error during user deletion.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build(); // No body
         }
     }
 }

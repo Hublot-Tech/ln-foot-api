@@ -34,6 +34,7 @@ public class UserServiceImpl implements UserService {
 
         return UserDto.builder()
                 .id(entity.getId())
+                .keycloakId(entity.getKeycloakId()) // Added mapping
                 .email(entity.getEmail())
                 .name(name.isEmpty() ? null : name)
                 .avatarUrl(entity.getAvatarUrl())

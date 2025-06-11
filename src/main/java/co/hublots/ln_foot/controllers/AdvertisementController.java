@@ -8,9 +8,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import jakarta.validation.Valid; // Added
-import jakarta.persistence.EntityNotFoundException; // Added
-import org.springframework.dao.DataAccessException; // Added
+import jakarta.validation.Valid;
+import jakarta.persistence.EntityNotFoundException;
+import org.springframework.dao.DataAccessException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page; // Added
 import org.springframework.data.domain.Pageable; // Added
@@ -43,7 +43,7 @@ public class AdvertisementController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<AdvertisementDto> createAdvertisement(@RequestBody CreateAdvertisementDto createDto) {
+    public ResponseEntity<AdvertisementDto> createAdvertisement(@Valid @RequestBody CreateAdvertisementDto createDto) {
         AdvertisementDto createdAd = advertisementService.createAdvertisement(createDto);
         return new ResponseEntity<>(createdAd, HttpStatus.CREATED);
     }

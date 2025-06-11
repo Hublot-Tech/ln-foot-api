@@ -21,6 +21,10 @@ import java.time.ZonedDateTime;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.Set; // Added
+import java.util.List; // Added
+import java.util.Optional; // Added
+import org.springframework.util.StringUtils; // Added
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +35,14 @@ public class UploadServiceImpl implements UploadService {
 
     private static final long DEFAULT_MIN_UPLOAD_SIZE = 1024; // 1KB
     private static final long DEFAULT_MAX_UPLOAD_SIZE = 10 * 1024 * 1024; // 10MB
+    private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of(
+            "image/png", "image/jpeg", "image/gif"
+    );
+    private static final Map<String, List<String>> CONTENT_TYPE_TO_EXTENSIONS_MAP = Map.of(
+            "image/jpeg", List.of(".jpg", ".jpeg"),
+            "image/png", List.of(".png"),
+            "image/gif", List.of(".gif")
+    );
 
     @Value("${minio.bucket}")
     private String bucketName;
@@ -38,28 +50,75 @@ public class UploadServiceImpl implements UploadService {
     @Value("${minio.url}") // This is the Minio API endpoint e.g. http://localhost:9000
     private String minioApiUrl;
 
+    private String sanitizePathSegment(String segment) {
+        if (!StringUtils.hasText(segment)) {
+            return "";
+        }
+        return segment.replaceAll("[^a-zA-Z0-9-_]", "_");
+    }
 
-    private String sanitizeFilename(String filename) {
-        if (filename == null) return "unknown";
-        return filename.replaceAll("[^a-zA-Z0-9.\\-_]", "_");
+    private String sanitizeAndValidateFilename(String originalFilename, String validatedContentType) {
+        if (!StringUtils.hasText(originalFilename)) {
+            throw new IllegalArgumentException("Filename cannot be empty.");
+        }
+        // Basic sanitization: replace unwanted characters, but keep dot for extension.
+        // Allow common filename characters: letters, numbers, dot, hyphen, underscore.
+        String sanitized = originalFilename.replaceAll("[^a-zA-Z0-9.\\-_]", "_");
+        // Replace multiple dots with one, ensure it doesn't start/end with dot (simplified for this context)
+        sanitized = sanitized.replaceAll("\\.+", ".").replaceAll("^\\.|\\.$", "");
+
+
+        if (!StringUtils.hasText(sanitized) || sanitized.equals(".")) {
+            throw new IllegalArgumentException("Sanitized filename is empty or invalid: " + originalFilename);
+        }
+
+        String lowerSanitized = sanitized.toLowerCase(); // Use lowercase for extension check
+        Optional<String> extensionOpt = Optional.of(lowerSanitized.lastIndexOf("."))
+                                            .filter(i -> i != -1 && i < lowerSanitized.length() - 1)
+                                            .map(i -> lowerSanitized.substring(i));
+
+        if (extensionOpt.isEmpty()) {
+            throw new IllegalArgumentException("Filename is missing a valid extension: " + sanitized);
+        }
+        String extension = extensionOpt.get();
+
+        List<String> allowedExtensions = CONTENT_TYPE_TO_EXTENSIONS_MAP.get(validatedContentType.toLowerCase());
+        if (allowedExtensions == null || !allowedExtensions.contains(extension)) {
+            String message = String.format("File extension '%s' is not allowed for content type '%s'. Allowed extensions are: %s",
+                              extension, validatedContentType, allowedExtensions != null ? String.join(", ", allowedExtensions) : "none");
+            throw new IllegalArgumentException(message);
+        }
+        // Return the sanitized filename, preserving original case for parts other than extension check
+        // but ensure the final name used for key is consistent, e.g. by returning 'sanitized' or 'lowerSanitized'.
+        // For keys, often lowercase is preferred.
+        return sanitized;
     }
 
     @Override
     public ImagePresignedUrlResponseDto getImagePresignedUrl(ImagePresignedUrlRequestDto requestDto) {
+        // 1. Validate Content-Type
+        String requestedContentType = requestDto.getContentType();
+        if (!StringUtils.hasText(requestedContentType) || !ALLOWED_CONTENT_TYPES.contains(requestedContentType.toLowerCase())) {
+            throw new IllegalArgumentException("Invalid or unsupported file type: " + requestedContentType +
+                                               ". Allowed types are: " + String.join(", ", ALLOWED_CONTENT_TYPES));
+        }
+        String validatedContentType = requestedContentType.toLowerCase();
+
+        // 2. Sanitize and Validate Filename based on Content-Type
+        String finalFilename = sanitizeAndValidateFilename(requestDto.getFileName(), validatedContentType);
+
         try {
+            String entityTypePath = StringUtils.hasText(requestDto.getEntityType()) ? sanitizePathSegment(requestDto.getEntityType()) + "/" : "";
+            String entityIdPath = StringUtils.hasText(requestDto.getEntityId()) ? sanitizePathSegment(requestDto.getEntityId()) + "/" : "";
+
             String objectKey = "uploads/images/" +
-                               (requestDto.getEntityType() != null ? sanitizeFilename(requestDto.getEntityType()) + "/" : "") +
-                               (requestDto.getEntityId() != null ? sanitizeFilename(requestDto.getEntityId()) + "/" : "") +
-                               UUID.randomUUID().toString() + "-" + sanitizeFilename(requestDto.getFileName());
+                               entityTypePath +
+                               entityIdPath +
+                               UUID.randomUUID().toString() + "-" + finalFilename; // finalFilename is already sanitized and validated
 
-            PostPolicy policy = new PostPolicy(bucketName, ZonedDateTime.now().plusMinutes(15)); // Expires in 15 minutes
+            PostPolicy policy = new PostPolicy(bucketName, ZonedDateTime.now().plusMinutes(15));
             policy.addEqualsCondition("key", objectKey);
-
-            if (requestDto.getContentType() != null && !requestDto.getContentType().isBlank()) {
-                policy.addEqualsCondition("Content-Type", requestDto.getContentType());
-            } else {
-                policy.addStartsWithCondition("Content-Type", "image/"); // Default to image/*
-            }
+            policy.addEqualsCondition("Content-Type", validatedContentType); // Use validated content type
 
             // Enforce server-defined limits for the policy.
             // The client should be informed of these limits out-of-band or via error if they violate them.

@@ -14,13 +14,15 @@ import jakarta.persistence.EntityNotFoundException; // Added import
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated; // Added for @Validated
 import org.springframework.data.domain.Page; // Added for Page
-import org.springframework.data.domain.Pageable; // Added for Pageable
+import org.springframework.data.domain.Pageable;
+import jakarta.validation.constraints.Min; // Added
+import jakarta.validation.constraints.Max; // Added
 
 import java.time.LocalDate;
 import java.util.List;
 
 @Slf4j
-@Validated // Added
+@Validated
 @RestController
 @RequestMapping("/api/v1/fixtures")
 public class FixtureController {
@@ -48,7 +50,7 @@ public class FixtureController {
 
     @GetMapping("/upcoming")
     public List<FixtureDto> getUpcomingFixtures(
-            @RequestParam(defaultValue = "7") Integer days,
+            @RequestParam(defaultValue = "7") @Min(1) @Max(30) Integer days,
             @RequestParam(required = false) String leagueId) {
         return fixtureService.getUpcomingFixtures(days, leagueId);
     }

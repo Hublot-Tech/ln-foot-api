@@ -32,11 +32,14 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/v1/**").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/**").authenticated()
 
-                        // Existing authenticated GET for orders
+                        // NEW: Secure specific V1 user GET endpoints
+                        .requestMatchers(HttpMethod.GET, "/api/v1/users", "/api/v1/users/**").authenticated()
+
+                        // Existing authenticated GET for orders (covers /api/orders/user/orders, /api/orders/{id})
                         .requestMatchers(HttpMethod.GET, "/api/orders/**").authenticated()
 
                         // General GET permit all (catches all other GET requests not specified above)
-                        // This makes all GET endpoints under /api/v1/ public by default,
+                        // This makes all GET endpoints under /api/v1/ (except users) public by default,
                         // unless a more specific GET rule above makes them authenticated.
                         // (Currently, no /api/v1/ GET endpoints are marked as authenticated above this line)
                         .requestMatchers(HttpMethod.GET).permitAll()
