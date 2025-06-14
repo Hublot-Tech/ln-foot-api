@@ -1,9 +1,37 @@
 package co.hublots.ln_foot.services.impl;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+
 import co.hublots.ln_foot.dto.CreateFixtureDto;
 import co.hublots.ln_foot.dto.FixtureDto;
 import co.hublots.ln_foot.dto.UpdateFixtureDto;
@@ -14,27 +42,6 @@ import co.hublots.ln_foot.repositories.FixtureRepository;
 import co.hublots.ln_foot.repositories.LeagueRepository;
 import co.hublots.ln_foot.repositories.TeamRepository;
 import jakarta.persistence.EntityNotFoundException;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class FixtureServiceImplTest {
@@ -61,7 +68,8 @@ class FixtureServiceImplTest {
         return Team.builder().id(internalId).apiTeamId(apiTeamId).teamName(name).logoUrl("logo.png").build();
     }
 
-    private Fixture createMockFixture(String apiFixtureId, League league, Team team1, Team team2, LocalDateTime matchTime) {
+    private Fixture createMockFixture(String apiFixtureId, League league, Team team1, Team team2,
+            OffsetDateTime matchTime) {
         return Fixture.builder()
                 .id(UUID.randomUUID().toString()) // Internal UUID
                 .apiFixtureId(apiFixtureId)
@@ -85,15 +93,18 @@ class FixtureServiceImplTest {
         // Arrange
         String leagueApiId = "L1_API";
         Pageable pageable = PageRequest.of(0, 10);
-        // League mockLeague = createMockLeague(UUID.randomUUID().toString(), leagueApiId, "Mock League"); // Not directly used by service if repo handles league ID
-        Team teamA = createMockTeam(UUID.randomUUID().toString(),"TA_API", "Team A");
-        Team teamB = createMockTeam(UUID.randomUUID().toString(),"TB_API", "Team B");
-        // Need to associate the mockLeague with the fixture for the DTO mapping to get leagueApiId
+        // League mockLeague = createMockLeague(UUID.randomUUID().toString(),
+        // leagueApiId, "Mock League"); // Not directly used by service if repo handles
+        // league ID
+        Team teamA = createMockTeam(UUID.randomUUID().toString(), "TA_API", "Team A");
+        Team teamB = createMockTeam(UUID.randomUUID().toString(), "TB_API", "Team B");
+        // Need to associate the mockLeague with the fixture for the DTO mapping to get
+        // leagueApiId
         League mockLeagueForFixture = createMockLeague(UUID.randomUUID().toString(), leagueApiId, "Mock League");
-        Fixture mockFixture = createMockFixture("FX1_API", mockLeagueForFixture, teamA, teamB, LocalDateTime.now());
+        Fixture mockFixture = createMockFixture("FX1_API", mockLeagueForFixture, teamA, teamB, OffsetDateTime.now());
 
         when(fixtureRepository.findByLeagueApiLeagueId(leagueApiId, pageable))
-            .thenReturn(new PageImpl<>(List.of(mockFixture), pageable, 1));
+                .thenReturn(new PageImpl<>(List.of(mockFixture), pageable, 1));
 
         // Act
         Page<FixtureDto> result = fixtureService.listFixtures(leagueApiId, pageable);
@@ -125,10 +136,10 @@ class FixtureServiceImplTest {
     @Test
     void listFixtures_noLeagueId_returnsAllFixturesPaged() { // Renamed
         Pageable pageable = PageRequest.of(0, 10);
-        Team teamA = createMockTeam(UUID.randomUUID().toString(),"TA_API", "Team A");
-        Team teamB = createMockTeam(UUID.randomUUID().toString(),"TB_API", "Team B");
+        Team teamA = createMockTeam(UUID.randomUUID().toString(), "TA_API", "Team A");
+        Team teamB = createMockTeam(UUID.randomUUID().toString(), "TB_API", "Team B");
         League mockLeague = createMockLeague(UUID.randomUUID().toString(), "L1_API", "Mock League");
-        Fixture mockFixture = createMockFixture("FX1_API", mockLeague, teamA, teamB, LocalDateTime.now());
+        Fixture mockFixture = createMockFixture("FX1_API", mockLeague, teamA, teamB, OffsetDateTime.now());
 
         when(fixtureRepository.findAll(pageable)).thenReturn(new PageImpl<>(List.of(mockFixture), pageable, 1));
 
@@ -142,15 +153,14 @@ class FixtureServiceImplTest {
         verify(fixtureRepository).findAll(pageable);
     }
 
-
     @Test
     void findFixtureById_whenFound_returnsOptionalDto() { // Param is apiFixtureId
         // Arrange
         String apiFixtureId = "fixture-api-123";
         League mockLeague = createMockLeague(UUID.randomUUID().toString(), "L_API", "League");
-        Team teamA = createMockTeam(UUID.randomUUID().toString(),"TA_API", "Team A");
-        Team teamB = createMockTeam(UUID.randomUUID().toString(),"TB_API", "Team B");
-        Fixture mockFixture = createMockFixture(apiFixtureId, mockLeague, teamA, teamB, LocalDateTime.now());
+        Team teamA = createMockTeam(UUID.randomUUID().toString(), "TA_API", "Team A");
+        Team teamB = createMockTeam(UUID.randomUUID().toString(), "TB_API", "Team B");
+        Fixture mockFixture = createMockFixture(apiFixtureId, mockLeague, teamA, teamB, OffsetDateTime.now());
         when(fixtureRepository.findByApiFixtureId(apiFixtureId)).thenReturn(Optional.of(mockFixture));
 
         // Act
@@ -165,11 +175,12 @@ class FixtureServiceImplTest {
 
     @Test
     void getUpcomingFixtures_noLeagueId_returnsDtos() {
-        LocalDateTime startDate = LocalDateTime.now();
-        LocalDateTime endDate = startDate.plusDays(7);
-        Fixture mockFixture = createMockFixture("up1", null, null, null, startDate.plusDays(1)); // simplified for this test
+        OffsetDateTime startDate = OffsetDateTime.now();
+        OffsetDateTime endDate = startDate.plusDays(7);
+        Fixture mockFixture = createMockFixture("up1", null, null, null, startDate.plusDays(1)); // simplified for this
+                                                                                                 // test
         when(fixtureRepository.findByMatchDatetimeBetween(any(LocalDateTime.class), any(LocalDateTime.class)))
-            .thenReturn(List.of(mockFixture));
+                .thenReturn(List.of(mockFixture));
 
         List<FixtureDto> result = fixtureService.getUpcomingFixtures(7, null);
         assertEquals(1, result.size());
@@ -180,26 +191,27 @@ class FixtureServiceImplTest {
     void getUpcomingFixtures_withLeagueId_returnsDtos() {
         String leagueApiId = "L1";
         League mockLeague = createMockLeague(UUID.randomUUID().toString(), leagueApiId, "League");
-        Fixture mockFixture = createMockFixture("upL1", mockLeague, null, null, LocalDateTime.now().plusDays(1));
+        Fixture mockFixture = createMockFixture("upL1", mockLeague, null, null, OffsetDateTime.now().plusDays(1));
 
         when(leagueRepository.findByApiLeagueId(leagueApiId)).thenReturn(Optional.of(mockLeague));
-        when(fixtureRepository.findByLeagueIdAndMatchDatetimeBetween(eq(mockLeague.getId()), any(LocalDateTime.class), any(LocalDateTime.class)))
-            .thenReturn(List.of(mockFixture));
+        when(fixtureRepository.findByLeagueIdAndMatchDatetimeBetween(eq(mockLeague.getId()), any(LocalDateTime.class),
+                any(LocalDateTime.class)))
+                .thenReturn(List.of(mockFixture));
 
         List<FixtureDto> result = fixtureService.getUpcomingFixtures(7, leagueApiId);
         assertEquals(1, result.size());
         assertEquals("upL1", result.get(0).getId());
     }
 
-
     @Test
     void getFixturesByDate_noLeagueId_returnsDtos() {
-        LocalDate date = LocalDate.now();
-        Fixture mockFixture = createMockFixture("dateFix1", null, null, null, date.atStartOfDay());
-        when(fixtureRepository.findByMatchDatetimeBetween(eq(date.atStartOfDay()), eq(date.atTime(LocalTime.MAX))))
-            .thenReturn(List.of(mockFixture));
+        OffsetDateTime date = OffsetDateTime.now();
+        Fixture mockFixture = createMockFixture("dateFix1", null, null, null, date);
+        when(fixtureRepository.findByMatchDatetimeBetween(eq(date.withHour(0).withMinute(0).toLocalDateTime()),
+                eq(date.withHour(0).withMinute(59).toLocalDateTime())))
+                .thenReturn(List.of(mockFixture));
 
-        List<FixtureDto> result = fixtureService.getFixturesByDate(date, null);
+        List<FixtureDto> result = fixtureService.getFixturesByDate(date.toLocalDate(), null);
         assertEquals(1, result.size());
     }
 
@@ -253,7 +265,8 @@ class FixtureServiceImplTest {
 
     @Test
     void createFixture_whenLeagueNotFound_throwsException() {
-        CreateFixtureDto createDto = CreateFixtureDto.builder().id("fix-league-fail").leagueId("L_FAIL").homeTeamId("H").awayTeamId("A").build();
+        CreateFixtureDto createDto = CreateFixtureDto.builder().id("fix-league-fail").leagueId("L_FAIL").homeTeamId("H")
+                .awayTeamId("A").build();
         when(fixtureRepository.findByApiFixtureId("fix-league-fail")).thenReturn(Optional.empty());
         when(leagueRepository.findByApiLeagueId("L_FAIL")).thenReturn(Optional.empty());
 
@@ -277,8 +290,8 @@ class FixtureServiceImplTest {
         when(leagueRepository.findByApiLeagueId("L_OK")).thenReturn(Optional.of(mockLeague));
         when(teamRepository.findByApiTeamId("HT_FAIL")).thenReturn(Optional.empty());
         // Optional: Mock away team if needed, but failure should happen before that
-        // when(teamRepository.findByApiTeamId("AT_OK")).thenReturn(Optional.of(createMockTeam(UUID.randomUUID().toString(), "AT_OK", "Away Team OK")));
-
+        // when(teamRepository.findByApiTeamId("AT_OK")).thenReturn(Optional.of(createMockTeam(UUID.randomUUID().toString(),
+        // "AT_OK", "Away Team OK")));
 
         assertThrows(EntityNotFoundException.class, () -> fixtureService.createFixture(createDto));
         verify(leagueRepository).findByApiLeagueId("L_OK");
@@ -309,15 +322,14 @@ class FixtureServiceImplTest {
         verify(fixtureRepository, never()).save(any(Fixture.class));
     }
 
-
     @Test
     void updateFixture_whenFound_updatesAndReturnsDto() { // Param is apiFixtureId
         // Arrange
         String apiFixtureId = "fix-to-update";
         League mockLeague = createMockLeague(UUID.randomUUID().toString(), "L_API", "League");
-        Team teamA = createMockTeam(UUID.randomUUID().toString(),"TA_API", "Team A");
-        Team teamB = createMockTeam(UUID.randomUUID().toString(),"TB_API", "Team B");
-        Fixture existingFixture = createMockFixture(apiFixtureId, mockLeague, teamA, teamB, LocalDateTime.now());
+        Team teamA = createMockTeam(UUID.randomUUID().toString(), "TA_API", "Team A");
+        Team teamB = createMockTeam(UUID.randomUUID().toString(), "TB_API", "Team B");
+        Fixture existingFixture = createMockFixture(apiFixtureId, mockLeague, teamA, teamB, OffsetDateTime.now());
 
         when(fixtureRepository.findByApiFixtureId(apiFixtureId)).thenReturn(Optional.of(existingFixture));
 
@@ -335,7 +347,7 @@ class FixtureServiceImplTest {
         // Assert
         assertNotNull(resultDto);
         assertEquals(apiFixtureId, resultDto.getId());
-        assertEquals("FT", resultDto.getStatusShort());
+        assertEquals("FT", resultDto.getStatusShortCode());
         assertEquals(2, resultDto.getGoalsHome());
         assertEquals(1, resultDto.getGoalsAway());
 
@@ -360,7 +372,7 @@ class FixtureServiceImplTest {
     void deleteFixture_whenFound_deletesFixture() { // Param is apiFixtureId
         // Arrange
         String apiFixtureId = "fix-to-delete";
-        Fixture mockFixture = createMockFixture(apiFixtureId, null, null, null, LocalDateTime.now());
+        Fixture mockFixture = createMockFixture(apiFixtureId, null, null, null, OffsetDateTime.now());
         when(fixtureRepository.findByApiFixtureId(apiFixtureId)).thenReturn(Optional.of(mockFixture));
         doNothing().when(fixtureRepository).delete(mockFixture);
 

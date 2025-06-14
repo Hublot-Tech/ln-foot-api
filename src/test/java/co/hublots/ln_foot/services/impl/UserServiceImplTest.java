@@ -4,6 +4,7 @@ import co.hublots.ln_foot.dto.UpdateUserRoleDto;
 import co.hublots.ln_foot.dto.UserDto;
 import co.hublots.ln_foot.models.User;
 import co.hublots.ln_foot.repositories.UserRepository;
+import co.hublots.ln_foot.services.UserService;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,7 +30,7 @@ class UserServiceImplTest {
     @Mock
     private UserRepository userRepository;
 
-    private UserServiceImpl userService;
+    private UserService userService;
 
     @BeforeEach
     void setUp() {
@@ -153,7 +154,7 @@ class UserServiceImplTest {
         });
 
         // Act
-        UserDto resultDto = userService.updateUserRole(userId, updateDto);
+        UserDto resultDto = userService.updateUserRole(userId, updateDto.getRole());
 
         // Assert
         assertNotNull(resultDto);
@@ -177,7 +178,7 @@ class UserServiceImplTest {
         when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThrows(EntityNotFoundException.class, () -> userService.updateUserRole(userId, updateDto));
+        assertThrows(EntityNotFoundException.class, () -> userService.updateUserRole(userId, updateDto.getRole()));
         verify(userRepository).findById(userId);
         verify(userRepository, never()).save(any(User.class));
     }
@@ -194,7 +195,7 @@ class UserServiceImplTest {
         when(userRepository.save(any(User.class))).thenReturn(existingUser); // Return the same user
 
         // Act
-        UserDto resultDto = userService.updateUserRole(userId, updateDto);
+        UserDto resultDto = userService.updateUserRole(userId, updateDto.getRole());
 
         // Assert
         assertNotNull(resultDto);

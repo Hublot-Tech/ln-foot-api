@@ -1,30 +1,37 @@
 package co.hublots.ln_foot.controllers;
 
-import co.hublots.ln_foot.dto.UpdateUserRoleDto;
-import co.hublots.ln_foot.dto.UserDto;
-import co.hublots.ln_foot.services.UserService;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.web.servlet.MockMvc;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.OffsetDateTime;
 import java.util.Collections;
 import java.util.Optional;
-import java.util.UUID;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.hasSize;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.MockMvc;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import co.hublots.ln_foot.dto.UpdateUserRoleDto;
+import co.hublots.ln_foot.dto.UserDto;
+import co.hublots.ln_foot.services.UserService;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -33,7 +40,7 @@ class UserControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @Mock
     private UserService userService;
 
     @Autowired
@@ -49,8 +56,6 @@ class UserControllerTest {
                 .updatedAt(OffsetDateTime.now())
                 .build();
     }
-
-    // --- All UserController endpoints are Admin-Only ---
 
     @Test
     @WithMockUser(roles = "ADMIN")
@@ -76,7 +81,6 @@ class UserControllerTest {
         mockMvc.perform(get("/api/v1/users"))
                 .andExpect(status().isForbidden());
     }
-
 
     @Test
     @WithMockUser(roles = "ADMIN")
@@ -111,7 +115,6 @@ class UserControllerTest {
                 .andExpect(status().isForbidden());
     }
 
-
     @Test
     @WithMockUser(roles = "ADMIN")
     void updateUserRole_isOk_withAdminRole() throws Exception {
@@ -120,11 +123,11 @@ class UserControllerTest {
         UserDto returnedDto = createMockUserDto(userId);
         returnedDto.setRole("EDITOR");
 
-        when(userService.updateUserRole(eq(userId), any(UpdateUserRoleDto.class))).thenReturn(returnedDto);
+        when(userService.updateUserRole(eq(userId), eq(returnedDto.getRole()))).thenReturn(returnedDto);
 
         mockMvc.perform(put("/api/v1/users/{id}/role", userId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(updateDto)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updateDto)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.role", is("EDITOR")));
     }
@@ -133,8 +136,8 @@ class UserControllerTest {
     void updateUserRole_isUnauthorized_withoutAuth() throws Exception {
         UpdateUserRoleDto updateDto = UpdateUserRoleDto.builder().role("EDITOR").build();
         mockMvc.perform(put("/api/v1/users/{id}/role", "anyid")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(updateDto)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updateDto)))
                 .andExpect(status().isUnauthorized());
     }
 
@@ -142,12 +145,11 @@ class UserControllerTest {
     @WithMockUser(roles = "USER")
     void updateUserRole_isForbidden_withUserRole() throws Exception {
         UpdateUserRoleDto updateDto = UpdateUserRoleDto.builder().role("EDITOR").build();
-         mockMvc.perform(put("/api/v1/users/{id}/role", "anyid")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(updateDto)))
+        mockMvc.perform(put("/api/v1/users/{id}/role", "anyid")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updateDto)))
                 .andExpect(status().isForbidden());
     }
-
 
     @Test
     @WithMockUser(roles = "ADMIN")

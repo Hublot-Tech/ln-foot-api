@@ -13,11 +13,8 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UpdateUserRoleDto {
-    // userId is typically passed as a path parameter, e.g., /users/{userId}/role
-    // So, it might not be needed in the DTO body.
-
     @NotBlank(message = "Role must be provided.")
-    private String role; // The new role to assign
+    private String role;
 
     private List<String> permissions; // Optional: if permissions are updated alongside role. Could add @Size if needed.
 }

@@ -12,10 +12,8 @@ import jakarta.validation.Valid;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.dao.DataAccessException;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page; // Added
-import org.springframework.data.domain.Pageable; // Added
-
-import java.util.List; // Still needed for other methods if any, or can be removed if getLatest is the only list method
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @Slf4j
 @RestController

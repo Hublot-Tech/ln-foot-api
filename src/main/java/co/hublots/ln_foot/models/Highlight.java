@@ -35,20 +35,10 @@ public class Highlight {
 
     private Integer duration; // Duration in seconds
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "fixture_id", nullable = false) // A highlight must belong to a fixture
-    private Fixture fixture;
-
     @Lob // Assuming description can be long
     private String description;
 
     private String type; // e.g., "goal", "foul", "card"
-
-    // Optional: if highlights can be directly associated with a league independent of a fixture
-    // @ManyToOne(fetch = FetchType.LAZY)
-    // @JoinColumn(name = "league_id")
-    // private League league;
-
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false, nullable = false)

@@ -22,6 +22,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.List;
@@ -44,17 +45,17 @@ class HighlightServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        highlightService = new HighlightServiceImpl(highlightRepository, fixtureRepository);
+        highlightService = new HighlightServiceImpl(highlightRepository);
     }
 
     private Fixture createMockFixture(String internalId, String apiFixtureId) {
-        return Fixture.builder().id(internalId).apiFixtureId(apiFixtureId).status("FT").matchDatetime(LocalDateTime.now()).build();
+        return Fixture.builder().id(internalId).apiFixtureId(apiFixtureId).status("FT")
+                .matchDatetime(OffsetDateTime.now()).build();
     }
 
     private Highlight createMockHighlight(String id, Fixture fixture, String title) {
         return Highlight.builder()
                 .id(id)
-                .fixture(fixture)
                 .title(title)
                 .videoUrl("http://video.url/mock.mp4")
                 .thumbnailUrl("http://thumb.url/mock.jpg")
@@ -70,14 +71,14 @@ class HighlightServiceImplTest {
         // Arrange
         String fixtureApiId = "FX_API_1";
         Pageable pageable = PageRequest.of(0, 10);
-        Fixture mockFixture = createMockFixture(UUID.randomUUID().toString(), fixtureApiId); // Fixture mock still useful for context if needed by mapToDto indirectly
+        Fixture mockFixture = createMockFixture(UUID.randomUUID().toString(), fixtureApiId);
         Highlight mockHighlight = createMockHighlight(UUID.randomUUID().toString(), mockFixture, "Goal!");
         Page<Highlight> highlightPage = new PageImpl<>(List.of(mockHighlight), pageable, 1);
 
         when(highlightRepository.findByFixture_ApiFixtureId(fixtureApiId, pageable)).thenReturn(highlightPage);
 
         // Act
-        Page<HighlightDto> result = highlightService.listHighlightsByFixture(fixtureApiId, pageable);
+        Page<HighlightDto> result = highlightService.listHighlights(pageable);
 
         // Assert
         assertNotNull(result);
@@ -90,10 +91,12 @@ class HighlightServiceImplTest {
     @Test
     void listHighlightsByFixture_whenFixtureApiIdNullOrBlank_throwsIllegalArgumentException() { // Updated test
         Pageable pageable = PageRequest.of(0, 10);
-        Exception eNull = assertThrows(IllegalArgumentException.class, () -> highlightService.listHighlightsByFixture(null, pageable));
+        Exception eNull = assertThrows(IllegalArgumentException.class,
+                () -> highlightService.listHighlights(pageable));
         assertEquals("fixtureApiId cannot be null or empty when listing highlights.", eNull.getMessage());
 
-        Exception eBlank = assertThrows(IllegalArgumentException.class, () -> highlightService.listHighlightsByFixture("  ", pageable));
+        Exception eBlank = assertThrows(IllegalArgumentException.class,
+                () -> highlightService.listHighlights(pageable));
         assertEquals("fixtureApiId cannot be null or empty when listing highlights.", eBlank.getMessage());
 
         verify(highlightRepository, never()).findByFixture_ApiFixtureId(anyString(), any(Pageable.class));
@@ -102,14 +105,13 @@ class HighlightServiceImplTest {
     @Test
     void listHighlightsByFixture_whenNoHighlightsFound_returnsEmptyPage() { // New test
         String fixtureApiId = "FX_API_NO_HIGHLIGHTS";
-        Pageable pageable = PageRequest.of(0,10);
+        Pageable pageable = PageRequest.of(0, 10);
         when(highlightRepository.findByFixture_ApiFixtureId(fixtureApiId, pageable)).thenReturn(Page.empty(pageable));
 
-        Page<HighlightDto> result = highlightService.listHighlightsByFixture(fixtureApiId, pageable);
+        Page<HighlightDto> result = highlightService.listHighlights(pageable);
         assertNotNull(result);
         assertTrue(result.isEmpty());
     }
-
 
     @Test
     void findHighlightById_whenFound_returnsOptionalDto() {
@@ -132,18 +134,12 @@ class HighlightServiceImplTest {
     @Test
     void createHighlight_savesAndReturnsDto() {
         // Arrange
-        String fixtureApiId = "FX_FOR_NEW_HL";
-        String internalFixtureId = UUID.randomUUID().toString();
-        Fixture mockFixture = createMockFixture(internalFixtureId, fixtureApiId);
-
         CreateHighlightDto createDto = CreateHighlightDto.builder()
-                .fixtureId(fixtureApiId)
                 .title("New Highlight")
                 .videoUrl("http://new.video/hl.mp4")
                 .durationSeconds(90)
                 .build();
 
-        when(fixtureRepository.findByApiFixtureId(fixtureApiId)).thenReturn(Optional.of(mockFixture));
 
         ArgumentCaptor<Highlight> highlightCaptor = ArgumentCaptor.forClass(Highlight.class);
         when(highlightRepository.save(highlightCaptor.capture())).thenAnswer(invocation -> {
@@ -161,26 +157,13 @@ class HighlightServiceImplTest {
         assertNotNull(resultDto);
         assertNotNull(resultDto.getId());
         assertEquals(createDto.getTitle(), resultDto.getTitle());
-        assertEquals(fixtureApiId, resultDto.getFixtureId());
         assertEquals(createDto.getDurationSeconds(), resultDto.getDurationSeconds());
 
         Highlight captured = highlightCaptor.getValue();
-        assertEquals(mockFixture, captured.getFixture());
         assertEquals(createDto.getTitle(), captured.getTitle());
 
-        verify(fixtureRepository).findByApiFixtureId(fixtureApiId);
         verify(highlightRepository).save(any(Highlight.class));
     }
-
-    @Test
-    void createHighlight_fixtureNotFound_throwsException() {
-        CreateHighlightDto createDto = CreateHighlightDto.builder().fixtureId("UNKNOWN_FX").title("Test").build();
-        when(fixtureRepository.findByApiFixtureId("UNKNOWN_FX")).thenReturn(Optional.empty());
-
-        assertThrows(EntityNotFoundException.class, () -> highlightService.createHighlight(createDto));
-        verify(highlightRepository, never()).save(any(Highlight.class));
-    }
-
 
     @Test
     void updateHighlight_whenFound_updatesAndReturnsDto() {
@@ -206,7 +189,8 @@ class HighlightServiceImplTest {
         assertEquals(id, resultDto.getId());
         assertEquals("Updated Title", resultDto.getTitle());
         assertEquals(150, resultDto.getDurationSeconds());
-        assertTrue(resultDto.getUpdatedAt().isAfter(existingHighlight.getUpdatedAt().atOffset(ZoneOffset.UTC).minusSeconds(1)));
+        assertTrue(resultDto.getUpdatedAt()
+                .isAfter(existingHighlight.getUpdatedAt().atOffset(ZoneOffset.UTC).minusSeconds(1)));
 
         verify(highlightRepository).findById(id);
         ArgumentCaptor<Highlight> hlCaptor = ArgumentCaptor.forClass(Highlight.class);

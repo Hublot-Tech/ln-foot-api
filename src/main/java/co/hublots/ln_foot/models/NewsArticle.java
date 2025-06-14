@@ -10,6 +10,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.UuidGenerator;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @Builder
@@ -33,10 +34,6 @@ public class NewsArticle {
     @Column(name = "author_name") // Used if not linking directly to a User entity, or as a fallback
     private String authorName;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id") // Link to the User entity who authored this
-    private User author;
-
     @Column(name = "publication_date")
     private LocalDateTime publicationDate;
 
@@ -48,16 +45,12 @@ public class NewsArticle {
 
     private String category; // e.g., "General", "Transfers", "Match Report"
 
-    // status from NewsArticleDto e.g., "published", "draft"
     private String status;
 
-    // tags from NewsArticleDto e.g. ["transfer", "injury"]
-    // This would typically be a ManyToMany to a Tag entity, or a List<String> with @ElementCollection
-    // For simplicity based on current DTO (List<String>), using @ElementCollection for now.
-    // @ElementCollection(fetch = FetchType.LAZY)
-    // @CollectionTable(name = "news_article_tags", joinColumns = @JoinColumn(name = "news_article_id"))
-    // @Column(name = "tag")
-    // private List<String> tags;
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(name = "news_article_tags", joinColumns = @JoinColumn(name = "news_article_id"))
+    @Column(name = "tag")
+    private List<String> tags;
 
 
     @CreationTimestamp

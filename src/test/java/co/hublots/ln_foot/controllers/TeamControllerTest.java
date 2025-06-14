@@ -1,28 +1,27 @@
 package co.hublots.ln_foot.controllers;
 
-import co.hublots.ln_foot.dto.TeamDto;
-import co.hublots.ln_foot.services.TeamService;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.security.test.context.support.WithAnonymousUser;
-import org.springframework.test.web.servlet.MockMvc;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.OffsetDateTime;
 import java.util.Collections;
 import java.util.Optional;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString; // Added import
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.hasSize;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.test.context.support.WithAnonymousUser;
+import org.springframework.test.web.servlet.MockMvc;
+
+import co.hublots.ln_foot.dto.TeamDto;
+import co.hublots.ln_foot.services.TeamService;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -31,11 +30,9 @@ class TeamControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @Mock
     private TeamService teamService;
 
-    @Autowired
-    private ObjectMapper objectMapper;
 
     private TeamDto createMockTeamDto(String id) {
         return TeamDto.builder()
@@ -52,7 +49,7 @@ class TeamControllerTest {
     @WithAnonymousUser // Endpoint is public
     void listTeamsByLeague_isOk() throws Exception {
         TeamDto mockTeam = createMockTeamDto("T1");
-        when(teamService.listTeamsByLeague(anyString(), any())).thenReturn(Collections.singletonList(mockTeam));
+        when(teamService.listTeamsByLeague(anyString())).thenReturn(Collections.singletonList(mockTeam));
 
         mockMvc.perform(get("/api/v1/teams").param("leagueId", "L1").param("season", "2023"))
                 .andExpect(status().isOk())
@@ -65,10 +62,9 @@ class TeamControllerTest {
     void listTeamsByLeague_requiresLeagueId() throws Exception {
         // This test assumes leagueId is a required parameter.
         // Spring by default would return 400 if a required @RequestParam is missing.
-        mockMvc.perform(get("/api/v1/teams")) // No leagueId param
-                .andExpect(status().isBadRequest()); // Or whatever error your setup produces for missing required params
+        mockMvc.perform(get("/api/v1/teams"))
+                .andExpect(status().isBadRequest());
     }
-
 
     @Test
     @WithAnonymousUser // Endpoint is public
@@ -89,6 +85,4 @@ class TeamControllerTest {
         mockMvc.perform(get("/api/v1/teams/{id}", "nonexistent"))
                 .andExpect(status().isNotFound());
     }
-
-    // No Admin/Create/Update/Delete methods in TeamController based on prior analysis
 }

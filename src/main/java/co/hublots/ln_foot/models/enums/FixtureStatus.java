@@ -35,17 +35,26 @@ public enum FixtureStatus {
         this.isLive = isLive;
     }
 
-    public String getShortCode() { return shortCode; }
-    public String getDescription() { return description; }
-    public boolean isLive() { return isLive; }
+    public String getShortCode() {
+        return shortCode;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public boolean isLive() {
+        return isLive;
+    }
 
     private static final Set<String> LIVE_STATUS_SHORT_CODES = Set.of(
-            "1H", "HT", "2H", "ET", "P", "BT", "SUSP", "INT", "LIVE"
-    );
+            "1H", "HT", "2H", "ET", "P", "BT", "SUSP", "INT", "LIVE");
 
-    // More robust isLive check based on a set of codes, can be used if enum instance's isLive field isn't sufficient
+    // More robust isLive check based on a set of codes, can be used if enum
+    // instance's isLive field isn't sufficient
     public static boolean isStatusLive(String shortCode) {
-        if (shortCode == null) return false;
+        if (shortCode == null)
+            return false;
         return LIVE_STATUS_SHORT_CODES.contains(shortCode.toUpperCase());
     }
 
@@ -58,8 +67,6 @@ public enum FixtureStatus {
                 .filter(status -> status.shortCode.equals(upperCode))
                 .findFirst()
                 .orElseGet(() -> {
-                    // Handle some common variations if necessary, though API should be consistent
-                    if ("FT_PEN".equals(upperCode)) return PEN;
                     return UNKNOWN;
                 });
     }

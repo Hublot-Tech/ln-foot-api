@@ -1,8 +1,15 @@
 package co.hublots.ln_foot.services.impl;
 
-import java.lang.IllegalArgumentException; // Explicit import
+import java.time.ZoneOffset;
+import java.util.Optional;
+
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import co.hublots.ln_foot.dto.AdvertisementDto;
 import co.hublots.ln_foot.dto.CreateAdvertisementDto;
 import co.hublots.ln_foot.dto.UpdateAdvertisementDto;
@@ -11,16 +18,6 @@ import co.hublots.ln_foot.repositories.AdvertisementRepository;
 import co.hublots.ln_foot.services.AdvertisementService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -35,8 +32,8 @@ public class AdvertisementServiceImpl implements AdvertisementService {
         return AdvertisementDto.builder()
                 .id(entity.getId())
                 .title(entity.getTitle())
-                .content(entity.getDescription()) // Map description to content
-                .url(entity.getReferenceUrl())   // Map referenceUrl to url
+                .content(entity.getDescription())
+                .url(entity.getReferenceUrl())
                 .imageUrl(entity.getImageUrl())
                 .createdAt(entity.getCreatedAt() != null ? entity.getCreatedAt().atOffset(ZoneOffset.UTC) : null)
                 .updatedAt(entity.getUpdatedAt() != null ? entity.getUpdatedAt().atOffset(ZoneOffset.UTC) : null)
@@ -45,37 +42,45 @@ public class AdvertisementServiceImpl implements AdvertisementService {
 
     private void mapToEntityForCreate(CreateAdvertisementDto dto, Advertisement entity) {
         entity.setTitle(dto.getTitle());
-        entity.setDescription(dto.getContent()); // Map content to description
-        entity.setReferenceUrl(dto.getUrl());   // Map url to referenceUrl
+        entity.setDescription(dto.getContent());
+        entity.setReferenceUrl(dto.getUrl());
         entity.setImageUrl(dto.getImageUrl());
     }
 
     private void mapToEntityForUpdate(UpdateAdvertisementDto dto, Advertisement entity) {
+        boolean hasUpdates = false;
+
         if (dto.getTitle() != null) {
             entity.setTitle(dto.getTitle());
+            hasUpdates = true;
         }
         if (dto.getContent() != null) {
-            entity.setDescription(dto.getContent()); // Map content to description
+            entity.setDescription(dto.getContent());
+            hasUpdates = true;
         }
         if (dto.getUrl() != null) {
-            entity.setReferenceUrl(dto.getUrl());   // Map url to referenceUrl
+            entity.setReferenceUrl(dto.getUrl());
+            hasUpdates = true;
         }
         if (dto.getImageUrl() != null) {
             entity.setImageUrl(dto.getImageUrl());
+            hasUpdates = true;
         }
-    }
 
-    // Removed comment as imports are now at the top
+        if (!hasUpdates) {
+            throw new IllegalArgumentException("At least one field must be provided for update");
+        }
+
+    }
 
     @Override
     @Transactional(readOnly = true)
     public Page<AdvertisementDto> getLatestAdvertisements(Pageable pageable) {
         Pageable effectivePageable = pageable;
         if (pageable.getSort().isUnsorted()) {
-            effectivePageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.DESC, "createdAt"));
+            effectivePageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(),
+                    Sort.by(Sort.Direction.DESC, "createdAt"));
         }
-        // If you always want to enforce/override sort, even if client provides one:
-        // effectivePageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.DESC, "createdAt"));
 
         Page<Advertisement> advertisementPage = advertisementRepository.findAll(effectivePageable);
         return advertisementPage.map(this::mapToDto);
@@ -86,8 +91,6 @@ public class AdvertisementServiceImpl implements AdvertisementService {
     public Optional<AdvertisementDto> getAdvertisementById(String id) {
         return advertisementRepository.findById(id).map(this::mapToDto);
     }
-
-    // Removed comment
 
     @Override
     @Transactional
@@ -108,19 +111,17 @@ public class AdvertisementServiceImpl implements AdvertisementService {
             throw new IllegalArgumentException("UpdateAdvertisementDto cannot be null.");
         }
 
-        // Check if at least one field that maps to the entity is provided for update
         if (updateDto.getTitle() == null &&
-            updateDto.getContent() == null && // Maps to description
-            updateDto.getUrl() == null &&     // Maps to referenceUrl
-            updateDto.getImageUrl() == null) {
-            // Note: startDate, endDate, priority, status from DTO are not currently mapped to entity
+                updateDto.getContent() == null &&
+                updateDto.getUrl() == null &&
+                updateDto.getImageUrl() == null) {
             throw new IllegalArgumentException("No updateable fields provided in UpdateAdvertisementDto.");
         }
 
         Advertisement advertisement = advertisementRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Advertisement with ID " + id + " not found"));
 
-        mapToEntityForUpdate(updateDto, advertisement); // This method already handles null checks for individual fields
+        mapToEntityForUpdate(updateDto, advertisement);
 
         Advertisement updatedAdvertisement = advertisementRepository.save(advertisement);
         return mapToDto(updatedAdvertisement);

@@ -1,29 +1,33 @@
 package co.hublots.ln_foot.services.impl;
 
-import co.hublots.ln_foot.dto.TeamDto;
-import co.hublots.ln_foot.models.Fixture;
-import co.hublots.ln_foot.models.League;
-import co.hublots.ln_foot.models.Team;
-import co.hublots.ln_foot.repositories.FixtureRepository;
-import co.hublots.ln_foot.repositories.LeagueRepository;
-import co.hublots.ln_foot.repositories.TeamRepository;
-import jakarta.persistence.EntityNotFoundException;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import co.hublots.ln_foot.dto.TeamDto;
+import co.hublots.ln_foot.models.Fixture;
+import co.hublots.ln_foot.models.League;
+import co.hublots.ln_foot.models.Team;
+import co.hublots.ln_foot.repositories.TeamRepository;
 
 @ExtendWith(MockitoExtension.class)
 class TeamServiceImplTest {
@@ -66,7 +70,7 @@ class TeamServiceImplTest {
                 .league(league)
                 .team1(team1)
                 .team2(team2)
-                .matchDatetime(LocalDateTime.now())
+                .matchDatetime(OffsetDateTime.now())
                 .status("NS")
                 .build();
     }

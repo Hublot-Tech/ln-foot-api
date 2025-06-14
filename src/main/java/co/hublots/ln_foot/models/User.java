@@ -1,16 +1,19 @@
 package co.hublots.ln_foot.models;
 
-import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import java.time.LocalDateTime;
+
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.UuidGenerator;
 
-import java.time.LocalDateTime;
-// import java.util.List; // For OneToMany relationships if user authors things
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @Builder
@@ -24,13 +27,13 @@ public class User {
     @UuidGenerator
     private String id;
 
-    @Column(name = "keycloak_id", unique = true) // Assuming this maps to Keycloak's subject ID
+    @Column(name = "keycloak_id", unique = true)
     private String keycloakId;
 
-    @Column(unique = true) // Often, app-level username is unique
+    @Column(unique = true)
     private String username;
 
-    @Column(unique = true) // Email should generally be unique
+    @Column(unique = true)
     private String email;
 
     @Column(name = "first_name")
@@ -44,10 +47,6 @@ public class User {
 
     private String role; // e.g., "ADMIN", "EDITOR", "USER"
 
-    // Example for relationship if User can author NewsArticles
-    // @OneToMany(mappedBy = "author", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    // private List<NewsArticle> newsArticles;
-
     @CreationTimestamp
     @Column(name = "created_at", updatable = false, nullable = false)
     private LocalDateTime createdAt;
@@ -55,4 +54,17 @@ public class User {
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    public static enum ValidRolesEnum {
+        ADMIN, EDITOR, USER;
+
+        public static boolean isValidRole(String role) {
+            for (ValidRolesEnum validRole : ValidRolesEnum.values()) {
+                if (validRole.name().equalsIgnoreCase(role)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
 }

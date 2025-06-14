@@ -1,36 +1,44 @@
 package co.hublots.ln_foot.controllers;
 
-import co.hublots.ln_foot.dto.CreateLeagueDto;
-import co.hublots.ln_foot.dto.LeagueDto;
-import co.hublots.ln_foot.dto.UpdateLeagueDto;
-import co.hublots.ln_foot.services.LeagueService;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithAnonymousUser;
-import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.data.domain.Page; // Added
-import org.springframework.data.domain.PageImpl; // Added
-import org.springframework.data.domain.PageRequest; // Added
-import org.springframework.data.domain.Pageable; // Added
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.OffsetDateTime;
 import java.util.Collections;
 import java.util.Optional;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq; // Keep one
-// import static org.mockito.ArgumentMatchers.eq; // Remove duplicate
-import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.hasSize;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithAnonymousUser;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.MockMvc;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import co.hublots.ln_foot.dto.CreateLeagueDto;
+import co.hublots.ln_foot.dto.LeagueDto;
+import co.hublots.ln_foot.dto.UpdateLeagueDto;
+import co.hublots.ln_foot.services.LeagueService;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -39,7 +47,7 @@ class LeagueControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @Mock
     private LeagueService leagueService;
 
     @Autowired
@@ -52,7 +60,6 @@ class LeagueControllerTest {
                 .country("Mockland")
                 .season("2023")
                 .logoUrl("http://example.com/logo.png")
-                .fixtures(Collections.emptyList())
                 .createdAt(OffsetDateTime.now())
                 .updatedAt(OffsetDateTime.now())
                 .build();
@@ -67,9 +74,9 @@ class LeagueControllerTest {
         when(leagueService.listLeagues(eq("Mockland"), eq(null), any(Pageable.class))).thenReturn(leaguePage);
 
         mockMvc.perform(get("/api/v1/leagues")
-                        .param("country", "Mockland")
-                        .param("page", "0")
-                        .param("size", "1"))
+                .param("country", "Mockland")
+                .param("page", "0")
+                .param("size", "1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content", hasSize(1)))
                 .andExpect(jsonPath("$.content[0].id", is("L1")))
@@ -106,8 +113,8 @@ class LeagueControllerTest {
         when(leagueService.createLeague(any(CreateLeagueDto.class))).thenReturn(returnedDto);
 
         mockMvc.perform(post("/api/v1/leagues")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(createDto)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createDto)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.name", is("New League")));
     }
@@ -116,8 +123,8 @@ class LeagueControllerTest {
     void createLeague_isUnauthorized_withoutAuth() throws Exception {
         CreateLeagueDto createDto = CreateLeagueDto.builder().build();
         mockMvc.perform(post("/api/v1/leagues")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(createDto)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createDto)))
                 .andExpect(status().isUnauthorized());
     }
 
@@ -126,8 +133,8 @@ class LeagueControllerTest {
     void createLeague_isForbidden_withUserRole() throws Exception {
         CreateLeagueDto createDto = CreateLeagueDto.builder().build();
         mockMvc.perform(post("/api/v1/leagues")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(createDto)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createDto)))
                 .andExpect(status().isForbidden());
     }
 
@@ -142,8 +149,8 @@ class LeagueControllerTest {
         when(leagueService.updateLeague(eq(leagueId), any(UpdateLeagueDto.class))).thenReturn(returnedDto);
 
         mockMvc.perform(put("/api/v1/leagues/{id}", leagueId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(updateDto)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updateDto)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name", is("Updated Name")));
     }

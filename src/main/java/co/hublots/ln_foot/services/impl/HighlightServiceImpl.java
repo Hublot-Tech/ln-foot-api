@@ -1,33 +1,27 @@
 package co.hublots.ln_foot.services.impl;
 
+import java.time.ZoneOffset;
+import java.util.Optional;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.util.StringUtils;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import co.hublots.ln_foot.dto.CreateHighlightDto;
 import co.hublots.ln_foot.dto.HighlightDto;
 import co.hublots.ln_foot.dto.UpdateHighlightDto;
-import co.hublots.ln_foot.models.Fixture;
 import co.hublots.ln_foot.models.Highlight;
-import co.hublots.ln_foot.repositories.FixtureRepository;
 import co.hublots.ln_foot.repositories.HighlightRepository;
 import co.hublots.ln_foot.services.HighlightService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.time.ZoneOffset;
-import java.util.Collections; // Added import
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class HighlightServiceImpl implements HighlightService {
 
     private final HighlightRepository highlightRepository;
-    private final FixtureRepository fixtureRepository;
 
     private HighlightDto mapToDto(Highlight entity) {
         if (entity == null) {
@@ -35,28 +29,24 @@ public class HighlightServiceImpl implements HighlightService {
         }
         return HighlightDto.builder()
                 .id(entity.getId())
-                .fixtureId(entity.getFixture() != null ? entity.getFixture().getApiFixtureId() : null)
                 .title(entity.getTitle())
-                .description(entity.getDescription()) // Added mapping
+                .description(entity.getDescription())
                 .videoUrl(entity.getVideoUrl())
                 .thumbnailUrl(entity.getThumbnailUrl())
                 .durationSeconds(entity.getDuration())
-                .type(entity.getType()) // Added mapping
-                // source from entity not in DTO
+                .type(entity.getType())
                 .createdAt(entity.getCreatedAt() != null ? entity.getCreatedAt().atOffset(ZoneOffset.UTC) : null)
                 .updatedAt(entity.getUpdatedAt() != null ? entity.getUpdatedAt().atOffset(ZoneOffset.UTC) : null)
                 .build();
     }
 
-    private void mapToEntityForCreate(CreateHighlightDto dto, Highlight entity, Fixture fixture) {
-        entity.setFixture(fixture);
+    private void mapToEntityForCreate(CreateHighlightDto dto, Highlight entity) {
         entity.setTitle(dto.getTitle());
         entity.setVideoUrl(dto.getVideoUrl());
         entity.setThumbnailUrl(dto.getThumbnailUrl());
         entity.setDuration(dto.getDurationSeconds());
-        entity.setDescription(dto.getDescription()); // Added mapping
-        entity.setType(dto.getType());           // Added mapping
-        // Entity's source could be set here if provided in DTO or from context, e.g. entity.setSource("internal_upload");
+        entity.setDescription(dto.getDescription());
+        entity.setType(dto.getType());
     }
 
     private void mapToEntityForUpdate(UpdateHighlightDto dto, Highlight entity) {
@@ -72,26 +62,18 @@ public class HighlightServiceImpl implements HighlightService {
         if (dto.getDurationSeconds() != null) {
             entity.setDuration(dto.getDurationSeconds());
         }
-        if (dto.getDescription() != null) { // Added mapping
+        if (dto.getDescription() != null) {
             entity.setDescription(dto.getDescription());
         }
-        if (dto.getType() != null) { // Added mapping
+        if (dto.getType() != null) {
             entity.setType(dto.getType());
         }
     }
 
-
-    // Removed comment as imports are now at the top
-
     @Override
     @Transactional(readOnly = true)
-    public Page<HighlightDto> listHighlightsByFixture(String fixtureApiId, Pageable pageable) { // Changed signature
-        if (!StringUtils.hasText(fixtureApiId)) {
-            throw new IllegalArgumentException("fixtureApiId cannot be null or empty when listing highlights.");
-        }
-        // The repository method findByFixture_ApiFixtureId directly uses the fixture's API ID.
-        // No need to fetch Fixture entity first to get its internal ID if repo method handles it.
-        Page<Highlight> highlightPage = highlightRepository.findByFixture_ApiFixtureId(fixtureApiId, pageable);
+    public Page<HighlightDto> listHighlights(Pageable pageable) {
+        Page<Highlight> highlightPage = highlightRepository.findAll(pageable);
         return highlightPage.map(this::mapToDto);
     }
 
@@ -104,11 +86,8 @@ public class HighlightServiceImpl implements HighlightService {
     @Override
     @Transactional
     public HighlightDto createHighlight(CreateHighlightDto createDto) {
-        Fixture fixture = fixtureRepository.findByApiFixtureId(createDto.getFixtureId())
-                .orElseThrow(() -> new EntityNotFoundException("Fixture with apiFixtureId " + createDto.getFixtureId() + " not found"));
-
         Highlight highlight = new Highlight();
-        mapToEntityForCreate(createDto, highlight, fixture);
+        mapToEntityForCreate(createDto, highlight);
         Highlight savedHighlight = highlightRepository.save(highlight);
         return mapToDto(savedHighlight);
     }

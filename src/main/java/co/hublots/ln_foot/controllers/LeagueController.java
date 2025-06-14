@@ -1,46 +1,43 @@
 package co.hublots.ln_foot.controllers;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import co.hublots.ln_foot.dto.CreateLeagueDto;
 import co.hublots.ln_foot.dto.LeagueDto;
 import co.hublots.ln_foot.dto.UpdateLeagueDto;
 import co.hublots.ln_foot.services.LeagueService;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Pattern; // For season pattern
-import jakarta.validation.constraints.Size;   // For string sizes
-import org.springframework.validation.annotation.Validated; // For class-level validation
-import lombok.extern.slf4j.Slf4j; // For logging
-import jakarta.persistence.EntityNotFoundException; // For try-catch
-import org.springframework.dao.DataIntegrityViolationException; // For try-catch
-import org.springframework.dao.DataAccessException; // For try-catch
-// HttpStatus is already imported via ResponseEntity
-
-import java.util.List; // Keep for other methods if they return List, or remove if all paged
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import jakarta.validation.constraints.Size;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@Validated // Added
+@Validated
 @RestController
 @RequestMapping("/api/v1/leagues")
+@RequiredArgsConstructor
 public class LeagueController {
-
     private final LeagueService leagueService;
 
-    public LeagueController(LeagueService leagueService) {
-        this.leagueService = leagueService;
-    }
-
-    // Removed comment as imports are at top
     @GetMapping
     public ResponseEntity<Page<LeagueDto>> listLeagues( // Changed return type
             @RequestParam(required = false) @Size(max = 100, message = "Country parameter is too long") String country,
-            // Removed season @RequestParam
             @RequestParam(required = false) @Size(max = 50, message = "Type parameter is too long") String type,
-            Pageable pageable) { // Added Pageable
+            Pageable pageable) {
         Page<LeagueDto> leaguePage = leagueService.listLeagues(country, type, pageable);
         return ResponseEntity.ok(leaguePage);
     }
@@ -49,11 +46,11 @@ public class LeagueController {
     public ResponseEntity<LeagueDto> findLeagueById(@PathVariable String id) {
         try {
             return leagueService.findLeagueById(id)
-                .map(ResponseEntity::ok)
-                .orElseGet(() -> {
-                    log.warn("League not found with ID: {}", id);
-                    return ResponseEntity.notFound().build();
-                });
+                    .map(ResponseEntity::ok)
+                    .orElseGet(() -> {
+                        log.warn("League not found with ID: {}", id);
+                        return ResponseEntity.notFound().build();
+                    });
         } catch (IllegalArgumentException e) {
             log.warn("Invalid ID format for League: {}", id, e);
             return ResponseEntity.badRequest().build();
@@ -63,42 +60,22 @@ public class LeagueController {
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<LeagueDto> createLeague(@Valid @RequestBody CreateLeagueDto createDto) {
-        // Assuming service layer handles potential exceptions like duplicate apiLeagueId
         LeagueDto createdLeague = leagueService.createLeague(createDto);
         return new ResponseEntity<>(createdLeague, HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<LeagueDto> updateLeague(@PathVariable String id, @Valid @RequestBody UpdateLeagueDto updateDto) {
-        try {
-            LeagueDto updatedLeague = leagueService.updateLeague(id, updateDto);
-            return ResponseEntity.ok(updatedLeague);
-        } catch (EntityNotFoundException e) {
-            log.warn("Attempted to update non-existent league with ID {}: {}", id, e.getMessage());
-            return ResponseEntity.notFound().build();
-        } catch (DataAccessException e) { // Catching broader DB errors
-            log.error("Database error while updating league with ID {}: {}", id, e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+    public ResponseEntity<LeagueDto> updateLeague(@PathVariable String id,
+            @Valid @RequestBody UpdateLeagueDto updateDto) {
+        LeagueDto updatedLeague = leagueService.updateLeague(id, updateDto);
+        return ResponseEntity.ok(updatedLeague);
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteLeague(@PathVariable String id) {
-        try {
-            leagueService.deleteLeague(id);
-            return ResponseEntity.noContent().build();
-        } catch (EntityNotFoundException e) {
-            log.warn("Attempted to delete non-existent league with ID {}: {}", id, e.getMessage());
-            return ResponseEntity.notFound().build();
-        } catch (DataIntegrityViolationException e) {
-            log.error("Cannot delete league with ID {}: data integrity violation (e.g., existing fixtures).", id, e);
-            // Using a generic message for client, specific error logged for server side.
-            return ResponseEntity.status(HttpStatus.CONFLICT).build();
-        } catch (DataAccessException e) {
-            log.error("Database error while deleting league with ID {}: {}", id, e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        leagueService.deleteLeague(id);
+        return ResponseEntity.noContent().build();
     }
 }

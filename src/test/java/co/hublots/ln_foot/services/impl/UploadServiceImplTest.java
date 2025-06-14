@@ -1,18 +1,14 @@
 package co.hublots.ln_foot.services.impl;
 
-import co.hublots.ln_foot.dto.DeleteImageDto;
-import co.hublots.ln_foot.dto.ImagePresignedUrlRequestDto;
-import co.hublots.ln_foot.dto.ImagePresignedUrlResponseDto;
-import io.minio.MinioClient;
-import io.minio.PostPolicy;
-import io.minio.RemoveObjectArgs;
-import io.minio.errors.*; // Assuming this covers most Minio exceptions
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils; // For setting @Value fields
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.security.InvalidKeyException;
@@ -20,9 +16,26 @@ import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
+
+import co.hublots.ln_foot.dto.DeleteImageDto;
+import co.hublots.ln_foot.dto.ImagePresignedUrlRequestDto;
+import co.hublots.ln_foot.dto.ImagePresignedUrlResponseDto;
+import io.minio.MinioClient;
+import io.minio.PostPolicy;
+import io.minio.RemoveObjectArgs;
+import io.minio.errors.ErrorResponseException;
+import io.minio.errors.InsufficientDataException;
+import io.minio.errors.InternalException;
+import io.minio.errors.InvalidResponseException;
+import io.minio.errors.ServerException;
+import io.minio.errors.XmlParserException;
 
 @ExtendWith(MockitoExtension.class)
 class UploadServiceImplTest {
@@ -58,7 +71,6 @@ class UploadServiceImplTest {
         mockFormData.put("key", "uploads/images/team/team123/some-uuid-test-image.png");
         mockFormData.put("policy", "base64policy");
         mockFormData.put("X-Amz-Algorithm", "AWS4-HMAC-SHA256");
-        // ... other typical form data fields ...
 
         when(minioClient.getPresignedPostFormData(any(PostPolicy.class))).thenReturn(mockFormData);
 
@@ -91,19 +103,15 @@ class UploadServiceImplTest {
 
         uploadService.getImagePresignedUrl(requestDto);
 
-        // Verification of PostPolicy conditions (contentType startsWith "image/", default size range)
-        // would require capturing the PostPolicy argument or more complex mocking.
-        // For now, ensuring the method runs and calls getPresignedPostFormData is the primary goal.
         verify(minioClient).getPresignedPostFormData(any(PostPolicy.class));
     }
-
 
     @Test
     void getImagePresignedUrl_whenMinioThrowsException_propagatesAsRuntimeException() throws Exception {
         // Arrange
         ImagePresignedUrlRequestDto requestDto = ImagePresignedUrlRequestDto.builder().fileName("test.png").build();
         when(minioClient.getPresignedPostFormData(any(PostPolicy.class)))
-                .thenThrow(new ServerException("Minio server error", null, null));
+                .thenThrow(new ServerException("Minio server error", 500, null));
 
         // Act & Assert
         RuntimeException thrown = assertThrows(RuntimeException.class, () -> {
@@ -129,7 +137,9 @@ class UploadServiceImplTest {
     }
 
     @Test
-    void deleteImage_keyNullOrBlank_throwsIllegalArgumentException() {
+    void deleteImage_keyNullOrBlank_throwsIllegalArgumentException()
+            throws InvalidKeyException, ErrorResponseException, InsufficientDataException, InternalException,
+            InvalidResponseException, NoSuchAlgorithmException, ServerException, XmlParserException, IOException {
         DeleteImageDto deleteDtoNoKey = DeleteImageDto.builder().key(null).build();
         DeleteImageDto deleteDtoBlankKey = DeleteImageDto.builder().key("  ").build();
 
@@ -138,14 +148,13 @@ class UploadServiceImplTest {
         verify(minioClient, never()).removeObject(any(RemoveObjectArgs.class));
     }
 
-
     @Test
     void deleteImage_whenMinioThrowsException_propagatesAsRuntimeException() throws Exception {
         // Arrange
         String objectKey = "valid-key.png";
         DeleteImageDto deleteDto = DeleteImageDto.builder().key(objectKey).build();
-        doThrow(new ServerException("Minio server error on delete", null, null))
-            .when(minioClient).removeObject(any(RemoveObjectArgs.class));
+        doThrow(new ServerException("Minio server error on delete", 500, null))
+                .when(minioClient).removeObject(any(RemoveObjectArgs.class));
 
         // Act & Assert
         RuntimeException thrown = assertThrows(RuntimeException.class, () -> {

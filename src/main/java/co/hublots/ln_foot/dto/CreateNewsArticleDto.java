@@ -1,18 +1,15 @@
 package co.hublots.ln_foot.dto;
 
-import lombok.Data;
-import lombok.Builder;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
-import jakarta.validation.constraints.PastOrPresent;
-import jakarta.validation.constraints.URL; // For imageUrl and url
-// import jakarta.validation.constraints.NotNull; // If publishedAt is strictly required
-
 import java.time.OffsetDateTime;
 import java.util.List;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.PastOrPresent;
+import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @Builder
@@ -26,22 +23,20 @@ public class CreateNewsArticleDto {
     @NotBlank(message = "Content cannot be blank.")
     private String content;
 
-    private String authorId; // Optional, can be system/anonymous or linked later
+    private String authorName;
 
     @Size(max = 100, message = "Source name cannot exceed 100 characters.")
     private String source; // Name of the source publication e.g. "BBC Sport"
 
-    @URL(message = "Please provide a valid URL for the article.")
     @Size(max = 2048, message = "Article URL is too long.")
-    private String url; // URL to the original article
+    private String url;
 
-    @URL(message = "Please provide a valid URL for the image.")
     @Size(max = 2048, message = "Image URL is too long.")
-    private String imageUrl; // Optional
+    private String imageUrl;
 
     @PastOrPresent(message = "Publication date must be in the past or present, if provided.")
-    private OffsetDateTime publishedAt; // Optional, might be set on publish
+    private OffsetDateTime publishedAt;
 
-    private List<String> tags; // Optional
-    private String status;     // Optional, might default in service
+    private List<String> tags;
+    private String status;
 }

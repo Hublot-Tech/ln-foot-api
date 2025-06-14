@@ -7,7 +7,6 @@ import lombok.AllArgsConstructor;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import org.hibernate.validator.constraints.URL; // Using Hibernate's @URL for broader compatibility if jakarta.validation.constraints.URL is not available or preferred
 
 @Data
 @Builder
@@ -25,11 +24,9 @@ public class CreateLeagueDto {
     @Size(max = 100, message = "Country name cannot exceed 100 characters.")
     private String country;
 
-    @URL(message = "Please provide a valid logo URL.")
     @Size(max = 2048, message = "Logo URL is too long.")
     private String logoUrl; // Optional, but if provided, must be URL
 
-    @URL(message = "Please provide a valid flag URL.")
     @Size(max = 2048, message = "Flag URL is too long.")
     private String flagUrl; // Optional
 

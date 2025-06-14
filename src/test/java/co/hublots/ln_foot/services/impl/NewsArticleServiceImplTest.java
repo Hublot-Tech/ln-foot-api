@@ -1,14 +1,25 @@
 package co.hublots.ln_foot.services.impl;
 
-import co.hublots.ln_foot.dto.CreateNewsArticleDto;
-import co.hublots.ln_foot.dto.NewsArticleDto;
-import co.hublots.ln_foot.dto.UpdateNewsArticleDto;
-import co.hublots.ln_foot.dto.UserDto;
-import co.hublots.ln_foot.models.NewsArticle;
-import co.hublots.ln_foot.models.User;
-import co.hublots.ln_foot.repositories.NewsArticleRepository;
-import co.hublots.ln_foot.repositories.UserRepository;
-import jakarta.persistence.EntityNotFoundException;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,17 +28,14 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Sort;
 
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import co.hublots.ln_foot.dto.CreateNewsArticleDto;
+import co.hublots.ln_foot.dto.NewsArticleDto;
+import co.hublots.ln_foot.dto.UpdateNewsArticleDto;
+import co.hublots.ln_foot.models.NewsArticle;
+import co.hublots.ln_foot.models.User;
+import co.hublots.ln_foot.repositories.NewsArticleRepository;
+import co.hublots.ln_foot.repositories.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
 
 @ExtendWith(MockitoExtension.class)
 class NewsArticleServiceImplTest {
@@ -45,15 +53,15 @@ class NewsArticleServiceImplTest {
     }
 
     private User createMockUser(String id, String firstName, String lastName) {
-        return User.builder().id(id).firstName(firstName).lastName(lastName).email(firstName+"@test.com").role("EDITOR").build();
+        return User.builder().id(id).firstName(firstName).lastName(lastName).email(firstName + "@test.com")
+                .role("EDITOR").build();
     }
 
-    private NewsArticle createMockNewsArticle(String id, String title, User author, String authorName) {
+    private NewsArticle createMockNewsArticle(String id, String title, String authorName) {
         return NewsArticle.builder()
                 .id(id)
                 .title(title)
                 .content("Some content for " + title)
-                .author(author)
                 .authorName(authorName) // Text fallback if author entity not linked
                 .publicationDate(LocalDateTime.now().minusDays(1))
                 .sourceUrl("http://source.url/" + title.toLowerCase().replace(" ", "-"))
@@ -68,13 +76,13 @@ class NewsArticleServiceImplTest {
     @Test
     void listNewsArticles_noStatus_returnsAllSorted() {
         // Arrange
-        NewsArticle article1 = createMockNewsArticle("1", "Article Alpha", null, "Alpha Author");
-        NewsArticle article2 = createMockNewsArticle("2", "Article Beta", null, "Beta Author");
+        NewsArticle article1 = createMockNewsArticle("1", "Article Alpha", "Alpha Author");
+        NewsArticle article2 = createMockNewsArticle("2", "Article Beta", "Beta Author");
         Sort defaultSort = Sort.by(Sort.Direction.DESC, "publicationDate");
         when(newsArticleRepository.findAll(defaultSort)).thenReturn(List.of(article1, article2));
 
         // Act
-        List<NewsArticleDto> result = newsArticleService.listNewsArticles(null, null); // status is null
+        List<NewsArticleDto> result = newsArticleService.listNewsArticles(null); // status is null
 
         // Assert
         assertEquals(2, result.size());
@@ -85,12 +93,12 @@ class NewsArticleServiceImplTest {
     void listNewsArticles_withStatus_returnsFilteredAndSorted() {
         // Arrange
         String status = "published";
-        NewsArticle article1 = createMockNewsArticle("1", "Published Article", null, "Pub Author");
+        NewsArticle article1 = createMockNewsArticle("1", "Published Article", "Pub Author");
         article1.setStatus(status);
         when(newsArticleRepository.findByStatusOrderByPublicationDateDesc(status)).thenReturn(List.of(article1));
 
         // Act
-        List<NewsArticleDto> result = newsArticleService.listNewsArticles(status, null);
+        List<NewsArticleDto> result = newsArticleService.listNewsArticles(status);
 
         // Assert
         assertEquals(1, result.size());
@@ -98,13 +106,13 @@ class NewsArticleServiceImplTest {
         verify(newsArticleRepository).findByStatusOrderByPublicationDateDesc(status);
     }
 
-
     @Test
     void findNewsArticleById_whenFound_mapsAuthorCorrectly() {
         // Arrange
         String articleId = UUID.randomUUID().toString();
         User authorUser = createMockUser(UUID.randomUUID().toString(), "John", "Doe");
-        NewsArticle mockArticle = createMockNewsArticle(articleId, "Test Article with Author Entity", authorUser, null);
+        NewsArticle mockArticle = createMockNewsArticle(articleId, "Test Article with Author Entity",
+                authorUser.getFirstName() + " " + authorUser.getLastName());
 
         when(newsArticleRepository.findById(articleId)).thenReturn(Optional.of(mockArticle));
 
@@ -115,17 +123,15 @@ class NewsArticleServiceImplTest {
         assertTrue(result.isPresent());
         NewsArticleDto dto = result.get();
         assertEquals(articleId, dto.getId());
-        assertNotNull(dto.getAuthor());
-        assertEquals(authorUser.getId(), dto.getAuthor().getId());
-        assertEquals("John Doe", dto.getAuthor().getName()); // Assuming UserDto.name is concat of first/last
-        assertNull(mockArticle.getAuthorName()); // AuthorName should be null if User author is set
+        assertNotNull(dto.getAuthorName());
+        assertEquals("John Doe", dto.getAuthorName());
     }
 
     @Test
     void findNewsArticleById_whenFound_mapsAuthorNameCorrectly_ifAuthorEntityNull() {
         // Arrange
         String articleId = UUID.randomUUID().toString();
-        NewsArticle mockArticle = createMockNewsArticle(articleId, "Test Article with Author Name", null, "Jane Doe (text)");
+        NewsArticle mockArticle = createMockNewsArticle(articleId, "Test Article with Author Name", "Jane Doe (text)");
 
         when(newsArticleRepository.findById(articleId)).thenReturn(Optional.of(mockArticle));
 
@@ -135,31 +141,8 @@ class NewsArticleServiceImplTest {
         // Assert
         assertTrue(result.isPresent());
         NewsArticleDto dto = result.get();
-        assertNull(dto.getAuthor()); // UserDto author should be null
-        // The current NewsArticleDto does not have a separate authorName field if UserDto author is present.
-        // The mapToDto in service prioritizes User entity for author name.
-        // If User entity is null, and authorName is present on NewsArticle entity, this name is used for UserDto.name
-        // This test might need adjustment based on how mapToDto handles UserDto.name vs UserDto.author object
-        // The current mapToDto for NewsArticle sets dto.setAuthor(mapUserToUserDto(entity.getAuthor()))
-        // The mapUserToUserDto will return null if entity.getAuthor() is null.
-        // This means NewsArticleDto.author (the UserDto object) will be null.
-        // The previous version of NewsArticleDto had a String author field.
-        // Let's re-check NewsArticleDto and mapToDto for NewsArticle.
-        // NewsArticleDto.author is UserDto. If entity.author is null, then NewsArticleDto.author is null.
-        // The previous string field `author` on NewsArticleDto is gone.
-        // This test case needs to align with the new DTO structure.
-        // If entity.getAuthor() is null, dto.getAuthor() will be null.
-        // The logic inside mapToDto for NewsArticleServiceImpl tries to get authorName from entity.getAuthorName()
-        // if entity.getAuthor() is null. BUT it tries to populate the UserDto with this.
-        // This is slightly convoluted. Let's simplify: mapToDto should map User entity to UserDto.
-        // If User entity is null, UserDto author is null. The entity.authorName can be a fallback if needed,
-        // but not by creating a UserDto with only a name from entity.authorName.
-
-        // For this test, we expect dto.getAuthor() to be null.
-        assertNull(dto.getAuthor());
-
+        assertEquals("Jane Doe (text)", dto.getAuthorName());
     }
-
 
     @Test
     void createNewsArticle_withAuthorId_linksAuthorAndSaves() {
@@ -169,7 +152,7 @@ class NewsArticleServiceImplTest {
         CreateNewsArticleDto createDto = CreateNewsArticleDto.builder()
                 .title("Article by ID")
                 .content("Content...")
-                .authorId(authorId) // Use authorId
+                .authorName(mockAuthor.getFirstName() + " " + mockAuthor.getLastName())
                 .publishedAt(OffsetDateTime.now(ZoneOffset.UTC))
                 .status("draft")
                 .build();
@@ -190,31 +173,14 @@ class NewsArticleServiceImplTest {
 
         // Assert
         assertNotNull(resultDto);
-        assertNotNull(resultDto.getAuthor());
-        assertEquals(authorId, resultDto.getAuthor().getId());
-        assertEquals("Test Author", resultDto.getAuthor().getName());
+        assertEquals("Test Author", resultDto.getAuthorName());
 
         NewsArticle captured = articleCaptor.getValue();
-        assertEquals(mockAuthor, captured.getAuthor());
+        assertEquals(mockAuthor.getFirstName() + mockAuthor.getLastName(), captured.getAuthorName());
         assertNull(captured.getAuthorName()); // authorName should be cleared if User author is linked
 
         verify(userRepository).findById(authorId);
         verify(newsArticleRepository).save(any(NewsArticle.class));
-    }
-
-    @Test
-    void createNewsArticle_withNonExistentAuthorId_throwsException() {
-        // Arrange
-        String nonExistentAuthorId = "non-existent-author-id";
-        CreateNewsArticleDto createDto = CreateNewsArticleDto.builder()
-                .title("Article with Bad Author")
-                .authorId(nonExistentAuthorId)
-                .build();
-        when(userRepository.findById(nonExistentAuthorId)).thenReturn(Optional.empty());
-
-        // Act & Assert
-        assertThrows(EntityNotFoundException.class, () -> newsArticleService.createNewsArticle(createDto));
-        verify(newsArticleRepository, never()).save(any(NewsArticle.class));
     }
 
     @Test
@@ -240,27 +206,25 @@ class NewsArticleServiceImplTest {
 
         // Assert
         assertNotNull(resultDto);
-        assertNull(resultDto.getAuthor()); // UserDto author should be null
+        assertNull(resultDto.getAuthorName()); // UserDto author should be null
 
         NewsArticle captured = articleCaptor.getValue();
-        assertNull(captured.getAuthor()); // User entity link should be null
-        // The service's mapToEntityForCreate logic currently doesn't use the old string author field from DTO
-        // So, captured.getAuthorName() would be null unless CreateNewsArticleDto still had 'author' string
-        // and mapToEntityForCreate explicitly set entity.setAuthorName from it when authorId is null.
-        // The current DTO only has authorId.
-        assertNull(captured.getAuthorName());
+        assertNull(captured.getAuthorName()); // User entity link should be null
 
         verify(userRepository, never()).findById(anyString());
         verify(newsArticleRepository).save(any(NewsArticle.class));
     }
-
 
     @Test
     void updateNewsArticle_whenFound_updatesAndReturnsDto() {
         // Arrange
         String articleId = UUID.randomUUID().toString();
         User author = createMockUser(UUID.randomUUID().toString(), "Old", "Author");
-        NewsArticle existingArticle = createMockNewsArticle(articleId, "Old Title", author, null);
+        NewsArticle existingArticle = createMockNewsArticle(articleId, "Old Title",
+                author.getFirstName() + " " + author.getLastName());
+
+        when(newsArticleRepository.findById(articleId)).thenReturn(Optional.of(existingArticle));
+        when(userRepository.findById(author.getId())).thenReturn(Optional.of(author)); // For updating author
 
         String newAuthorId = UUID.randomUUID().toString();
         User newAuthor = createMockUser(newAuthorId, "New", "Scribe");
@@ -269,9 +233,9 @@ class NewsArticleServiceImplTest {
         when(userRepository.findById(newAuthorId)).thenReturn(Optional.of(newAuthor)); // For updating author
 
         UpdateNewsArticleDto updateDto = UpdateNewsArticleDto.builder()
-            .title("Updated Title")
-            .authorId(newAuthorId) // Update to new author
-            .build();
+                .title("Updated Title")
+                .authorId(newAuthorId) // Update to new author
+                .build();
 
         when(newsArticleRepository.save(any(NewsArticle.class))).thenAnswer(inv -> inv.getArgument(0));
 
@@ -280,22 +244,22 @@ class NewsArticleServiceImplTest {
 
         // Assert
         assertEquals("Updated Title", resultDto.getTitle());
-        assertNotNull(resultDto.getAuthor());
-        assertEquals(newAuthorId, resultDto.getAuthor().getId());
-        assertEquals("New Scribe", resultDto.getAuthor().getName());
+        assertNotNull(resultDto.getAuthorName());
+        assertEquals("New Scribe", resultDto.getAuthorName());
 
         verify(newsArticleRepository).findById(articleId);
         verify(userRepository).findById(newAuthorId);
         ArgumentCaptor<NewsArticle> captor = ArgumentCaptor.forClass(NewsArticle.class);
         verify(newsArticleRepository).save(captor.capture());
-        assertEquals(newAuthor, captor.getValue().getAuthor());
+        assertEquals(newAuthor.getFirstName() + " " + newAuthor.getLastName(), captor.getValue().getAuthorName());
     }
 
     @Test
     void updateNewsArticle_setAuthorToNull_ifAuthorIdIsBlank() {
         String articleId = UUID.randomUUID().toString();
         User author = createMockUser(UUID.randomUUID().toString(), "Old", "Author");
-        NewsArticle existingArticle = createMockNewsArticle(articleId, "Old Title", author, null);
+        NewsArticle existingArticle = createMockNewsArticle(articleId, "Old Title",
+                author.getFirstName() + " " + author.getLastName());
 
         when(newsArticleRepository.findById(articleId)).thenReturn(Optional.of(existingArticle));
         when(newsArticleRepository.save(any(NewsArticle.class))).thenAnswer(inv -> inv.getArgument(0));
@@ -303,14 +267,12 @@ class NewsArticleServiceImplTest {
         UpdateNewsArticleDto updateDto = UpdateNewsArticleDto.builder().authorId("").build(); // Blank authorId
 
         NewsArticleDto resultDto = newsArticleService.updateNewsArticle(articleId, updateDto);
-        assertNull(resultDto.getAuthor());
+        assertNull(resultDto.getAuthorName());
 
         ArgumentCaptor<NewsArticle> captor = ArgumentCaptor.forClass(NewsArticle.class);
         verify(newsArticleRepository).save(captor.capture());
-        assertNull(captor.getValue().getAuthor());
         assertNull(captor.getValue().getAuthorName());
     }
-
 
     @Test
     void deleteNewsArticle_whenFound_deletesArticle() {

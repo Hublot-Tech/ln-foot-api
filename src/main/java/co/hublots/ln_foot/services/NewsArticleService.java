@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface NewsArticleService {
-    List<NewsArticleDto> listNewsArticles(String status, List<String> tags);
+    List<NewsArticleDto> listNewsArticles(String status);
     Optional<NewsArticleDto> findNewsArticleById(String id);
     NewsArticleDto createNewsArticle(CreateNewsArticleDto createDto);
     NewsArticleDto updateNewsArticle(String id, UpdateNewsArticleDto updateDto);

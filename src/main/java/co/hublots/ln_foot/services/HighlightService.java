@@ -1,17 +1,16 @@
 package co.hublots.ln_foot.services;
 
-import co.hublots.ln_foot.dto.CreateHighlightDto;
-import co.hublots.ln_foot.dto.HighlightDto;
-import co.hublots.ln_foot.dto.UpdateHighlightDto;
-
-import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import co.hublots.ln_foot.dto.CreateHighlightDto;
+import co.hublots.ln_foot.dto.HighlightDto;
+import co.hublots.ln_foot.dto.UpdateHighlightDto;
+
 public interface HighlightService {
-    Page<HighlightDto> listHighlightsByFixture(String fixtureApiId, Pageable pageable); // Changed signature
+    Page<HighlightDto> listHighlights(Pageable pageable);
     Optional<HighlightDto> findHighlightById(String id);
     HighlightDto createHighlight(CreateHighlightDto createDto);
     HighlightDto updateHighlight(String id, UpdateHighlightDto updateDto);

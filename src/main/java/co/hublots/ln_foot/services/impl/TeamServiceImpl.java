@@ -1,52 +1,44 @@
 package co.hublots.ln_foot.services.impl;
 
-import org.springframework.util.StringUtils; // Added
-import java.util.Collections; // Added
-import co.hublots.ln_foot.dto.TeamDto;
-import co.hublots.ln_foot.models.Fixture;
-import co.hublots.ln_foot.models.League;
-import co.hublots.ln_foot.models.Team;
-import co.hublots.ln_foot.repositories.FixtureRepository;
-import co.hublots.ln_foot.repositories.LeagueRepository;
-import co.hublots.ln_foot.repositories.TeamRepository;
-import co.hublots.ln_foot.services.TeamService;
-import jakarta.persistence.EntityNotFoundException;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.time.ZoneOffset;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+
+import co.hublots.ln_foot.dto.TeamDto;
+import co.hublots.ln_foot.models.Team;
+import co.hublots.ln_foot.repositories.TeamRepository;
+import co.hublots.ln_foot.services.TeamService;
+import lombok.RequiredArgsConstructor;
 
 @Service
-// Removed mid-file imports as they are at the top now
 @RequiredArgsConstructor
 public class TeamServiceImpl implements TeamService {
 
     private final TeamRepository teamRepository;
-    // FixtureRepository and LeagueRepository are no longer needed here if listTeamsByLeague is optimized
-    // private final FixtureRepository fixtureRepository;
-    // private final LeagueRepository leagueRepository;
 
+    /**
+     * Maps a Team entity to a TeamDto.
+     *
+     * @param entity the Team entity to map
+     * @return the mapped TeamDto, or null if the entity is null
+     */
     private TeamDto mapToDto(Team entity) {
         if (entity == null) {
             return null;
         }
         return TeamDto.builder()
-                .id(entity.getApiTeamId()) // Mapping apiTeamId to DTO's id
+                .id(entity.getApiTeamId())
                 .name(entity.getTeamName())
                 .country(entity.getCountry())
                 .founded(entity.getFoundedYear())
-                // .national(entity.getNational()) // 'national' field not in Team entity
                 .logoUrl(entity.getLogoUrl())
                 .venueName(entity.getStadiumName())
-                // venueAddress, venueCity, venueCapacity not in current Team entity
                 .createdAt(entity.getCreatedAt() != null ? entity.getCreatedAt().atOffset(ZoneOffset.UTC) : null)
                 .updatedAt(entity.getUpdatedAt() != null ? entity.getUpdatedAt().atOffset(ZoneOffset.UTC) : null)
                 .build();
