@@ -52,7 +52,7 @@ public class DataSyncServiceImpl implements DataSyncService {
     private final RestTemplate restTemplate;
 
     @Value("${external.api.sportsUrl}")
-    private final String baseUrl;
+    private String baseUrl;
 
     @Value("${external.api.sportsKey}")
     private String externalApiSportsKey;

@@ -51,9 +51,9 @@ notchpay:
 external:
   api:
     sportsUrl: ${EXTERNAL_SPORTS_API_URL:https://api-football-v1.p.rapidapi.com/v3}
-    sportsKey: ${EXTERNAL_SPORTS_API_KEY} # Removed placeholder default
+    sportsKey: ${EXTERNAL_SPORTS_API_KEY}
     rapidApiHost: api-football-v1.p.rapidapi.com
-    sourceName: RapidAPIFootballV1 # Updated source name
+    sourceName: RapidAPIFootballV1
 
 application:
   sync:

@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.web.client.RestTemplate;
 
 import io.minio.MinioClient;
 
@@ -34,6 +35,11 @@ class LnFootApplicationTests {
 					.endpoint("http://localhost:9000")
 					.credentials("accessKey", "secretKey")
 					.build();
+		}
+
+		@Bean
+		public RestTemplate restTemplate() {
+			return new RestTemplate();
 		}
 	}
 
