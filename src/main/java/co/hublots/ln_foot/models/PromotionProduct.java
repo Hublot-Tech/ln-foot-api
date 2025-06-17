@@ -17,12 +17,12 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 
+@RequiredArgsConstructor
 @Entity
-@Table(name = "promotion_products")
+@Table(name = "promotion_products", schema = "lnfoot_api")
 @Data
 @Builder
 @AllArgsConstructor
-@RequiredArgsConstructor
 public class PromotionProduct {
     @Id
     @UuidGenerator

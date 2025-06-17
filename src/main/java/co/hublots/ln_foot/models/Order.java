@@ -23,14 +23,14 @@ import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 
+@RequiredArgsConstructor
 @Entity
-@Table(name = "orders")
+@Table(name = "orders", schema = "lnfoot_api")
 @ToString(exclude = "orderItems")
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@RequiredArgsConstructor
 public class Order {
     @Id
     @UuidGenerator

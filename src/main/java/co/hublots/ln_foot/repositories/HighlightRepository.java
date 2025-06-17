@@ -10,5 +10,5 @@ import co.hublots.ln_foot.models.Highlight;
 @Repository
 public interface HighlightRepository extends JpaRepository<Highlight, String> {
     Page<Highlight> findByFixture_ApiFixtureId(String fixtureApiFixtureId, Pageable pageable);
-    Page<Highlight> findByFixtureId(String fixtureInternalId, Pageable pageable);
+    Page<Highlight> findByFixture_Id(String fixtureInternalId, Pageable pageable);
 }

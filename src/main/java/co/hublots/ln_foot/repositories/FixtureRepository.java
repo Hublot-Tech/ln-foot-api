@@ -16,25 +16,26 @@ import org.springframework.data.domain.Pageable;
 public interface FixtureRepository extends JpaRepository<Fixture, String> {
     Optional<Fixture> findByApiFixtureId(String apiFixtureId);
 
-    List<Fixture> findByLeagueId(String leagueId);
+    List<Fixture> findByLeague_Id(String leagueId);
 
     // Renamed from findByTeam1IdOrTeam2Id to be more descriptive or provide separate methods if needed
     // This query finds fixtures where the given teamId is either team1 or team2
     @Query("SELECT f FROM Fixture f WHERE f.team1.id = :teamId OR f.team2.id = :teamId")
     List<Fixture> findByTeamId(@Param("teamId") String teamId);
 
-    List<Fixture> findByTeam1Id(String team1Id);
-    List<Fixture> findByTeam2Id(String team2Id);
+    List<Fixture> findByTeam1_Id(String team1Id);
+    List<Fixture> findByTeam2_Id(String team2Id);
 
     List<Fixture> findByMatchDatetimeBetween(LocalDateTime startDateTime, LocalDateTime endDateTime);
 
-    List<Fixture> findByLeagueIdAndMatchDatetimeBetween(String leagueId, LocalDateTime startDateTime, LocalDateTime endDateTime);
+    List<Fixture> findByLeague_IdAndMatchDatetimeBetween(String leagueId, LocalDateTime startDateTime, LocalDateTime endDateTime);
 
     List<Fixture> findByStatus(String status);
 
-    List<Fixture> findByLeagueIdAndStatus(String leagueId, String status);
+    List<Fixture> findByLeague_IdAndStatus(String leagueId, String status);
 
     Optional<Fixture> findByApiFixtureIdAndApiSource(String apiFixtureId, String apiSource);
 
-    Page<Fixture> findByLeagueApiLeagueId(String leagueApiId, Pageable pageable); // Added for paginated search by league API ID
+    @Query("SELECT f FROM Fixture f WHERE f.league.apiLeagueId = :leagueApiId")
+    Page<Fixture> findByLeagueApiLeagueId(@Param("leagueApiId") String leagueApiId, Pageable pageable); // Added for paginated search by league API ID
 }

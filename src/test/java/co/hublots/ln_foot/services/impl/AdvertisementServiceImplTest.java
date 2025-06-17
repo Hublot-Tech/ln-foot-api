@@ -219,14 +219,24 @@ class AdvertisementServiceImplTest {
     @Test
     void updateAdvertisement_whenNotFound_throwsEntityNotFoundException() {
         // Arrange
-        String id = "nonexistent-id";
-        UpdateAdvertisementDto updateDto = new UpdateAdvertisementDto();
+        String id = UUID.randomUUID().toString();
+        UpdateAdvertisementDto updateDto = UpdateAdvertisementDto.builder().title("Valid title").build();
         when(advertisementRepository.findById(id)).thenReturn(Optional.empty());
 
-        // Act & Assert
-        assertThrows(EntityNotFoundException.class, () -> advertisementService.updateAdvertisement(id, updateDto));
-        verify(advertisementRepository).findById(id);
-        verify(advertisementRepository, never()).save(any(Advertisement.class));
+        // Act
+        Exception thrownException = null;
+        try {
+            advertisementService.updateAdvertisement(id, updateDto);
+        } catch (Exception e) {
+            thrownException = e;
+        }
+
+        // Assert
+        assertNotNull(thrownException, "Expected an exception to be thrown");
+        assertTrue(thrownException instanceof EntityNotFoundException,
+                "Expected EntityNotFoundException, but got " + thrownException.getClass().getName());
+        verify(advertisementRepository).findById(id); // Verify findById was called
+        verify(advertisementRepository, never()).save(any(Advertisement.class)); // Verify save was not called
     }
 
     @Test

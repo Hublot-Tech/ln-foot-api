@@ -14,12 +14,12 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 
+@RequiredArgsConstructor
 @Entity
-@Table(name = "payments")
+@Table(name = "payments", schema = "lnfoot_api")
 @Data
 @Builder
 @AllArgsConstructor
-@RequiredArgsConstructor
 public class Payment {
     @Id
     @UuidGenerator

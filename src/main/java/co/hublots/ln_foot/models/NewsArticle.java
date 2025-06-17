@@ -17,7 +17,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "web_news_articles")
+@Table(name = "web_news_articles", schema = "lnfoot_api")
 public class NewsArticle {
 
     @Id

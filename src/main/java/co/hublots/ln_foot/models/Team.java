@@ -19,7 +19,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "web_teams")
+@Table(name = "web_teams", schema = "lnfoot_api")
 public class Team {
 
     @Id

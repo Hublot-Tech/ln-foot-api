@@ -194,7 +194,7 @@ class FixtureServiceImplTest {
         Fixture mockFixture = createMockFixture("upL1", mockLeague, null, null, OffsetDateTime.now().plusDays(1));
 
         when(leagueRepository.findByApiLeagueId(leagueApiId)).thenReturn(Optional.of(mockLeague));
-        when(fixtureRepository.findByLeagueIdAndMatchDatetimeBetween(eq(mockLeague.getId()), any(LocalDateTime.class),
+        when(fixtureRepository.findByLeague_IdAndMatchDatetimeBetween(eq(mockLeague.getId()), any(LocalDateTime.class),
                 any(LocalDateTime.class)))
                 .thenReturn(List.of(mockFixture));
 

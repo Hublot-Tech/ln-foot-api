@@ -16,7 +16,7 @@ import java.time.LocalDateTime; // Corrected from java.time.OffsetDateTime for @
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "web_advertisements")
+@Table(name = "web_advertisements", schema = "lnfoot_api")
 public class Advertisement {
 
     @Id

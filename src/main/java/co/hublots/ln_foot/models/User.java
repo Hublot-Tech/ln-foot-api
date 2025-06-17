@@ -20,7 +20,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "web_users")
+@Table(name = "web_users", schema = "lnfoot_api")
 public class User {
 
     @Id

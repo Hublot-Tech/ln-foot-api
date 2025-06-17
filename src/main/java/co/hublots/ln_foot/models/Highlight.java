@@ -11,12 +11,18 @@ import org.hibernate.annotations.UuidGenerator;
 
 import java.time.LocalDateTime;
 
+// Import Fixture and necessary JPA annotations
+import co.hublots.ln_foot.models.Fixture;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.FetchType;
+
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "web_highlights")
+@Table(name = "web_highlights", schema = "lnfoot_api")
 public class Highlight {
 
     @Id
@@ -39,6 +45,10 @@ public class Highlight {
     private String description;
 
     private String type; // e.g., "goal", "foul", "card"
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "fixture_id") // Name of the foreign key column in web_highlights table
+    private Fixture fixture;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false, nullable = false)

@@ -105,6 +105,6 @@ public class ProductVariantServiceImpl implements ProductVariantService {
 
     @Override
     public List<ProductVariant> getProductVariantsByProductId(String productId) {
-        return productVariantRepository.findAllByProductId(productId);
+        return productVariantRepository.findAllByProduct_Id(productId);
     }
 }

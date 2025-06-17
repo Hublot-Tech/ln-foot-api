@@ -134,7 +134,7 @@ public class FixtureServiceImpl implements FixtureService {
                     .orElseThrow(() -> new EntityNotFoundException(
                             "League with apiLeagueId " + leagueApiId + " not found for upcoming fixtures."));
 
-            fixtures = fixtureRepository.findByLeagueIdAndMatchDatetimeBetween(league.getId(), startDate, endDate);
+            fixtures = fixtureRepository.findByLeague_IdAndMatchDatetimeBetween(league.getId(), startDate, endDate);
         } else {
             fixtures = fixtureRepository.findByMatchDatetimeBetween(startDate, endDate);
         }
@@ -152,7 +152,7 @@ public class FixtureServiceImpl implements FixtureService {
                     .orElseThrow(() -> new EntityNotFoundException(
                             "League with apiLeagueId " + leagueApiId + " not found for fixtures by date."));
 
-            fixtures = fixtureRepository.findByLeagueIdAndMatchDatetimeBetween(league.getId(), startDate, endDate);
+            fixtures = fixtureRepository.findByLeague_IdAndMatchDatetimeBetween(league.getId(), startDate, endDate);
         } else {
             fixtures = fixtureRepository.findByMatchDatetimeBetween(startDate, endDate);
         }
