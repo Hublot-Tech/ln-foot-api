@@ -1,19 +1,25 @@
 package co.hublots.ln_foot.controllers;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import co.hublots.ln_foot.dto.AdvertisementDto;
 import co.hublots.ln_foot.dto.CreateAdvertisementDto;
 import co.hublots.ln_foot.dto.UpdateAdvertisementDto;
 import co.hublots.ln_foot.services.AdvertisementService;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
-import jakarta.persistence.EntityNotFoundException;
-import org.springframework.dao.DataAccessException;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 
 @Slf4j
 @RestController
@@ -48,20 +54,10 @@ public class AdvertisementController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> updateAdvertisement(@PathVariable String id, @Valid @RequestBody UpdateAdvertisementDto updateDto) {
-        try {
-            AdvertisementDto updatedAdvertisement = advertisementService.updateAdvertisement(id, updateDto);
-            return ResponseEntity.ok(updatedAdvertisement);
-        } catch (EntityNotFoundException e) {
-            log.warn("Attempted to update non-existent advertisement with ID {}: {}", id, e.getMessage());
-            return ResponseEntity.notFound().build();
-        } catch (DataAccessException e) {
-            log.error("Database error while updating advertisement with ID {}: {}", id, e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("A database error occurred.");
-        } catch (Exception e) {
-            log.error("Unexpected error while updating advertisement with ID {}: {}", id, e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred.");
-        }
+    public ResponseEntity<?> updateAdvertisement(@PathVariable String id,
+            @Valid @RequestBody UpdateAdvertisementDto updateDto) {
+        AdvertisementDto updatedAdvertisement = advertisementService.updateAdvertisement(id, updateDto);
+        return new ResponseEntity<>(updatedAdvertisement, HttpStatus.OK);
     }
 
     @DeleteMapping("/{id}")

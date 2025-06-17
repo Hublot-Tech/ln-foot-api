@@ -1,25 +1,33 @@
 package co.hublots.ln_foot.controllers;
 
-import co.hublots.ln_foot.dto.CreateFixtureDto;
-import co.hublots.ln_foot.dto.FixtureDto;
-import co.hublots.ln_foot.dto.UpdateFixtureDto;
-import co.hublots.ln_foot.services.FixtureService;
+import java.time.LocalDate;
+import java.util.List;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
-import jakarta.validation.Valid; // Added import
-import jakarta.persistence.EntityNotFoundException; // Added import
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.validation.annotation.Validated; // Added for @Validated
-import org.springframework.data.domain.Page; // Added for Page
-import org.springframework.data.domain.Pageable;
-import jakarta.validation.constraints.Min; // Added
-import jakarta.validation.constraints.Max; // Added
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.time.LocalDate;
-import java.util.List;
+import co.hublots.ln_foot.dto.CreateFixtureDto;
+import co.hublots.ln_foot.dto.FixtureDto;
+import co.hublots.ln_foot.dto.UpdateFixtureDto;
+import co.hublots.ln_foot.services.FixtureService;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Validated
@@ -34,9 +42,9 @@ public class FixtureController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<FixtureDto>> listFixtures( // Changed return type
-            @RequestParam(required = false) String leagueApiId, // Renamed for clarity, param name in request is still leagueId unless changed with @RequestParam("leagueId")
-            Pageable pageable) { // Added Pageable
+    public ResponseEntity<Page<FixtureDto>> listFixtures(
+            @RequestParam(required = false) String leagueApiId,
+            Pageable pageable) {
         Page<FixtureDto> fixturePage = fixtureService.listFixtures(leagueApiId, pageable);
         return ResponseEntity.ok(fixturePage);
     }
@@ -69,27 +77,18 @@ public class FixtureController {
         return new ResponseEntity<>(createdFixture, HttpStatus.CREATED);
     }
 
-    @PutMapping("/{id}") // Path variable should be apiFixtureId if that's what service expects
+    @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<FixtureDto> updateFixture(@PathVariable String id, @Valid @RequestBody UpdateFixtureDto updateDto) {
-        try {
-            FixtureDto updatedFixture = fixtureService.updateFixture(id, updateDto); // Service throws if not found
-            return ResponseEntity.ok(updatedFixture);
-        } catch (EntityNotFoundException e) {
-            log.warn("Attempted to update non-existent fixture with id {}: {}", id, e.getMessage());
-            return ResponseEntity.notFound().build();
-        }
+    public ResponseEntity<FixtureDto> updateFixture(@PathVariable String id,
+            @Valid @RequestBody UpdateFixtureDto updateDto) {
+        FixtureDto updatedFixture = fixtureService.updateFixture(id, updateDto);
+        return new ResponseEntity<>(updatedFixture, HttpStatus.OK);
     }
 
-    @DeleteMapping("/{id}") // Path variable should be apiFixtureId
+    @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteFixture(@PathVariable String id) {
-        try {
-            fixtureService.deleteFixture(id); // Service throws EntityNotFoundException if not found
-            return ResponseEntity.noContent().build();
-        } catch (EntityNotFoundException e) {
-            log.warn("Attempted to delete non-existent fixture with id {}: {}", id, e.getMessage());
-            return ResponseEntity.notFound().build();
-        }
+        fixtureService.deleteFixture(id);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }

@@ -35,7 +35,7 @@ public class HighlightController {
     }
 
     @GetMapping
-    public ResponseEntity<?> listHighlightsByFixture(
+    public ResponseEntity<Page<HighlightDto>> listHighlightsByFixture(
             @PathVariable String fixtureApiId,
             Pageable pageable) {
         Page<HighlightDto> highlights = highlightService.listHighlights(pageable);
