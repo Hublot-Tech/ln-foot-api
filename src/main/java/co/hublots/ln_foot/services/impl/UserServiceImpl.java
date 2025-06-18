@@ -3,9 +3,13 @@ package co.hublots.ln_foot.services.impl;
 import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,7 +20,9 @@ import co.hublots.ln_foot.repositories.UserRepository;
 import co.hublots.ln_foot.services.UserService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
@@ -97,18 +103,93 @@ public class UserServiceImpl implements UserService {
             }
         }
 
-        userRepository.save(user);
+        userRepository.delete(user);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<UserDto> findUserByEmail(String email) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'findUserByEmail'");
+        return userRepository.findByEmail(email).map(this::mapToDto);
     }
 
     @Override
+    @Transactional // Can be readOnly = true if findOrCreateUserFromJwt is also readOnly for existing users without updates
     public Optional<UserDto> getCurrentUser() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getCurrentUser'");
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.isAuthenticated() && authentication.getPrincipal() instanceof Jwt) {
+            Jwt jwt = (Jwt) authentication.getPrincipal();
+            return findOrCreateUserFromJwt(jwt);
+        }
+        return Optional.empty();
+    }
+
+    @Override
+    @Transactional
+    public Optional<UserDto> findOrCreateUserFromJwt(Jwt jwt) {
+        String keycloakId = jwt.getSubject();
+        String email = jwt.getClaimAsString("email");
+        String firstName = jwt.getClaimAsString("given_name");
+        String lastName = jwt.getClaimAsString("family_name");
+        String username = jwt.getClaimAsString("preferred_username");
+
+        Map<String, Object> realmAccess = jwt.getClaimAsMap("realm_access");
+        @SuppressWarnings("unchecked")
+        List<String> rolesFromJwt = realmAccess != null ? (List<String>) realmAccess.get("roles") : Collections.emptyList();
+
+        String determinedRole = "USER"; // Default role
+        if (rolesFromJwt != null) {
+            if (rolesFromJwt.stream().anyMatch(role -> "ADMIN".equalsIgnoreCase(role) || "ROLE_ADMIN".equalsIgnoreCase(role))) {
+                determinedRole = "ADMIN";
+            } else if (rolesFromJwt.stream().anyMatch(role -> "USER".equalsIgnoreCase(role) || "ROLE_USER".equalsIgnoreCase(role))) {
+                determinedRole = "USER";
+            }
+        }
+
+        if (!User.ValidRolesEnum.isValidRole(determinedRole)) {
+            log.warn("Invalid role determined from JWT: '{}'. Defaulting to USER.", determinedRole);
+            determinedRole = "USER";
+        }
+
+        Optional<User> existingUserOpt = userRepository.findByKeycloakId(keycloakId);
+        User user;
+
+        if (existingUserOpt.isPresent()) {
+            user = existingUserOpt.get();
+            boolean updated = false;
+            if (email != null && !email.equals(user.getEmail())) {
+                user.setEmail(email);
+                updated = true;
+            }
+            if (firstName != null && !firstName.equals(user.getFirstName())) {
+                user.setFirstName(firstName);
+                updated = true;
+            }
+            if (lastName != null && !lastName.equals(user.getLastName())) {
+                user.setLastName(lastName);
+                updated = true;
+            }
+            if (username != null && !username.equals(user.getUsername())) {
+                user.setUsername(username);
+                updated = true;
+            }
+            if (!determinedRole.equals(user.getRole())) {
+                user.setRole(determinedRole);
+                updated = true;
+            }
+            if (updated) {
+                user = userRepository.save(user);
+            }
+        } else {
+            user = new User();
+            user.setKeycloakId(keycloakId);
+            user.setEmail(email);
+            user.setFirstName(firstName);
+            user.setLastName(lastName);
+            user.setUsername(username);
+            user.setRole(determinedRole);
+            // Set other mandatory fields if any, e.g., createdAt, though usually handled by @CreationTimestamp
+            user = userRepository.save(user);
+        }
+        return Optional.of(mapToDto(user));
     }
 }

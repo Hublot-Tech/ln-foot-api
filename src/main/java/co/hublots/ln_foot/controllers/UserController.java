@@ -36,6 +36,15 @@ public class UserController {
         this.userService = userService;
     }
 
+    @GetMapping("/me")
+    // No specific PreAuthorize here, relies on global config for /api/v1/users/**
+    // ensuring user is authenticated.
+    public ResponseEntity<UserDto> getCurrentUser() {
+        return userService.getCurrentUser()
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
     public List<UserDto> listUsers(

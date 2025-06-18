@@ -19,10 +19,10 @@ import java.util.Collections;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
@@ -40,23 +40,71 @@ class UserControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @Mock
+    @MockBean // Changed from @Mock to @MockBean
     private UserService userService;
 
     @Autowired
     private ObjectMapper objectMapper;
 
-    private UserDto createMockUserDto(String id) {
+    private UserDto createMockUserDto(String id, String role, String keycloakId) {
         return UserDto.builder()
                 .id(id)
+                .keycloakId(keycloakId)
                 .email(id + "@example.com")
                 .name("User " + id)
-                .role("USER")
+                .role(role)
                 .createdAt(OffsetDateTime.now().minusDays(1))
                 .updatedAt(OffsetDateTime.now())
                 .build();
     }
 
+    private UserDto createMockUserDto(String id) {
+        return createMockUserDto(id, "USER", "kc-" + id);
+    }
+
+
+    // --- /api/v1/users/me Tests ---
+    @Test
+    @WithMockUser // Default mock user: "user", roles "USER"
+    void getCurrentUser_whenAuthenticatedAndUserFound_returnsUserDto() throws Exception {
+        String userId = "currentUserId";
+        String keycloakId = "current-user-keycloak-id"; // This would be `authentication.getName()` from @WithMockUser(username="...")
+        UserDto expectedDto = createMockUserDto(userId, "USER", keycloakId);
+        expectedDto.setName("CurrentUser");
+
+
+        when(userService.getCurrentUser()).thenReturn(Optional.of(expectedDto));
+
+        mockMvc.perform(get("/api/v1/users/me"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id", is(userId)))
+                .andExpect(jsonPath("$.name", is("CurrentUser")))
+                .andExpect(jsonPath("$.keycloakId", is(keycloakId)));
+
+        verify(userService).getCurrentUser();
+    }
+
+    @Test
+    @WithMockUser
+    void getCurrentUser_whenAuthenticatedAndUserNotFound_returnsNotFound() throws Exception {
+        when(userService.getCurrentUser()).thenReturn(Optional.empty());
+
+        mockMvc.perform(get("/api/v1/users/me"))
+                .andExpect(status().isNotFound());
+
+        verify(userService).getCurrentUser();
+    }
+
+    @Test
+    void getCurrentUser_whenUnauthenticated_returnsUnauthorized() throws Exception {
+        mockMvc.perform(get("/api/v1/users/me"))
+                .andExpect(status().isUnauthorized());
+
+        verify(userService, times(0)).getCurrentUser(); // Service method should not be called
+    }
+
+
+    // --- Other User Endpoints ---
     @Test
     @WithMockUser(roles = "ADMIN")
     void listUsers_isOk_withAdminRole() throws Exception {
@@ -152,15 +200,39 @@ class UserControllerTest {
     }
 
     @Test
-    @WithMockUser(roles = "ADMIN")
-    void deleteUser_isNoContent_withAdminRole() throws Exception {
-        String userId = "userToDelete";
-        doNothing().when(userService).deleteUser(userId);
+    @WithMockUser(username = "admin-kc-id", roles = "ADMIN")
+    void deleteUser_isNoContent_withAdminRole_whenDeletingAnotherUser() throws Exception {
+        String userIdToDelete = "userToDelete";
+        String userToDeleteKeycloakId = "other-user-kc-id"; // Different from admin-kc-id
 
-        mockMvc.perform(delete("/api/v1/users/{id}", userId))
+        UserDto userToDeleteDto = createMockUserDto(userIdToDelete, "USER", userToDeleteKeycloakId);
+        when(userService.findUserById(userIdToDelete)).thenReturn(Optional.of(userToDeleteDto));
+        doNothing().when(userService).deleteUser(userIdToDelete);
+
+        mockMvc.perform(delete("/api/v1/users/{id}", userIdToDelete))
                 .andExpect(status().isNoContent());
-        verify(userService, times(1)).deleteUser(userId);
+
+        verify(userService).findUserById(userIdToDelete);
+        verify(userService).deleteUser(userIdToDelete);
     }
+
+    @Test
+    @WithMockUser(username = "admin-kc-id", roles = "ADMIN")
+    void deleteUser_byAdmin_whenDeletingSelf_isForbidden() throws Exception {
+        String adminUserIdInDb = "adminUserInDb"; // This is the DB ID of the admin
+        String adminKeycloakId = "admin-kc-id";   // This matches @WithMockUser's username
+
+        UserDto adminDtoToDelete = createMockUserDto(adminUserIdInDb, "ADMIN", adminKeycloakId);
+        when(userService.findUserById(adminUserIdInDb)).thenReturn(Optional.of(adminDtoToDelete));
+        // deleteUser service method should not be called
+
+        mockMvc.perform(delete("/api/v1/users/{id}", adminUserIdInDb))
+                .andExpect(status().isForbidden());
+
+        verify(userService).findUserById(adminUserIdInDb);
+        verify(userService, times(0)).deleteUser(any(String.class));
+    }
+
 
     @Test
     void deleteUser_isUnauthorized_withoutAuth() throws Exception {
