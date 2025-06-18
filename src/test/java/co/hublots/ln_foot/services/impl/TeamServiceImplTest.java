@@ -3,15 +3,11 @@ package co.hublots.ln_foot.services.impl;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -24,8 +20,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import co.hublots.ln_foot.dto.TeamDto;
-import co.hublots.ln_foot.models.Fixture;
-import co.hublots.ln_foot.models.League;
 import co.hublots.ln_foot.models.Team;
 import co.hublots.ln_foot.repositories.TeamRepository;
 
@@ -60,32 +54,6 @@ class TeamServiceImplTest {
                 .build();
     }
 
-    private League createMockLeague(String internalId, String apiLeagueId) {
-        return League.builder().id(internalId).apiLeagueId(apiLeagueId).leagueName("Mock League").build();
-    }
-
-    private Fixture createMockFixture(League league, Team team1, Team team2) {
-        return Fixture.builder()
-                .id(UUID.randomUUID().toString())
-                .league(league)
-                .team1(team1)
-                .team2(team2)
-                .matchDatetime(OffsetDateTime.now())
-                .status("NS")
-                .build();
-    }
-
-
-    @Test
-    void listTeamsByLeague_leagueApiIdNullOrBlank_throwsIllegalArgumentException() {
-        Exception eNull = assertThrows(IllegalArgumentException.class, () -> teamService.listTeamsByLeague(null));
-        assertEquals("League API ID cannot be null or empty.", eNull.getMessage());
-
-        Exception eBlank = assertThrows(IllegalArgumentException.class, () -> teamService.listTeamsByLeague("  "));
-        assertEquals("League API ID cannot be null or empty.", eBlank.getMessage());
-
-        verify(teamRepository, never()).findDistinctTeamsByLeagueApiId(anyString());
-    }
 
     @Test
     void listTeamsByLeague_whenRepositoryReturnsEmpty_returnsEmptyList() {
@@ -94,7 +62,7 @@ class TeamServiceImplTest {
         when(teamRepository.findDistinctTeamsByLeagueApiId(leagueApiId)).thenReturn(Collections.emptyList());
 
         // Act
-        List<TeamDto> result = teamService.listTeamsByLeague(leagueApiId);
+        List<TeamDto> result = teamService.listTeams(Optional.of(leagueApiId));
 
         // Assert
         assertNotNull(result);
@@ -112,7 +80,7 @@ class TeamServiceImplTest {
         when(teamRepository.findDistinctTeamsByLeagueApiId(leagueApiId)).thenReturn(List.of(teamA, teamB));
 
         // Act
-        List<TeamDto> result = teamService.listTeamsByLeague(leagueApiId);
+        List<TeamDto> result = teamService.listTeams(Optional.of(leagueApiId));
 
         // Assert
         assertNotNull(result);

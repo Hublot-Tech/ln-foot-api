@@ -8,6 +8,7 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -23,7 +24,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -31,6 +31,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -47,7 +48,7 @@ class LeagueControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean // Changed from @Mock
+    @MockitoBean
     private LeagueService leagueService;
 
     @Autowired
@@ -112,7 +113,7 @@ class LeagueControllerTest {
         returnedDto.setName("New League");
         when(leagueService.createLeague(any(CreateLeagueDto.class))).thenReturn(returnedDto);
 
-        mockMvc.perform(post("/api/v1/leagues")
+        mockMvc.perform(post("/api/v1/leagues").with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(createDto)))
                 .andExpect(status().isCreated())
@@ -122,7 +123,7 @@ class LeagueControllerTest {
     @Test
     void createLeague_isUnauthorized_withoutAuth() throws Exception {
         CreateLeagueDto createDto = CreateLeagueDto.builder().build();
-        mockMvc.perform(post("/api/v1/leagues")
+        mockMvc.perform(post("/api/v1/leagues").with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(createDto)))
                 .andExpect(status().isUnauthorized());
@@ -132,7 +133,7 @@ class LeagueControllerTest {
     @WithMockUser(roles = "USER")
     void createLeague_isForbidden_withUserRole() throws Exception {
         CreateLeagueDto createDto = CreateLeagueDto.builder().build();
-        mockMvc.perform(post("/api/v1/leagues")
+        mockMvc.perform(post("/api/v1/leagues").with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(createDto)))
                 .andExpect(status().isForbidden());
@@ -148,7 +149,7 @@ class LeagueControllerTest {
 
         when(leagueService.updateLeague(eq(leagueId), any(UpdateLeagueDto.class))).thenReturn(returnedDto);
 
-        mockMvc.perform(put("/api/v1/leagues/{id}", leagueId)
+        mockMvc.perform(put("/api/v1/leagues/{id}", leagueId).with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(updateDto)))
                 .andExpect(status().isOk())
@@ -161,7 +162,7 @@ class LeagueControllerTest {
         String leagueId = "LToDelete";
         doNothing().when(leagueService).deleteLeague(leagueId);
 
-        mockMvc.perform(delete("/api/v1/leagues/{id}", leagueId))
+        mockMvc.perform(delete("/api/v1/leagues/{id}", leagueId).with(csrf()))
                 .andExpect(status().isNoContent());
         verify(leagueService, times(1)).deleteLeague(leagueId);
     }

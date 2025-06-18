@@ -13,7 +13,6 @@ import java.time.OffsetDateTime;
 @AllArgsConstructor
 public class HighlightDto {
     private String id;
-    private String fixtureId; // The fixture this highlight belongs to
     private String title;
     private String description;
     private String videoUrl; // URL to the highlight video

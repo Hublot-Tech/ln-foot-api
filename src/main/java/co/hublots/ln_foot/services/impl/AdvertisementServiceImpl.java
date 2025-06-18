@@ -18,7 +18,9 @@ import co.hublots.ln_foot.repositories.AdvertisementRepository;
 import co.hublots.ln_foot.services.AdvertisementService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AdvertisementServiceImpl implements AdvertisementService {
@@ -130,6 +132,7 @@ public class AdvertisementServiceImpl implements AdvertisementService {
     @Override
     @Transactional
     public void deleteAdvertisement(String id) {
+        log.info("Delete PathVariable: {}", id);
         if (!advertisementRepository.existsById(id)) {
             throw new EntityNotFoundException("Advertisement with ID " + id + " not found");
         }

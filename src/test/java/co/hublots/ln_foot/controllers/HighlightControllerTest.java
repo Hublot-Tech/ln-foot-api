@@ -8,6 +8,7 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -24,7 +25,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -32,6 +32,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -48,7 +49,7 @@ class HighlightControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean // Changed from @Mock
+    @MockitoBean
     private HighlightService highlightService;
 
     @Autowired
@@ -57,7 +58,6 @@ class HighlightControllerTest {
     private HighlightDto createMockHighlightDto(String id) {
         return HighlightDto.builder()
                 .id(id)
-                .fixtureId("fixture1")
                 .title("Amazing Goal")
                 .videoUrl("http://example.com/highlight.mp4")
                 .createdAt(OffsetDateTime.now())
@@ -81,16 +81,6 @@ class HighlightControllerTest {
                 .andExpect(jsonPath("$.content", hasSize(1)))
                 .andExpect(jsonPath("$.content[0].id", is("hl1")))
                 .andExpect(jsonPath("$.totalElements", is(1)));
-    }
-
-    @Test
-    @WithAnonymousUser
-    void listHighlightsByFixture_isBadRequest_whenFixtureApiIdMissing() throws Exception {
-        // Controller now has @NotBlank on fixtureApiId @RequestParam
-        mockMvc.perform(get("/api/v1/highlights")
-                .param("page", "0")
-                .param("size", "5"))
-                .andExpect(status().isBadRequest()); // Expect validation to fail
     }
 
     @Test
@@ -122,7 +112,7 @@ class HighlightControllerTest {
         returnedDto.setTitle("New Highlight");
         when(highlightService.createHighlight(any(CreateHighlightDto.class))).thenReturn(returnedDto);
 
-        mockMvc.perform(post("/api/v1/highlights")
+        mockMvc.perform(post("/api/v1/highlights").with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(createDto)))
                 .andExpect(status().isCreated())
@@ -132,7 +122,7 @@ class HighlightControllerTest {
     @Test
     void createHighlight_isUnauthorized_withoutAuth() throws Exception {
         CreateHighlightDto createDto = CreateHighlightDto.builder().build();
-        mockMvc.perform(post("/api/v1/highlights")
+        mockMvc.perform(post("/api/v1/highlights").with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(createDto)))
                 .andExpect(status().isUnauthorized());
@@ -142,7 +132,7 @@ class HighlightControllerTest {
     @WithMockUser(roles = "USER")
     void createHighlight_isForbidden_withUserRole() throws Exception {
         CreateHighlightDto createDto = CreateHighlightDto.builder().build();
-        mockMvc.perform(post("/api/v1/highlights")
+        mockMvc.perform(post("/api/v1/highlights").with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(createDto)))
                 .andExpect(status().isForbidden());
@@ -158,7 +148,7 @@ class HighlightControllerTest {
 
         when(highlightService.updateHighlight(eq(highlightId), any(UpdateHighlightDto.class))).thenReturn(returnedDto);
 
-        mockMvc.perform(put("/api/v1/highlights/{id}", highlightId)
+        mockMvc.perform(put("/api/v1/highlights/{id}", highlightId).with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(updateDto)))
                 .andExpect(status().isOk())
@@ -171,7 +161,7 @@ class HighlightControllerTest {
         String highlightId = "hlToDelete";
         doNothing().when(highlightService).deleteHighlight(highlightId);
 
-        mockMvc.perform(delete("/api/v1/highlights/{id}", highlightId))
+        mockMvc.perform(delete("/api/v1/highlights/{id}", highlightId).with(csrf()))
                 .andExpect(status().isNoContent());
         verify(highlightService, times(1)).deleteHighlight(highlightId);
     }

@@ -1,14 +1,13 @@
 package co.hublots.ln_foot.services.impl;
 
 import java.time.ZoneOffset;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
 import co.hublots.ln_foot.dto.TeamDto;
 import co.hublots.ln_foot.models.Team;
@@ -46,14 +45,13 @@ public class TeamServiceImpl implements TeamService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<TeamDto> listTeamsByLeague(String leagueApiId) {
-        if (!StringUtils.hasText(leagueApiId)) {
-            throw new IllegalArgumentException("League API ID cannot be null or empty.");
-        }
-        List<Team> teams = teamRepository.findDistinctTeamsByLeagueApiId(leagueApiId);
-        if (teams == null || teams.isEmpty()) {
-            return Collections.emptyList();
-        }
+    public List<TeamDto> listTeams(Optional<String> leagueApiId) {
+        List<Team> teams = new ArrayList<>();
+        if (leagueApiId.isPresent()) {
+            teams = teamRepository.findDistinctTeamsByLeagueApiId(leagueApiId.get());
+        } else
+            teams = teamRepository.findAll();
+
         return teams.stream().map(this::mapToDto).collect(Collectors.toList());
     }
 

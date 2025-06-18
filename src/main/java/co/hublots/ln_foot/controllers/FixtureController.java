@@ -27,19 +27,17 @@ import co.hublots.ln_foot.services.FixtureService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Validated
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/v1/fixtures")
 public class FixtureController {
 
     private final FixtureService fixtureService;
-
-    public FixtureController(FixtureService fixtureService) {
-        this.fixtureService = fixtureService;
-    }
 
     @GetMapping
     public ResponseEntity<Page<FixtureDto>> listFixtures(

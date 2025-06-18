@@ -9,6 +9,7 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -27,11 +28,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -49,7 +50,7 @@ class FixtureControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean // Changed from @Mock
+    @MockitoBean
     private FixtureService fixtureService;
 
     @Autowired
@@ -58,7 +59,7 @@ class FixtureControllerTest {
     private FixtureDto createMockFixtureDto(String id) {
         return FixtureDto.builder()
                 .id(id)
-                .leagueId("league1")
+                .leagueId("L1")
                 .season("2023")
                 .homeTeam(SimpleTeamDto.builder().id("teamA").name("Team A").build())
                 .awayTeam(SimpleTeamDto.builder().id("teamB").name("Team B").build())
@@ -72,13 +73,14 @@ class FixtureControllerTest {
     @WithAnonymousUser
     void listFixtures_isOk() throws Exception {
         FixtureDto mockFixture = createMockFixtureDto("fix1");
+
         when(fixtureService.listFixtures(any(), any()))
                 .thenReturn(new PageImpl<>(Collections.singletonList(mockFixture)));
 
         mockMvc.perform(get("/api/v1/fixtures").param("leagueId", "L1"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].id", is("fix1")));
+                .andExpect(jsonPath("$.content", hasSize(1))) // ✅ fix here
+                .andExpect(jsonPath("$.content[0].id", is("fix1"))); // ✅ and here
     }
 
     @Test
@@ -136,6 +138,7 @@ class FixtureControllerTest {
         when(fixtureService.createFixture(any(CreateFixtureDto.class))).thenReturn(returnedDto);
 
         mockMvc.perform(post("/api/v1/fixtures")
+                .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(createDto)))
                 .andExpect(status().isCreated())
@@ -146,6 +149,7 @@ class FixtureControllerTest {
     void createFixture_isUnauthorized_withoutAuth() throws Exception {
         CreateFixtureDto createDto = CreateFixtureDto.builder().build();
         mockMvc.perform(post("/api/v1/fixtures")
+                .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(createDto)))
                 .andExpect(status().isUnauthorized());
@@ -156,6 +160,7 @@ class FixtureControllerTest {
     void createFixture_isForbidden_withUserRole() throws Exception {
         CreateFixtureDto createDto = CreateFixtureDto.builder().build();
         mockMvc.perform(post("/api/v1/fixtures")
+                .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(createDto)))
                 .andExpect(status().isForbidden());
@@ -172,6 +177,7 @@ class FixtureControllerTest {
         when(fixtureService.updateFixture(eq(fixtureId), any(UpdateFixtureDto.class))).thenReturn(returnedDto);
 
         mockMvc.perform(put("/api/v1/fixtures/{id}", fixtureId)
+                .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(updateDto)))
                 .andExpect(status().isOk())
@@ -184,7 +190,7 @@ class FixtureControllerTest {
         String fixtureId = "fixtureToDelete";
         doNothing().when(fixtureService).deleteFixture(fixtureId);
 
-        mockMvc.perform(delete("/api/v1/fixtures/{id}", fixtureId))
+        mockMvc.perform(delete("/api/v1/fixtures/{id}", fixtureId).with(csrf()))
                 .andExpect(status().isNoContent());
         verify(fixtureService, times(1)).deleteFixture(fixtureId);
     }

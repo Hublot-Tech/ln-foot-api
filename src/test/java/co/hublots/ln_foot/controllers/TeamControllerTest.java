@@ -2,7 +2,6 @@ package co.hublots.ln_foot.controllers;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -16,8 +15,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.security.test.context.support.WithAnonymousUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import co.hublots.ln_foot.dto.TeamDto;
@@ -30,9 +29,8 @@ class TeamControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean // Changed from @Mock
+    @MockitoBean
     private TeamService teamService;
-
 
     private TeamDto createMockTeamDto(String id) {
         return TeamDto.builder()
@@ -49,21 +47,12 @@ class TeamControllerTest {
     @WithAnonymousUser // Endpoint is public
     void listTeamsByLeague_isOk() throws Exception {
         TeamDto mockTeam = createMockTeamDto("T1");
-        when(teamService.listTeamsByLeague(anyString())).thenReturn(Collections.singletonList(mockTeam));
+        when(teamService.listTeams(Optional.of("leagueId"))).thenReturn(Collections.singletonList(mockTeam));
 
         mockMvc.perform(get("/api/v1/teams").param("leagueId", "L1").param("season", "2023"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].id", is("T1")));
-    }
-
-    @Test
-    @WithAnonymousUser
-    void listTeamsByLeague_requiresLeagueId() throws Exception {
-        // This test assumes leagueId is a required parameter.
-        // Spring by default would return 400 if a required @RequestParam is missing.
-        mockMvc.perform(get("/api/v1/teams"))
-                .andExpect(status().isBadRequest());
     }
 
     @Test

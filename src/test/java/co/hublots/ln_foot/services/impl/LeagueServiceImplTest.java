@@ -1,24 +1,17 @@
 package co.hublots.ln_foot.services.impl;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification; // For mocking findAll(spec, pageable)
-import co.hublots.ln_foot.dto.CreateLeagueDto;
-import co.hublots.ln_foot.dto.LeagueDto;
-import co.hublots.ln_foot.dto.UpdateLeagueDto;
-import co.hublots.ln_foot.models.Fixture;
-import co.hublots.ln_foot.models.League;
-import co.hublots.ln_foot.models.Team;
-import co.hublots.ln_foot.repositories.LeagueRepository;
-import jakarta.persistence.EntityNotFoundException;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -28,20 +21,33 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.ArgumentMatchers;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+
+import co.hublots.ln_foot.dto.CreateLeagueDto;
+import co.hublots.ln_foot.dto.LeagueDto;
+import co.hublots.ln_foot.dto.UpdateLeagueDto;
+import co.hublots.ln_foot.models.Fixture;
+import co.hublots.ln_foot.models.League;
+import co.hublots.ln_foot.models.Team;
+import co.hublots.ln_foot.repositories.LeagueRepository;
+import jakarta.persistence.EntityNotFoundException;
 
 @ExtendWith(MockitoExtension.class)
 class LeagueServiceImplTest {
 
     @Mock
     private LeagueRepository leagueRepository;
-    // No Fixture/Team repositories needed directly as LeagueService only manages
-    // League entity,
-    // and fixture list mapping is done from League.fixtures (which would be
-    // populated if eager or fetched)
-
     private LeagueServiceImpl leagueService;
 
     @BeforeEach
@@ -93,7 +99,8 @@ class LeagueServiceImplTest {
                 Collections.emptyList());
         Page<League> leaguePage = new PageImpl<>(List.of(mockLeague1, mockLeague2), pageable, 2);
 
-        when(leagueRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(leaguePage);
+        when(leagueRepository.findAll(ArgumentMatchers.<Specification<League>>any(), eq(pageable)))
+                .thenReturn(leaguePage);
 
         // Act
         Page<LeagueDto> result = leagueService.listLeagues(null, null, pageable);
@@ -103,7 +110,7 @@ class LeagueServiceImplTest {
         assertEquals(2, result.getTotalElements());
         assertEquals("L1_API", result.getContent().get(0).getId());
         assertEquals("League One", result.getContent().get(0).getName());
-        verify(leagueRepository).findAll(any(Specification.class), eq(pageable));
+        verify(leagueRepository).findAll(ArgumentMatchers.<Specification<League>>any(), eq(pageable));
     }
 
     @Test
@@ -119,7 +126,8 @@ class LeagueServiceImplTest {
         // ArgumentCaptor for Specification can be complex, so we trust the service
         // builds it.
         // We verify the interaction with the repository.
-        when(leagueRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(leaguePage);
+        when(leagueRepository.findAll(ArgumentMatchers.<Specification<League>>any(), eq(pageable)))
+                .thenReturn(leaguePage);
 
         // Act
         Page<LeagueDto> result = leagueService.listLeagues(countryFilter, null, pageable);
@@ -128,7 +136,7 @@ class LeagueServiceImplTest {
         assertNotNull(result);
         assertEquals(1, result.getTotalElements());
         assertEquals(countryFilter, result.getContent().get(0).getCountry());
-        verify(leagueRepository).findAll(any(Specification.class), eq(pageable));
+        verify(leagueRepository).findAll(ArgumentMatchers.<Specification<League>>any(), eq(pageable));
     }
 
     @Test
@@ -144,7 +152,8 @@ class LeagueServiceImplTest {
         Fixture mockFixture = createMockFixture("fix1_api", tempLeague, teamA, teamB);
 
         League mockLeague = createMockLeague(internalId, apiLeagueId, "Test League", List.of(mockFixture));
-        // Ensure fixture's league points back to the main mockLeague for mapping consistency
+        // Ensure fixture's league points back to the main mockLeague for mapping
+        // consistency
         mockFixture.setLeague(mockLeague);
 
         when(leagueRepository.findByApiLeagueId(apiLeagueId)).thenReturn(Optional.of(mockLeague));

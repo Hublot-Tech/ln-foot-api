@@ -1,16 +1,34 @@
 package co.hublots.ln_foot.services.impl;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atMost;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.time.OffsetDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -24,11 +42,23 @@ import org.springframework.web.client.RestTemplate;
 
 import co.hublots.ln_foot.config.SyncConfigProperties;
 import co.hublots.ln_foot.dto.SyncStatusDto;
-import co.hublots.ln_foot.dto.external.*;
+import co.hublots.ln_foot.dto.external.ExternalFixtureDetailsDto;
+import co.hublots.ln_foot.dto.external.ExternalLeagueInFixtureDto;
+import co.hublots.ln_foot.dto.external.ExternalTeamInFixtureDto;
+import co.hublots.ln_foot.dto.external.FixtureResponseItemDto;
+import co.hublots.ln_foot.dto.external.GoalsDto;
+import co.hublots.ln_foot.dto.external.RapidApiFootballResponseDto;
+import co.hublots.ln_foot.dto.external.ScoreDto;
+import co.hublots.ln_foot.dto.external.StatusDto;
+import co.hublots.ln_foot.dto.external.TeamsInFixtureDto;
+import co.hublots.ln_foot.dto.external.VenueDto;
 import co.hublots.ln_foot.models.Fixture;
 import co.hublots.ln_foot.models.League;
 import co.hublots.ln_foot.models.Team;
-import co.hublots.ln_foot.repositories.*;
+import co.hublots.ln_foot.repositories.FixtureRepository;
+import co.hublots.ln_foot.repositories.HighlightRepository;
+import co.hublots.ln_foot.repositories.LeagueRepository;
+import co.hublots.ln_foot.repositories.TeamRepository;
 
 @ExtendWith(MockitoExtension.class)
 class DataSyncServiceImplTest {
@@ -43,8 +73,8 @@ class DataSyncServiceImplTest {
     private HighlightRepository highlightRepositoryMock;
     @Mock
     private SyncConfigProperties syncConfigPropertiesMock;
-    @Mock
-    private RestTemplate restTemplateMock;
+
+    private RestTemplate restTemplateMock = new RestTemplate();
 
     @Captor
     ArgumentCaptor<League> leagueCaptor;
@@ -141,7 +171,9 @@ class DataSyncServiceImplTest {
                 any(java.net.URI.class),
                 eq(HttpMethod.GET),
                 any(HttpEntity.class),
-                any(ParameterizedTypeReference.class))).thenReturn(responseEntity);
+                ArgumentMatchers
+                        .<ParameterizedTypeReference<RapidApiFootballResponseDto<FixtureResponseItemDto>>>any()))
+                .thenReturn(responseEntity);
 
         // Mock repository save operations
         when(leagueRepositoryMock.save(any(League.class))).thenAnswer(inv -> {
@@ -206,7 +238,9 @@ class DataSyncServiceImplTest {
                 any(java.net.URI.class),
                 eq(HttpMethod.GET),
                 any(HttpEntity.class),
-                any(ParameterizedTypeReference.class))).thenReturn(responseEntity);
+                ArgumentMatchers
+                        .<ParameterizedTypeReference<RapidApiFootballResponseDto<FixtureResponseItemDto>>>any()))
+                .thenReturn(responseEntity);
 
         when(leagueRepositoryMock.save(any(League.class))).thenAnswer(inv -> inv.getArgument(0));
         when(teamRepositoryMock.save(any(Team.class))).thenAnswer(inv -> inv.getArgument(0));
@@ -231,7 +265,8 @@ class DataSyncServiceImplTest {
                 any(java.net.URI.class),
                 eq(HttpMethod.GET),
                 any(HttpEntity.class),
-                any(ParameterizedTypeReference.class))).thenThrow(new RestClientException("API Error"));
+                ArgumentMatchers.<ParameterizedTypeReference<FixtureResponseItemDto>>any()))
+                .thenThrow(new RestClientException("API Error"));
 
         SyncStatusDto statusDto = dataSyncService.syncMainFixtures(new HashMap<>());
 
@@ -259,7 +294,9 @@ class DataSyncServiceImplTest {
                 any(java.net.URI.class),
                 eq(HttpMethod.GET),
                 any(HttpEntity.class),
-                any(ParameterizedTypeReference.class))).thenReturn(responseEntity);
+                ArgumentMatchers
+                        .<ParameterizedTypeReference<RapidApiFootballResponseDto<FixtureResponseItemDto>>>any()))
+                .thenReturn(responseEntity);
 
         SyncStatusDto statusDto = dataSyncService.syncMainFixtures(new HashMap<>());
 
@@ -290,7 +327,9 @@ class DataSyncServiceImplTest {
                 any(java.net.URI.class),
                 eq(HttpMethod.GET),
                 any(HttpEntity.class),
-                any(ParameterizedTypeReference.class))).thenReturn(responseEntity);
+                ArgumentMatchers
+                        .<ParameterizedTypeReference<RapidApiFootballResponseDto<FixtureResponseItemDto>>>any()))
+                .thenReturn(responseEntity);
 
         SyncStatusDto statusDto = dataSyncService.syncMainFixtures(new HashMap<>());
 
@@ -318,7 +357,9 @@ class DataSyncServiceImplTest {
                 any(java.net.URI.class),
                 eq(HttpMethod.GET),
                 any(HttpEntity.class),
-                any(ParameterizedTypeReference.class))).thenReturn(responseEntity);
+                ArgumentMatchers
+                        .<ParameterizedTypeReference<RapidApiFootballResponseDto<FixtureResponseItemDto>>>any()))
+                .thenReturn(responseEntity);
 
         when(leagueRepositoryMock.save(any(League.class))).thenAnswer(inv -> inv.getArgument(0));
         when(teamRepositoryMock.save(any(Team.class))).thenAnswer(inv -> inv.getArgument(0));
@@ -359,7 +400,9 @@ class DataSyncServiceImplTest {
                 any(java.net.URI.class),
                 eq(HttpMethod.GET),
                 any(HttpEntity.class),
-                any(ParameterizedTypeReference.class))).thenReturn(responseEntity);
+                ArgumentMatchers
+                        .<ParameterizedTypeReference<RapidApiFootballResponseDto<FixtureResponseItemDto>>>any()))
+                .thenReturn(responseEntity);
 
         when(leagueRepositoryMock.save(any(League.class))).thenThrow(new RuntimeException("League save error"));
 
@@ -376,7 +419,6 @@ class DataSyncServiceImplTest {
         verify(fixtureRepositoryMock, never()).saveAll(anyList());
     }
 
-    // Test deprecated methods to ensure they call syncMainFixtures
     @Test
     void oldSyncLeagues_callsSyncMainFixtures() {
         DataSyncServiceImpl spiedService = spy(dataSyncService);
@@ -384,7 +426,7 @@ class DataSyncServiceImplTest {
 
         spiedService.syncLeagues("soccer", "england");
 
-        ArgumentCaptor<Map<String, String>> captor = ArgumentCaptor.forClass(Map.class);
+        ArgumentCaptor<Map<String, String>> captor = ArgumentCaptor.captor();
         verify(spiedService).syncMainFixtures(captor.capture());
         assertTrue(captor.getValue().containsKey("date"));
     }
@@ -396,7 +438,7 @@ class DataSyncServiceImplTest {
 
         spiedService.syncTeamsByLeague("league123");
 
-        ArgumentCaptor<Map<String, String>> captor = ArgumentCaptor.forClass(Map.class);
+        ArgumentCaptor<Map<String, String>> captor = ArgumentCaptor.captor();
         verify(spiedService).syncMainFixtures(captor.capture());
         assertEquals("league123", captor.getValue().get("league"));
         assertTrue(captor.getValue().containsKey("season"));
@@ -409,7 +451,7 @@ class DataSyncServiceImplTest {
 
         spiedService.syncFixturesByLeague("league456", "2024");
 
-        ArgumentCaptor<Map<String, String>> captor = ArgumentCaptor.forClass(Map.class);
+        ArgumentCaptor<Map<String, String>> captor = ArgumentCaptor.captor();
         verify(spiedService).syncMainFixtures(captor.capture());
         assertEquals("league456", captor.getValue().get("league"));
         assertEquals("2024", captor.getValue().get("season"));

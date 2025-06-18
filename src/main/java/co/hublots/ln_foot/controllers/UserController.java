@@ -22,23 +22,19 @@ import co.hublots.ln_foot.dto.UserDto;
 import co.hublots.ln_foot.services.UserService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Validated
 @RestController
 @RequestMapping("/api/v1/users")
+@RequiredArgsConstructor
 public class UserController {
 
     private final UserService userService;
 
-    public UserController(UserService userService) {
-        this.userService = userService;
-    }
-
     @GetMapping("/me")
-    // No specific PreAuthorize here, relies on global config for /api/v1/users/**
-    // ensuring user is authenticated.
     public ResponseEntity<UserDto> getCurrentUser() {
         return userService.getCurrentUser()
                 .map(ResponseEntity::ok)

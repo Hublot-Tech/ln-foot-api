@@ -1,37 +1,40 @@
 package co.hublots.ln_foot.services.impl;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.util.StringUtils; // For checking if this class is used by service
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-import co.hublots.ln_foot.dto.CreateHighlightDto;
-import co.hublots.ln_foot.dto.HighlightDto;
-import co.hublots.ln_foot.dto.UpdateHighlightDto;
-import co.hublots.ln_foot.models.Fixture;
-import co.hublots.ln_foot.models.Highlight;
-import co.hublots.ln_foot.repositories.FixtureRepository;
-import co.hublots.ln_foot.repositories.HighlightRepository;
-import jakarta.persistence.EntityNotFoundException;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import co.hublots.ln_foot.dto.CreateHighlightDto;
+import co.hublots.ln_foot.dto.HighlightDto;
+import co.hublots.ln_foot.dto.UpdateHighlightDto;
+import co.hublots.ln_foot.models.Highlight;
+import co.hublots.ln_foot.repositories.FixtureRepository;
+import co.hublots.ln_foot.repositories.HighlightRepository;
 
 @ExtendWith(MockitoExtension.class)
 class HighlightServiceImplTest {
@@ -48,12 +51,7 @@ class HighlightServiceImplTest {
         highlightService = new HighlightServiceImpl(highlightRepository);
     }
 
-    private Fixture createMockFixture(String internalId, String apiFixtureId) {
-        return Fixture.builder().id(internalId).apiFixtureId(apiFixtureId).status("FT")
-                .matchDatetime(OffsetDateTime.now()).build();
-    }
-
-    private Highlight createMockHighlight(String id, Fixture fixture, String title) {
+    private Highlight createMockHighlight(String id, String title) {
         return Highlight.builder()
                 .id(id)
                 .title(title)
@@ -67,15 +65,13 @@ class HighlightServiceImplTest {
     }
 
     @Test
-    void listHighlightsByFixture_whenFixtureApiIdProvided_returnsPagedDtos() { // Renamed test
+    void listHighlights_returnsPagedDtos() { // Renamed test
         // Arrange
-        String fixtureApiId = "FX_API_1";
         Pageable pageable = PageRequest.of(0, 10);
-        Fixture mockFixture = createMockFixture(UUID.randomUUID().toString(), fixtureApiId);
-        Highlight mockHighlight = createMockHighlight(UUID.randomUUID().toString(), mockFixture, "Goal!");
+        Highlight mockHighlight = createMockHighlight(UUID.randomUUID().toString(), "Goal!");
         Page<Highlight> highlightPage = new PageImpl<>(List.of(mockHighlight), pageable, 1);
 
-        when(highlightRepository.findByFixture_ApiFixtureId(fixtureApiId, pageable)).thenReturn(highlightPage);
+        when(highlightRepository.findAll(pageable)).thenReturn(highlightPage);
 
         // Act
         Page<HighlightDto> result = highlightService.listHighlights(pageable);
@@ -84,8 +80,7 @@ class HighlightServiceImplTest {
         assertNotNull(result);
         assertEquals(1, result.getTotalElements());
         assertEquals(mockHighlight.getTitle(), result.getContent().get(0).getTitle());
-        assertEquals(fixtureApiId, result.getContent().get(0).getFixtureId());
-        verify(highlightRepository).findByFixture_ApiFixtureId(fixtureApiId, pageable);
+        verify(highlightRepository).findAll(pageable);
     }
 
     @Test
@@ -117,8 +112,7 @@ class HighlightServiceImplTest {
     void findHighlightById_whenFound_returnsOptionalDto() {
         // Arrange
         String id = UUID.randomUUID().toString();
-        Fixture mockFixture = createMockFixture(UUID.randomUUID().toString(), "FX_API_HL");
-        Highlight mockHighlight = createMockHighlight(id, mockFixture, "Amazing Save");
+        Highlight mockHighlight = createMockHighlight(id, "Amazing Save");
         when(highlightRepository.findById(id)).thenReturn(Optional.of(mockHighlight));
 
         // Act
@@ -127,7 +121,6 @@ class HighlightServiceImplTest {
         // Assert
         assertTrue(result.isPresent());
         assertEquals(mockHighlight.getTitle(), result.get().getTitle());
-        assertEquals(mockFixture.getApiFixtureId(), result.get().getFixtureId());
         verify(highlightRepository).findById(id);
     }
 
@@ -169,8 +162,7 @@ class HighlightServiceImplTest {
     void updateHighlight_whenFound_updatesAndReturnsDto() {
         // Arrange
         String id = UUID.randomUUID().toString();
-        Fixture mockFixture = createMockFixture(UUID.randomUUID().toString(), "FX_HL_UPD");
-        Highlight existingHighlight = createMockHighlight(id, mockFixture, "Old Title");
+        Highlight existingHighlight = createMockHighlight(id, "Old Title");
         when(highlightRepository.findById(id)).thenReturn(Optional.of(existingHighlight));
 
         UpdateHighlightDto updateDto = UpdateHighlightDto.builder().title("Updated Title").durationSeconds(150).build();

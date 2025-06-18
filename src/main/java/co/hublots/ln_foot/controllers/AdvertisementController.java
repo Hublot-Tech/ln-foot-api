@@ -19,18 +19,16 @@ import co.hublots.ln_foot.dto.CreateAdvertisementDto;
 import co.hublots.ln_foot.dto.UpdateAdvertisementDto;
 import co.hublots.ln_foot.services.AdvertisementService;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/v1/advertisements")
 public class AdvertisementController {
 
     private final AdvertisementService advertisementService;
-
-    public AdvertisementController(AdvertisementService advertisementService) {
-        this.advertisementService = advertisementService;
-    }
 
     @GetMapping("/latest")
     public ResponseEntity<Page<AdvertisementDto>> getLatestAdvertisements(Pageable pageable) { // Changed signature
@@ -40,6 +38,7 @@ public class AdvertisementController {
 
     @GetMapping("/{id}")
     public ResponseEntity<AdvertisementDto> getAdvertisementById(@PathVariable String id) {
+        log.info("PathVariable: {}", id);
         return advertisementService.getAdvertisementById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -56,6 +55,8 @@ public class AdvertisementController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> updateAdvertisement(@PathVariable String id,
             @Valid @RequestBody UpdateAdvertisementDto updateDto) {
+        log.info("PathVariable: {}, DTO: {}", id, updateDto);
+
         AdvertisementDto updatedAdvertisement = advertisementService.updateAdvertisement(id, updateDto);
         return new ResponseEntity<>(updatedAdvertisement, HttpStatus.OK);
     }
@@ -63,6 +64,7 @@ public class AdvertisementController {
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteAdvertisement(@PathVariable String id) {
+        log.info("PathVariable: {}", id);
         advertisementService.deleteAdvertisement(id);
         return ResponseEntity.noContent().build();
     }

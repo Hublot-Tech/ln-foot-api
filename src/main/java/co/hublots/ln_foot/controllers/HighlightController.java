@@ -20,24 +20,20 @@ import co.hublots.ln_foot.dto.UpdateHighlightDto;
 import co.hublots.ln_foot.services.HighlightService;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Validated
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/v1/highlights")
 public class HighlightController {
 
     private final HighlightService highlightService;
 
-    public HighlightController(HighlightService highlightService) {
-        this.highlightService = highlightService;
-    }
-
     @GetMapping
-    public ResponseEntity<Page<HighlightDto>> listHighlightsByFixture(
-            @PathVariable String fixtureApiId,
-            Pageable pageable) {
+    public ResponseEntity<Page<HighlightDto>> listHighlights(Pageable pageable) {
         Page<HighlightDto> highlights = highlightService.listHighlights(pageable);
         return ResponseEntity.ok(highlights);
     }

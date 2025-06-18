@@ -43,7 +43,6 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class DataSyncServiceImpl implements DataSyncService {
 
-
     private final LeagueRepository leagueRepository;
     private final TeamRepository teamRepository;
     private final FixtureRepository fixtureRepository;

@@ -13,11 +13,8 @@ import org.springframework.transaction.annotation.Transactional;
 import co.hublots.ln_foot.dto.CreateNewsArticleDto;
 import co.hublots.ln_foot.dto.NewsArticleDto;
 import co.hublots.ln_foot.dto.UpdateNewsArticleDto;
-import co.hublots.ln_foot.dto.UserDto;
 import co.hublots.ln_foot.models.NewsArticle;
-import co.hublots.ln_foot.models.User;
 import co.hublots.ln_foot.repositories.NewsArticleRepository;
-import co.hublots.ln_foot.repositories.UserRepository;
 import co.hublots.ln_foot.services.NewsArticleService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -27,30 +24,6 @@ import lombok.RequiredArgsConstructor;
 public class NewsArticleServiceImpl implements NewsArticleService {
 
     private final NewsArticleRepository newsArticleRepository;
-    private final UserRepository userRepository;
-
-    private UserDto mapUserToUserDto(User userEntity) {
-        if (userEntity == null) {
-            return null;
-        }
-        String name = (userEntity.getFirstName() != null ? userEntity.getFirstName() : "") +
-                (userEntity.getLastName() != null ? " " + userEntity.getLastName() : "");
-        name = name.trim();
-
-        return UserDto.builder()
-                .id(userEntity.getId())
-                .email(userEntity.getEmail())
-                .name(name.isEmpty() ? null : name)
-                .avatarUrl(userEntity.getAvatarUrl())
-                .role(userEntity.getRole())
-                .createdAt(
-                        userEntity.getCreatedAt() != null ? userEntity.getCreatedAt().atOffset(ZoneOffset.UTC) : null)
-                .updatedAt(
-                        userEntity.getUpdatedAt() != null ? userEntity.getUpdatedAt().atOffset(ZoneOffset.UTC) : null)
-                .permissions(Collections.emptyList())
-                .emailVerified(null)
-                .build();
-    }
 
     private NewsArticleDto mapToDto(NewsArticle entity) {
         if (entity == null) {
@@ -89,16 +62,6 @@ public class NewsArticleServiceImpl implements NewsArticleService {
         }
         if (dto.getContent() != null) {
             entity.setContent(dto.getContent());
-        }
-        if (dto.getAuthorId() != null) {
-            if (dto.getAuthorId().isBlank()) {
-                entity.setAuthorName(null);
-            } else {
-                User authorUser = userRepository.findById(dto.getAuthorId())
-                        .orElseThrow(() -> new EntityNotFoundException(
-                                "Author (User) with ID " + dto.getAuthorId() + " not found."));
-                entity.setAuthorName(authorUser.getFirstName() + " " + authorUser.getLastName());
-            }
         }
 
         if (dto.getUrl() != null) {

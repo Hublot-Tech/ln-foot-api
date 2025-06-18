@@ -19,10 +19,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import co.hublots.ln_foot.dto.ProductDto;
 import co.hublots.ln_foot.models.ProductVariant;
-import co.hublots.ln_foot.models.Product;
-import co.hublots.ln_foot.services.ProductVariantService;
 import co.hublots.ln_foot.services.MinioService;
 import co.hublots.ln_foot.services.ProductService;
+import co.hublots.ln_foot.services.ProductVariantService;
+import co.hublots.ln_foot.models.Product;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

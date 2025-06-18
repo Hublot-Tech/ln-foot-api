@@ -8,6 +8,7 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -24,7 +25,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -32,6 +32,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -41,7 +42,6 @@ import co.hublots.ln_foot.dto.CreateAdvertisementDto;
 import co.hublots.ln_foot.dto.UpdateAdvertisementDto;
 import co.hublots.ln_foot.services.AdvertisementService;
 
-
 @SpringBootTest
 @AutoConfigureMockMvc
 class AdvertisementControllerTest {
@@ -49,7 +49,7 @@ class AdvertisementControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean // Changed from @Mock
+    @MockitoBean
     private AdvertisementService advertisementService;
 
     @Autowired
@@ -80,9 +80,9 @@ class AdvertisementControllerTest {
         when(advertisementService.getLatestAdvertisements(any(Pageable.class))).thenReturn(mockPage);
 
         mockMvc.perform(get("/api/v1/advertisements/latest")
-                        .param("page", "0")
-                        .param("size", "1")
-                        .param("sort", "createdAt,desc"))
+                .param("page", "0")
+                .param("size", "1")
+                .param("sort", "createdAt,desc"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content", hasSize(1)))
                 .andExpect(jsonPath("$.content[0].title", is("Test Ad")))
@@ -122,8 +122,9 @@ class AdvertisementControllerTest {
         when(advertisementService.createAdvertisement(any(CreateAdvertisementDto.class))).thenReturn(returnedDto);
 
         mockMvc.perform(post("/api/v1/advertisements")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(createDto)))
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createDto)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.title", is("New Ad")));
     }
@@ -132,8 +133,9 @@ class AdvertisementControllerTest {
     void createAdvertisement_isUnauthorized_withoutAuth() throws Exception {
         CreateAdvertisementDto createDto = CreateAdvertisementDto.builder().title("New Ad").build();
         mockMvc.perform(post("/api/v1/advertisements")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(createDto)))
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createDto)))
                 .andExpect(status().isUnauthorized()); // Default for unauthenticated by Spring Security
     }
 
@@ -142,8 +144,9 @@ class AdvertisementControllerTest {
     void createAdvertisement_isForbidden_withUserRole() throws Exception {
         CreateAdvertisementDto createDto = CreateAdvertisementDto.builder().title("New Ad").build();
         mockMvc.perform(post("/api/v1/advertisements")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(createDto)))
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createDto)))
                 .andExpect(status().isForbidden());
     }
 
@@ -157,11 +160,13 @@ class AdvertisementControllerTest {
         returnedDto.setId(adId);
         returnedDto.setTitle("Updated Ad");
 
-        when(advertisementService.updateAdvertisement(eq(adId), any(UpdateAdvertisementDto.class))).thenReturn(returnedDto);
+        when(advertisementService.updateAdvertisement(eq(adId), any(UpdateAdvertisementDto.class)))
+                .thenReturn(returnedDto);
 
         mockMvc.perform(put("/api/v1/advertisements/{id}", adId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(updateDto)))
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updateDto)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.title", is("Updated Ad")));
     }
@@ -170,8 +175,9 @@ class AdvertisementControllerTest {
     void updateAdvertisement_isUnauthorized_withoutAuth() throws Exception {
         UpdateAdvertisementDto updateDto = UpdateAdvertisementDto.builder().title("Updated Ad").build();
         mockMvc.perform(put("/api/v1/advertisements/{id}", "test-id")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(updateDto)))
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updateDto)))
                 .andExpect(status().isUnauthorized());
     }
 
@@ -180,8 +186,8 @@ class AdvertisementControllerTest {
     void updateAdvertisement_isForbidden_withUserRole() throws Exception {
         UpdateAdvertisementDto updateDto = UpdateAdvertisementDto.builder().title("Updated Ad").build();
         mockMvc.perform(put("/api/v1/advertisements/{id}", "test-id")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(updateDto)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updateDto)))
                 .andExpect(status().isForbidden());
     }
 
@@ -192,14 +198,14 @@ class AdvertisementControllerTest {
         String adId = "test-id-to-delete";
         doNothing().when(advertisementService).deleteAdvertisement(adId);
 
-        mockMvc.perform(delete("/api/v1/advertisements/{id}", adId))
+        mockMvc.perform(delete("/api/v1/advertisements/{id}", adId).with(csrf()))
                 .andExpect(status().isNoContent());
         verify(advertisementService, times(1)).deleteAdvertisement(adId);
     }
 
     @Test
     void deleteAdvertisement_isUnauthorized_withoutAuth() throws Exception {
-        mockMvc.perform(delete("/api/v1/advertisements/{id}", "test-id"))
+        mockMvc.perform(delete("/api/v1/advertisements/{id}", "test-id").with(csrf()))
                 .andExpect(status().isUnauthorized());
     }
 

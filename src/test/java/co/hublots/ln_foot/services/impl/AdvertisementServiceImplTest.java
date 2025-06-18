@@ -1,11 +1,23 @@
 package co.hublots.ln_foot.services.impl;
 
-import co.hublots.ln_foot.dto.AdvertisementDto;
-import co.hublots.ln_foot.dto.CreateAdvertisementDto;
-import co.hublots.ln_foot.dto.UpdateAdvertisementDto;
-import co.hublots.ln_foot.models.Advertisement;
-import co.hublots.ln_foot.repositories.AdvertisementRepository;
-import jakarta.persistence.EntityNotFoundException;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -18,16 +30,12 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable; // Ensure Pageable is imported
 import org.springframework.data.domain.Sort;
 
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import co.hublots.ln_foot.dto.AdvertisementDto;
+import co.hublots.ln_foot.dto.CreateAdvertisementDto;
+import co.hublots.ln_foot.dto.UpdateAdvertisementDto;
+import co.hublots.ln_foot.models.Advertisement;
+import co.hublots.ln_foot.repositories.AdvertisementRepository;
+import jakarta.persistence.EntityNotFoundException;
 
 @ExtendWith(MockitoExtension.class)
 class AdvertisementServiceImplTest {

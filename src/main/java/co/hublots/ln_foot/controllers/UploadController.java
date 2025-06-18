@@ -4,6 +4,8 @@ import co.hublots.ln_foot.dto.DeleteImageDto;
 import co.hublots.ln_foot.dto.ImagePresignedUrlRequestDto;
 import co.hublots.ln_foot.dto.ImagePresignedUrlResponseDto;
 import co.hublots.ln_foot.services.UploadService;
+import lombok.RequiredArgsConstructor;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -14,13 +16,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/upload")
+@RequiredArgsConstructor
 public class UploadController {
 
     private final UploadService uploadService;
-
-    public UploadController(UploadService uploadService) {
-        this.uploadService = uploadService;
-    }
 
     @PostMapping("/image-presigned-url")
     @PreAuthorize("hasRole('ADMIN')")

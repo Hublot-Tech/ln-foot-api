@@ -8,6 +8,7 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -22,9 +23,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -40,7 +41,7 @@ class UserControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean // Changed from @Mock to @MockBean
+    @MockitoBean
     private UserService userService;
 
     @Autowired
@@ -62,16 +63,15 @@ class UserControllerTest {
         return createMockUserDto(id, "USER", "kc-" + id);
     }
 
-
     // --- /api/v1/users/me Tests ---
     @Test
     @WithMockUser // Default mock user: "user", roles "USER"
     void getCurrentUser_whenAuthenticatedAndUserFound_returnsUserDto() throws Exception {
         String userId = "currentUserId";
-        String keycloakId = "current-user-keycloak-id"; // This would be `authentication.getName()` from @WithMockUser(username="...")
+        String keycloakId = "current-user-keycloak-id"; // This would be `authentication.getName()` from
+                                                        // @WithMockUser(username="...")
         UserDto expectedDto = createMockUserDto(userId, "USER", keycloakId);
         expectedDto.setName("CurrentUser");
-
 
         when(userService.getCurrentUser()).thenReturn(Optional.of(expectedDto));
 
@@ -102,7 +102,6 @@ class UserControllerTest {
 
         verify(userService, times(0)).getCurrentUser(); // Service method should not be called
     }
-
 
     // --- Other User Endpoints ---
     @Test
@@ -173,7 +172,7 @@ class UserControllerTest {
 
         when(userService.updateUserRole(eq(userId), eq(returnedDto.getRole()))).thenReturn(returnedDto);
 
-        mockMvc.perform(put("/api/v1/users/{id}/role", userId)
+        mockMvc.perform(put("/api/v1/users/{id}/role", userId).with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(updateDto)))
                 .andExpect(status().isOk())
@@ -183,7 +182,7 @@ class UserControllerTest {
     @Test
     void updateUserRole_isUnauthorized_withoutAuth() throws Exception {
         UpdateUserRoleDto updateDto = UpdateUserRoleDto.builder().role("EDITOR").build();
-        mockMvc.perform(put("/api/v1/users/{id}/role", "anyid")
+        mockMvc.perform(put("/api/v1/users/{id}/role", "anyid").with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(updateDto)))
                 .andExpect(status().isUnauthorized());
@@ -193,7 +192,7 @@ class UserControllerTest {
     @WithMockUser(roles = "USER")
     void updateUserRole_isForbidden_withUserRole() throws Exception {
         UpdateUserRoleDto updateDto = UpdateUserRoleDto.builder().role("EDITOR").build();
-        mockMvc.perform(put("/api/v1/users/{id}/role", "anyid")
+        mockMvc.perform(put("/api/v1/users/{id}/role", "anyid").with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(updateDto)))
                 .andExpect(status().isForbidden());
@@ -209,7 +208,7 @@ class UserControllerTest {
         when(userService.findUserById(userIdToDelete)).thenReturn(Optional.of(userToDeleteDto));
         doNothing().when(userService).deleteUser(userIdToDelete);
 
-        mockMvc.perform(delete("/api/v1/users/{id}", userIdToDelete))
+        mockMvc.perform(delete("/api/v1/users/{id}", userIdToDelete).with(csrf()))
                 .andExpect(status().isNoContent());
 
         verify(userService).findUserById(userIdToDelete);
@@ -220,30 +219,29 @@ class UserControllerTest {
     @WithMockUser(username = "admin-kc-id", roles = "ADMIN")
     void deleteUser_byAdmin_whenDeletingSelf_isForbidden() throws Exception {
         String adminUserIdInDb = "adminUserInDb"; // This is the DB ID of the admin
-        String adminKeycloakId = "admin-kc-id";   // This matches @WithMockUser's username
+        String adminKeycloakId = "admin-kc-id"; // This matches @WithMockUser's username
 
         UserDto adminDtoToDelete = createMockUserDto(adminUserIdInDb, "ADMIN", adminKeycloakId);
         when(userService.findUserById(adminUserIdInDb)).thenReturn(Optional.of(adminDtoToDelete));
         // deleteUser service method should not be called
 
-        mockMvc.perform(delete("/api/v1/users/{id}", adminUserIdInDb))
+        mockMvc.perform(delete("/api/v1/users/{id}", adminUserIdInDb).with(csrf()))
                 .andExpect(status().isForbidden());
 
         verify(userService).findUserById(adminUserIdInDb);
         verify(userService, times(0)).deleteUser(any(String.class));
     }
 
-
     @Test
     void deleteUser_isUnauthorized_withoutAuth() throws Exception {
-        mockMvc.perform(delete("/api/v1/users/{id}", "anyid"))
+        mockMvc.perform(delete("/api/v1/users/{id}", "anyid").with(csrf()))
                 .andExpect(status().isUnauthorized());
     }
 
     @Test
     @WithMockUser(roles = "USER")
     void deleteUser_isForbidden_withUserRole() throws Exception {
-        mockMvc.perform(delete("/api/v1/users/{id}", "anyid"))
+        mockMvc.perform(delete("/api/v1/users/{id}", "anyid").with(csrf()))
                 .andExpect(status().isForbidden());
     }
 }

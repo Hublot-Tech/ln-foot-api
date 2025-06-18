@@ -2,11 +2,12 @@ package co.hublots.ln_foot.scheduler;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -24,6 +25,7 @@ import org.slf4j.LoggerFactory;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
+import co.hublots.ln_foot.dto.SyncStatusDto;
 import co.hublots.ln_foot.services.DataSyncService;
 
 @ExtendWith(MockitoExtension.class)
@@ -38,8 +40,9 @@ class DataSyncSchedulerTest {
     @Test
     void scheduleDailyFullSync_callsSyncMainFixturesWithDateParam() {
         // Arrange
-        ArgumentCaptor<Map<String, String>> paramsCaptor = ArgumentCaptor.forClass(Map.class);
-        doNothing().when(dataSyncServiceMock).syncMainFixtures(paramsCaptor.capture());
+        ArgumentCaptor<Map<String, String>> paramsCaptor = ArgumentCaptor.captor();
+        when(dataSyncServiceMock.syncMainFixtures(paramsCaptor.capture()))
+            .thenReturn(any(SyncStatusDto.class)); // Mocking the return value to avoid any issues
 
         // Act
         dataSyncScheduler.scheduleDailyFullSync();
@@ -53,8 +56,9 @@ class DataSyncSchedulerTest {
     @Test
     void scheduleHourlyRecentFixturesSync_callsSyncMainFixturesWithLiveParam() {
         // Arrange
-        ArgumentCaptor<Map<String, String>> paramsCaptor = ArgumentCaptor.forClass(Map.class);
-        doNothing().when(dataSyncServiceMock).syncMainFixtures(paramsCaptor.capture());
+        ArgumentCaptor<Map<String, String>> paramsCaptor = ArgumentCaptor.captor();
+        when(dataSyncServiceMock.syncMainFixtures(paramsCaptor.capture()))
+            .thenReturn(any(SyncStatusDto.class)); // Mocking the return value to avoid any issues
 
         // Act
         dataSyncScheduler.scheduleHourlyRecentFixturesSync();

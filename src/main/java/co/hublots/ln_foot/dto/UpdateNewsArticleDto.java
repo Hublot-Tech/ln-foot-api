@@ -21,8 +21,6 @@ public class UpdateNewsArticleDto {
 
     private String content;
 
-    private String authorId;
-
     @Size(max = 100, message = "Source name cannot exceed 100 characters.")
     private String source;
 

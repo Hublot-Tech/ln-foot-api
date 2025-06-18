@@ -176,7 +176,6 @@ class FixtureServiceImplTest {
     @Test
     void getUpcomingFixtures_noLeagueId_returnsDtos() {
         OffsetDateTime startDate = OffsetDateTime.now();
-        OffsetDateTime endDate = startDate.plusDays(7);
         Fixture mockFixture = createMockFixture("up1", null, null, null, startDate.plusDays(1)); // simplified for this
                                                                                                  // test
         when(fixtureRepository.findByMatchDatetimeBetween(any(LocalDateTime.class), any(LocalDateTime.class)))
