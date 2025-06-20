@@ -116,7 +116,6 @@ public class DataSyncServiceImpl implements DataSyncService {
 
             if (allFixturesFromApi.isEmpty()) {
                 log.info("No fixtures returned. Clearing old data.");
-                clearAllSyncData();
                 return SyncStatusDto.builder().status("NO_DATA").message("No fixtures returned from API.")
                         .itemsProcessed(0).build();
             }
@@ -124,7 +123,6 @@ public class DataSyncServiceImpl implements DataSyncService {
             List<FixtureResponseItemDto> filteredFixtures = filterFixtures(allFixturesFromApi, queryParams);
 
             if (filteredFixtures.isEmpty()) {
-                clearAllSyncData();
                 return SyncStatusDto.builder().status("SUCCESS").message("No relevant fixtures to process.")
                         .itemsProcessed(0).build();
             }

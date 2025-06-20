@@ -11,14 +11,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import co.hublots.ln_foot.dto.CreateLeagueDto;
-import co.hublots.ln_foot.dto.FixtureDto;
 import co.hublots.ln_foot.dto.LeagueDto;
-import co.hublots.ln_foot.dto.SimpleTeamDto;
 import co.hublots.ln_foot.dto.UpdateLeagueDto;
-import co.hublots.ln_foot.models.Fixture;
 import co.hublots.ln_foot.models.League;
-import co.hublots.ln_foot.models.Team;
-import co.hublots.ln_foot.models.enums.FixtureStatus;
 import co.hublots.ln_foot.repositories.LeagueRepository;
 import co.hublots.ln_foot.services.LeagueService;
 import jakarta.persistence.EntityNotFoundException;
@@ -31,50 +26,6 @@ import lombok.extern.slf4j.Slf4j;
 public class LeagueServiceImpl implements LeagueService {
 
     private final LeagueRepository leagueRepository;
-
-    private SimpleTeamDto mapTeamToSimpleTeamDto(Team entity) {
-        if (entity == null)
-            return null;
-        return SimpleTeamDto.builder()
-                .id(entity.getApiTeamId())
-                .name(entity.getTeamName())
-                .logoUrl(entity.getLogoUrl())
-                .build();
-    }
-
-    private FixtureDto mapFixtureToDto(Fixture entity) {
-        if (entity == null)
-            return null;
-        return FixtureDto.builder()
-                .id(entity.getApiFixtureId())
-                .referee(null)
-                .timezone(null)
-                .date(entity.getMatchDatetime() != null ? entity.getMatchDatetime() : null)
-                .timestamp(entity.getMatchDatetime() != null
-                        ? (int) entity.getMatchDatetime().toEpochSecond()
-                        : null)
-                .venueName(entity.getVenueName())
-                .venueCity(null)
-                .statusShortCode(resolveStatus(entity).getShortCode())
-
-                .statusDescription(resolveStatus(entity).getDescription())
-                .isLive(resolveStatus(entity).isLive())
-                .elapsed(null)
-                .leagueId(entity.getLeague() != null ? entity.getLeague().getApiLeagueId() : null)
-                .round(entity.getRound())
-                .homeTeam(mapTeamToSimpleTeamDto(entity.getTeam1()))
-                .awayTeam(mapTeamToSimpleTeamDto(entity.getTeam2()))
-                .goalsHome(entity.getGoalsTeam1())
-                .goalsAway(entity.getGoalsTeam2())
-                .createdAt(entity.getCreatedAt() != null ? entity.getCreatedAt().atOffset(ZoneOffset.UTC) : null)
-                .updatedAt(entity.getUpdatedAt() != null ? entity.getUpdatedAt().atOffset(ZoneOffset.UTC) : null)
-                .build();
-    }
-
-    private FixtureStatus resolveStatus(Fixture fixture) {
-        String shortCode = fixture.getStatus();
-        return shortCode == null ? FixtureStatus.UNKNOWN : FixtureStatus.fromShortCode(shortCode);
-    }
 
     private LeagueDto mapToDto(League entity) {
         if (entity == null) {

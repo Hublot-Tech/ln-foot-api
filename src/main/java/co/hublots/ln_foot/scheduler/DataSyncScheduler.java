@@ -11,9 +11,6 @@ import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.Map;
-// List and Year are not needed with the new approach
-// import java.util.List;
-// import java.time.Year;
 
 @Slf4j
 @Component
