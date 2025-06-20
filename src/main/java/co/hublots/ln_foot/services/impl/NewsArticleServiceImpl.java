@@ -14,6 +14,8 @@ import co.hublots.ln_foot.dto.CreateNewsArticleDto;
 import co.hublots.ln_foot.dto.NewsArticleDto;
 import co.hublots.ln_foot.dto.UpdateNewsArticleDto;
 import co.hublots.ln_foot.models.NewsArticle;
+import co.hublots.ln_foot.models.NewsArticle.NewsCategory;
+import co.hublots.ln_foot.models.NewsArticle.NewsStatus;
 import co.hublots.ln_foot.repositories.NewsArticleRepository;
 import co.hublots.ln_foot.services.NewsArticleService;
 import jakarta.persistence.EntityNotFoundException;
@@ -34,7 +36,7 @@ public class NewsArticleServiceImpl implements NewsArticleService {
                 .title(entity.getTitle())
                 .content(entity.getContent())
                 .authorName(entity.getAuthorName())
-                .articleUrl(entity.getSourceUrl())
+                .sourceUrl(entity.getSourceUrl())
                 .imageUrl(entity.getImageUrl())
                 .publishedAt(entity.getPublicationDate() != null ? entity.getPublicationDate().atOffset(ZoneOffset.UTC)
                         : null)
@@ -49,10 +51,11 @@ public class NewsArticleServiceImpl implements NewsArticleService {
         entity.setTitle(dto.getTitle());
         entity.setContent(dto.getContent());
         entity.setAuthorName(dto.getAuthorName());
+        entity.setSourceUrl(dto.getSourceUrl());
         entity.setImageUrl(dto.getImageUrl());
         entity.setPublicationDate(dto.getPublishedAt() != null ? dto.getPublishedAt().toLocalDateTime() : null);
         entity.setStatus(dto.getStatus());
-        entity.setCategory("news");
+        entity.setCategory(NewsCategory.GENERAL);
         entity.setTags(List.of());
     }
 
@@ -64,8 +67,8 @@ public class NewsArticleServiceImpl implements NewsArticleService {
             entity.setContent(dto.getContent());
         }
 
-        if (dto.getUrl() != null) {
-            entity.setSourceUrl(dto.getUrl());
+        if (dto.getSourceUrl() != null) {
+            entity.setSourceUrl(dto.getSourceUrl());
         }
         if (dto.getImageUrl() != null) {
             entity.setImageUrl(dto.getImageUrl());
@@ -80,10 +83,10 @@ public class NewsArticleServiceImpl implements NewsArticleService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<NewsArticleDto> listNewsArticles(String status) {
+    public List<NewsArticleDto> listNewsArticles(Optional<NewsStatus> status) {
         List<NewsArticle> articles;
-        if (status != null && !status.isEmpty()) {
-            articles = newsArticleRepository.findByStatusOrderByPublicationDateDesc(status);
+        if (status.isPresent()) {
+            articles = newsArticleRepository.findByStatusOrderByPublicationDateDesc(status.get());
         } else {
             // Default sort if no status specified
             articles = newsArticleRepository.findAll(Sort.by(Sort.Direction.DESC, "publicationDate"));

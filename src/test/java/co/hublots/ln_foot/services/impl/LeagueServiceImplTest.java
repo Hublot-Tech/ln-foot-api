@@ -188,13 +188,13 @@ class LeagueServiceImplTest {
     void createLeague_savesAndReturnsDto() {
         // Arrange
         CreateLeagueDto createDto = CreateLeagueDto.builder()
-                .id("new-league-api") // This is apiLeagueId
+                .apiFootballId("new-league-api") // This is apiLeagueId
                 .name("New Super League")
                 .country("Utopia")
                 .logoUrl("http://logo.url/nsl.png")
                 .build();
 
-        when(leagueRepository.findByApiLeagueId(createDto.getId())).thenReturn(Optional.empty());
+        when(leagueRepository.findByApiLeagueId(createDto.getApiFootballId())).thenReturn(Optional.empty());
 
         ArgumentCaptor<League> leagueCaptor = ArgumentCaptor.forClass(League.class);
         when(leagueRepository.save(leagueCaptor.capture())).thenAnswer(invocation -> {
@@ -212,22 +212,22 @@ class LeagueServiceImplTest {
 
         // Assert
         assertNotNull(resultDto);
-        assertEquals(createDto.getId(), resultDto.getId()); // DTO id is apiLeagueId
+        assertEquals(createDto.getApiFootballId(), resultDto.getId()); // DTO id is apiLeagueId
         assertEquals(createDto.getName(), resultDto.getName());
         assertEquals(createDto.getCountry(), resultDto.getCountry());
 
         League captured = leagueCaptor.getValue();
-        assertEquals(createDto.getId(), captured.getApiLeagueId());
+        assertEquals(createDto.getApiFootballId(), captured.getApiLeagueId());
         assertEquals(createDto.getName(), captured.getLeagueName());
         assertEquals("RapidAPIFootballV1", captured.getApiSource()); // Check if default source set
 
-        verify(leagueRepository).findByApiLeagueId(createDto.getId());
+        verify(leagueRepository).findByApiLeagueId(createDto.getApiFootballId());
         verify(leagueRepository).save(any(League.class));
     }
 
     @Test
     void createLeague_whenApiIdExists_throwsIllegalStateException() {
-        CreateLeagueDto createDto = CreateLeagueDto.builder().id("existing-api-id").name("Test").build();
+        CreateLeagueDto createDto = CreateLeagueDto.builder().apiFootballId("existing-api-id").name("Test").build();
         when(leagueRepository.findByApiLeagueId("existing-api-id"))
                 .thenReturn(Optional.of(new League())); // Simulate league already exists
 

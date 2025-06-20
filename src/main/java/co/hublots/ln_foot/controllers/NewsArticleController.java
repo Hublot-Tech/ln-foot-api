@@ -1,6 +1,7 @@
 package co.hublots.ln_foot.controllers;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,7 +20,9 @@ import org.springframework.web.bind.annotation.RestController;
 import co.hublots.ln_foot.dto.CreateNewsArticleDto;
 import co.hublots.ln_foot.dto.NewsArticleDto;
 import co.hublots.ln_foot.dto.UpdateNewsArticleDto;
+import co.hublots.ln_foot.models.NewsArticle.NewsStatus;
 import co.hublots.ln_foot.services.NewsArticleService;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
@@ -36,7 +39,7 @@ public class NewsArticleController {
 
     @GetMapping
     public List<NewsArticleDto> listNewsArticles(
-            @RequestParam(required = false) @Size(max = 20, message = "Status parameter is too long") String status) {
+            @RequestParam(required = false) @Size(max = 20, message = "Status parameter is too long") Optional<NewsStatus> status) {
         return newsArticleService.listNewsArticles(status);
     }
 
@@ -61,8 +64,13 @@ public class NewsArticleController {
     @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<NewsArticleDto> updateNewsArticle(@PathVariable String id,
             @Valid @RequestBody UpdateNewsArticleDto updateDto) {
-        NewsArticleDto updatedArticle = newsArticleService.updateNewsArticle(id, updateDto);
-        return ResponseEntity.ok(updatedArticle);
+        try {
+            NewsArticleDto updatedArticle = newsArticleService.updateNewsArticle(id, updateDto);
+            return ResponseEntity.ok(updatedArticle);
+        } catch (EntityNotFoundException e) {
+            log.warn("NewsArticle not found with ID: {}", id);
+            return ResponseEntity.notFound().build();
+        }
 
     }
 

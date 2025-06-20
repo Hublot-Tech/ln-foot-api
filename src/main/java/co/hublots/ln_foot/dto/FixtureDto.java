@@ -16,7 +16,7 @@ public class FixtureDto {
     private String referee;
     private String timezone;
     private OffsetDateTime date;
-    private Integer timestamp;
+    private Long timestamp;
     private String venueName;
     private String venueCity;
     // private String statusShort; // Renamed

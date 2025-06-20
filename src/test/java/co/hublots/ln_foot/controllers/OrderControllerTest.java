@@ -87,9 +87,12 @@ public class OrderControllerTest {
             .collect(Collectors.toList());
         when(productVariantService.getProductVariantsByIds(anyList())).thenReturn(productVariantsInOrder);
 
-        Payment mockPayment = new Payment();
-        mockPayment.setId("payment123");
-        mockPayment.setStatus("pending");
+        Payment mockPayment = Payment.builder()
+            .id("payment123")
+            .orderId(sampleOrder.getId())
+            .paymentRef("ref123")
+            .status("pending")
+            .build();
         when(paymentService.confirmOrder(anyString(), anyDouble(), anyString(), anyString(), anyString()))
             .thenReturn(mockPayment);
 

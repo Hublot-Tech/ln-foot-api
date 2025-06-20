@@ -17,10 +17,8 @@ import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 
-@RequiredArgsConstructor
 @Entity
 @Table(name = "order_items", schema = "lnfoot_api")
 @ToString(exclude = "order")

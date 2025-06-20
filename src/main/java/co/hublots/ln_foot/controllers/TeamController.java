@@ -29,6 +29,9 @@ public class TeamController {
 
     @GetMapping("/{id}")
     public ResponseEntity<TeamDto> findTeamById(@PathVariable String id) {
+        if (id == null || id.trim().isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
         return teamService.findTeamById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());

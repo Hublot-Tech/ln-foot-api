@@ -55,7 +55,7 @@ class HighlightServiceImplTest {
                 .videoUrl("http://video.url/mock.mp4")
                 .thumbnailUrl("http://thumb.url/mock.jpg")
                 .source("TestSource")
-                .duration(120)
+                .durationSeconds(120)
                 .createdAt(LocalDateTime.now().minusHours(2))
                 .updatedAt(LocalDateTime.now().minusHours(1))
                 .build();

@@ -1,19 +1,15 @@
 package co.hublots.ln_foot.repositories;
 
-import co.hublots.ln_foot.models.NewsArticle;
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDateTime;
-import java.util.List;
+import co.hublots.ln_foot.models.NewsArticle;
+import co.hublots.ln_foot.models.NewsArticle.NewsStatus;
 
 @Repository
 public interface NewsArticleRepository extends JpaRepository<NewsArticle, String> {
-    List<NewsArticle> findByStatusOrderByPublicationDateDesc(String status);
-    List<NewsArticle> findByCategoryAndStatusOrderByPublicationDateDesc(String category, String status);
-    List<NewsArticle> findByAuthorNameAndStatusOrderByPublicationDateDesc(String authorName, String status);
-    List<NewsArticle> findByPublicationDateBetweenOrderByPublicationDateDesc(LocalDateTime startDate, LocalDateTime endDate);
-    // Example for searching by tags if tags were a separate entity or using a more complex query for ElementCollection
-    // @Query("SELECT na FROM NewsArticle na JOIN na.tags t WHERE t = :tag")
-    // List<NewsArticle> findByTag(@Param("tag") String tag);
+    List<NewsArticle> findByStatusOrderByPublicationDateDesc(NewsStatus status);
+
 }

@@ -1,17 +1,15 @@
 package co.hublots.ln_foot.dto;
 
-import lombok.Data;
-import lombok.Builder;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+import java.time.OffsetDateTime;
 
-import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 // import jakarta.validation.constraints.Size; // If needed for string lengths
-
-import java.time.OffsetDateTime;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @Builder
@@ -25,7 +23,6 @@ public class CreateFixtureDto {
     private String timezone; // Optional
 
     @NotNull(message = "Match date/time must be provided.")
-    @FutureOrPresent(message = "Match date/time must be in the present or future.")
     private OffsetDateTime date;
 
     private Integer timestamp; // Often derived from date, or vice-versa. Optional if 'date' is primary.

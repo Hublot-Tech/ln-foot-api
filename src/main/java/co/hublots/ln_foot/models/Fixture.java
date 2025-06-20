@@ -40,7 +40,7 @@ public class Fixture {
     private String id;
 
     @Column(name = "match_datetime", nullable = false)
-    private OffsetDateTime matchDatetime; // Using LocalDateTime assuming app consistency or UTC storage
+    private OffsetDateTime matchDatetime;
 
     @Column(nullable = false)
     private String status; // e.g., "SCHEDULED", "LIVE", "FINISHED", "POSTPONED"

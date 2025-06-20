@@ -3,6 +3,7 @@ package co.hublots.ln_foot.dto;
 import java.time.OffsetDateTime;
 import java.util.List;
 
+import co.hublots.ln_foot.models.NewsArticle.NewsStatus;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Size;
@@ -25,11 +26,8 @@ public class CreateNewsArticleDto {
 
     private String authorName;
 
-    @Size(max = 100, message = "Source name cannot exceed 100 characters.")
-    private String source; // Name of the source publication e.g. "BBC Sport"
-
-    @Size(max = 2048, message = "Article URL is too long.")
-    private String url;
+    @Size(max = 2048, message = "Source URL is too long.")
+    private String sourceUrl;
 
     @Size(max = 2048, message = "Image URL is too long.")
     private String imageUrl;
@@ -38,5 +36,5 @@ public class CreateNewsArticleDto {
     private OffsetDateTime publishedAt;
 
     private List<String> tags;
-    private String status;
+    private NewsStatus status;
 }

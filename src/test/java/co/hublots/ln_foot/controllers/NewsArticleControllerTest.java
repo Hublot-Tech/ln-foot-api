@@ -37,6 +37,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import co.hublots.ln_foot.dto.CreateNewsArticleDto;
 import co.hublots.ln_foot.dto.NewsArticleDto;
 import co.hublots.ln_foot.dto.UpdateNewsArticleDto;
+import co.hublots.ln_foot.models.NewsArticle.NewsStatus;
 import co.hublots.ln_foot.services.NewsArticleService;
 
 @SpringBootTest
@@ -58,11 +59,10 @@ class NewsArticleControllerTest {
                                 .title("Test Article")
                                 .content("Test content.")
                                 .authorName(authorName) // Now a UserDto object
-                                .sourceName("Mock Source")
-                                .articleUrl("http://example.com/article/" + id)
+                                .sourceUrl("http://example.com/article/" + id)
                                 .publishedAt(OffsetDateTime.now())
                                 .tags(Collections.singletonList("test"))
-                                .status("published")
+                                .status(NewsStatus.PUBLISHED)
                                 .createdAt(OffsetDateTime.now())
                                 .updatedAt(OffsetDateTime.now())
                                 .build();
@@ -82,7 +82,7 @@ class NewsArticleControllerTest {
                 when(newsArticleService.listNewsArticles(any()))
                                 .thenReturn(Collections.singletonList(mockArticle));
 
-                mockMvc.perform(get("/api/v1/news-articles").param("status", "published"))
+                mockMvc.perform(get("/api/v1/news-articles").param("status", NewsStatus.PUBLISHED.name()))
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$", hasSize(1)))
                                 .andExpect(jsonPath("$[0].id", is("na1")));

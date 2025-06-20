@@ -1,6 +1,7 @@
 package co.hublots.ln_foot.controllers;
 
 import co.hublots.ln_foot.dto.SyncStatusDto;
+import co.hublots.ln_foot.dto.SyncStatusDto.SyncStatus;
 import co.hublots.ln_foot.services.DataSyncService;
 import lombok.RequiredArgsConstructor;
 
@@ -27,7 +28,7 @@ public class SyncController {
             @RequestBody(required = false) Map<String, String> queryParams) {
         Map<String, String> params = (queryParams == null) ? new HashMap<>() : queryParams;
         SyncStatusDto result = dataSyncService.syncMainFixtures(params);
-        if ("ERROR".equals(result.getStatus())) {
+        if (SyncStatus.ERROR.equals(result.getStatus())) {
             return ResponseEntity.status(500).body(result);
         }
         return ResponseEntity.ok(result);

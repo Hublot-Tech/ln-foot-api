@@ -6,7 +6,6 @@ import java.security.NoSuchAlgorithmException;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -75,15 +74,12 @@ public class UploadServiceImpl implements UploadService {
             throw new IllegalArgumentException("Sanitized filename is empty or invalid: " + originalFilename);
         }
 
-        String lowerSanitized = sanitized.toLowerCase(); // Use lowercase for extension check
-        Optional<String> extensionOpt = Optional.of(lowerSanitized.lastIndexOf("."))
-                .filter(i -> i != -1 && i < lowerSanitized.length() - 1)
-                .map(i -> lowerSanitized.substring(i));
-
-        if (extensionOpt.isEmpty()) {
+        String lowerSanitized = sanitized.toLowerCase();
+        int lastDotIndex = lowerSanitized.lastIndexOf(".");
+        if (lastDotIndex == -1 || lastDotIndex >= lowerSanitized.length() - 1) {
             throw new IllegalArgumentException("Filename is missing a valid extension: " + sanitized);
         }
-        String extension = extensionOpt.get();
+        String extension = lowerSanitized.substring(lastDotIndex);
 
         List<String> allowedExtensions = CONTENT_TYPE_TO_EXTENSIONS_MAP.get(validatedContentType.toLowerCase());
         if (allowedExtensions == null || !allowedExtensions.contains(extension)) {

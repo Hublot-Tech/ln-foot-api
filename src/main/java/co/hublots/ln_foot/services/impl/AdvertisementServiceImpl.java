@@ -113,13 +113,6 @@ public class AdvertisementServiceImpl implements AdvertisementService {
             throw new IllegalArgumentException("UpdateAdvertisementDto cannot be null.");
         }
 
-        if (updateDto.getTitle() == null &&
-                updateDto.getContent() == null &&
-                updateDto.getUrl() == null &&
-                updateDto.getImageUrl() == null) {
-            throw new IllegalArgumentException("No updateable fields provided in UpdateAdvertisementDto.");
-        }
-
         Advertisement advertisement = advertisementRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Advertisement with ID " + id + " not found"));
 

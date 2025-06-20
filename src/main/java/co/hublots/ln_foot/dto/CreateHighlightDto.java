@@ -1,6 +1,7 @@
 package co.hublots.ln_foot.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -17,9 +18,11 @@ public class CreateHighlightDto {
 
     @NotBlank(message = "Video URL must be provided.")
     @Size(max = 2048, message = "Video URL is too long.")
+    @Pattern(regexp = "^(https?://).*", message = "Video URL must be a valid URL.")
     private String videoUrl;
 
     @Size(max = 2048, message = "Thumbnail URL is too long.")
+    @Pattern(regexp = "^(https?://).*", message = "Video URL must be a valid URL.")
     private String thumbnailUrl; // Optional
 
     private String description; // Optional

@@ -4,6 +4,7 @@ import co.hublots.ln_foot.dto.DeleteImageDto;
 import co.hublots.ln_foot.dto.ImagePresignedUrlRequestDto;
 import co.hublots.ln_foot.dto.ImagePresignedUrlResponseDto;
 import co.hublots.ln_foot.services.UploadService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.ResponseEntity;
@@ -24,14 +25,14 @@ public class UploadController {
     @PostMapping("/image-presigned-url")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ImagePresignedUrlResponseDto> getImagePresignedUrl(
-            @RequestBody ImagePresignedUrlRequestDto requestDto) {
+            @Valid @RequestBody ImagePresignedUrlRequestDto requestDto) {
         ImagePresignedUrlResponseDto responseDto = uploadService.getImagePresignedUrl(requestDto);
         return ResponseEntity.ok(responseDto);
     }
 
     @DeleteMapping("/image")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> deleteImage(@RequestBody DeleteImageDto deleteDto) {
+    public ResponseEntity<Void> deleteImage(@Valid @RequestBody DeleteImageDto deleteDto) {
         uploadService.deleteImage(deleteDto);
         return ResponseEntity.noContent().build();
     }

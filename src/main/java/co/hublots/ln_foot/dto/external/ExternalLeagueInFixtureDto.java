@@ -20,5 +20,5 @@ public class ExternalLeagueInFixtureDto {
     private String country;
     private String logo;
     private String flag;
-    private int season; // Typically the year, e.g., 2023
+    private Integer season; // Typically the year, e.g., 2023
 }

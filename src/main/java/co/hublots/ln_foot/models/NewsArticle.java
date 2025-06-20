@@ -43,15 +43,16 @@ public class NewsArticle {
     @Column(name = "image_url", length = 2048)
     private String imageUrl;
 
-    private String category; // e.g., "General", "Transfers", "Match Report"
+    @Enumerated(EnumType.STRING)
+    private NewsCategory category;
 
-    private String status;
+    @Enumerated(EnumType.STRING)
+    private NewsStatus status;
 
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "news_article_tags", joinColumns = @JoinColumn(name = "news_article_id"))
     @Column(name = "tag")
     private List<String> tags;
-
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false, nullable = false)
@@ -60,4 +61,12 @@ public class NewsArticle {
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    public enum NewsCategory {
+        GENERAL, TRANSFERS, MATCH_PREVIEW, MATCH_REVIEW, INJURY_UPDATE, OTHER
+    }
+
+    public enum NewsStatus {
+        DRAFT, PUBLISHED, ARCHIVED
+    }
 }

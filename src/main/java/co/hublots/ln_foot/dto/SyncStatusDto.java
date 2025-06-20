@@ -10,7 +10,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class SyncStatusDto {
-    private String status; // e.g., "SUCCESS", "ERROR", "NO_DATA"
+    private SyncStatus status; // e.g., "SUCCESS", "ERROR", "NO_DATA"
     private String message;
     private Integer itemsProcessed; // Number of primary items processed (e.g., fixtures)
+
+    public enum SyncStatus {
+        SUCCESS, ERROR, NO_DATA
+    }
 }

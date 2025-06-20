@@ -23,6 +23,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import co.hublots.ln_foot.config.SyncConfigProperties;
 import co.hublots.ln_foot.dto.SyncStatusDto;
+import co.hublots.ln_foot.dto.SyncStatusDto.SyncStatus;
 import co.hublots.ln_foot.dto.external.ExternalLeagueInFixtureDto;
 import co.hublots.ln_foot.dto.external.ExternalTeamInFixtureDto;
 import co.hublots.ln_foot.dto.external.FixtureResponseItemDto;
@@ -116,14 +117,14 @@ public class DataSyncServiceImpl implements DataSyncService {
 
             if (allFixturesFromApi.isEmpty()) {
                 log.info("No fixtures returned. Clearing old data.");
-                return SyncStatusDto.builder().status("NO_DATA").message("No fixtures returned from API.")
+                return SyncStatusDto.builder().status(SyncStatus.NO_DATA).message("No fixtures returned from API.")
                         .itemsProcessed(0).build();
             }
 
             List<FixtureResponseItemDto> filteredFixtures = filterFixtures(allFixturesFromApi, queryParams);
 
             if (filteredFixtures.isEmpty()) {
-                return SyncStatusDto.builder().status("SUCCESS").message("No relevant fixtures to process.")
+                return SyncStatusDto.builder().status(SyncStatus.SUCCESS).message("No relevant fixtures to process.")
                         .itemsProcessed(0).build();
             }
 
@@ -131,11 +132,13 @@ public class DataSyncServiceImpl implements DataSyncService {
 
         } catch (RestClientException e) {
             log.error("RestClientException during sync: {}", e.getMessage(), e);
-            return SyncStatusDto.builder().status("ERROR").message("API Error: " + e.getMessage()).itemsProcessed(0)
+            return SyncStatusDto.builder().status(SyncStatus.ERROR).message("API Error: " + e.getMessage())
+                    .itemsProcessed(0)
                     .build();
         } catch (Exception e) {
             log.error("Unexpected error during sync: {}", e.getMessage(), e);
-            return SyncStatusDto.builder().status("ERROR").message("Sync Error: " + e.getMessage()).itemsProcessed(0)
+            return SyncStatusDto.builder().status(SyncStatus.ERROR).message("Sync Error: " + e.getMessage())
+                    .itemsProcessed(0)
                     .build();
         }
     }
@@ -214,7 +217,7 @@ public class DataSyncServiceImpl implements DataSyncService {
             fixture.setLeague(league);
             fixture.setTeam1(homeTeam);
             fixture.setTeam2(awayTeam);
-            fixture.setStatus(item.getFixture().getStatus().getLongStatus());
+            fixture.setStatus(item.getFixture().getStatus().getShortStatus());
             fixture.setMatchDatetime(item.getFixture().getDate());
 
             fixturesToSave.add(fixture);
@@ -223,14 +226,27 @@ public class DataSyncServiceImpl implements DataSyncService {
 
         if (fixturesToSave.isEmpty()) {
             log.info("No valid fixtures to save after processing.");
-            return SyncStatusDto.builder().status("NO_DATA").message("No valid fixtures to save.").itemsProcessed(0)
+            return SyncStatusDto.builder().status(SyncStatus.NO_DATA).message("No valid fixtures to save.")
+                    .itemsProcessed(0)
                     .build();
         }
 
-        clearAllSyncData();
-        fixtureRepository.saveAll(fixturesToSave);
+        try {
+            // Save new fixtures first
+            List<Fixture> savedFixtures = fixtureRepository.saveAll(fixturesToSave);
+
+            // Only clear old data after successful save
+            clearAllSyncData();
+
+            // Re-save the new fixtures (or use a different strategy)
+            fixtureRepository.saveAll(savedFixtures);
+        } catch (Exception e) {
+            log.error("Failed to save fixtures: {}", e.getMessage(), e);
+            throw e; // Let transaction rollback
+        }
+
         return SyncStatusDto.builder()
-                .status("SUCCESS")
+                .status(SyncStatus.SUCCESS)
                 .message("Synced fixtures successfully")
                 .itemsProcessed(count)
                 .build();

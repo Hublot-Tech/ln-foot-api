@@ -27,7 +27,9 @@ import co.hublots.ln_foot.repositories.TeamRepository;
 import co.hublots.ln_foot.services.FixtureService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class FixtureServiceImpl implements FixtureService {
@@ -49,11 +51,18 @@ public class FixtureServiceImpl implements FixtureService {
     private FixtureDto mapToDto(Fixture entity) {
         if (entity == null)
             return null;
-        FixtureStatus statusEnum = FixtureStatus.fromShortCode(entity.getStatus());
+        FixtureStatus statusEnum;
+        try {
+            statusEnum = FixtureStatus.fromShortCode(entity.getStatus());
+        } catch (Exception e) {
+            log.warn("Invalid fixture status code: {}", entity.getStatus());
+            statusEnum = FixtureStatus.NOT_STARTED; // or another sensible default
+        }
+
         return FixtureDto.builder()
                 .id(entity.getApiFixtureId())
                 .date(entity.getMatchDatetime() != null ? entity.getMatchDatetime() : null)
-                .timestamp(entity.getMatchDatetime() != null ? (int) entity.getMatchDatetime().toEpochSecond() : null)
+                .timestamp(entity.getMatchDatetime() != null ? entity.getMatchDatetime().toEpochSecond() : null)
                 .venueName(entity.getVenueName())
                 .statusShortCode(statusEnum.getShortCode())
                 .statusDescription(statusEnum.getDescription())
@@ -64,7 +73,6 @@ public class FixtureServiceImpl implements FixtureService {
                 .awayTeam(mapTeamToSimpleTeamDto(entity.getTeam2()))
                 .goalsHome(entity.getGoalsTeam1())
                 .goalsAway(entity.getGoalsTeam2())
-
                 .createdAt(entity.getCreatedAt() != null ? entity.getCreatedAt().atOffset(ZoneOffset.UTC) : null)
                 .updatedAt(entity.getUpdatedAt() != null ? entity.getUpdatedAt().atOffset(ZoneOffset.UTC) : null)
                 .build();

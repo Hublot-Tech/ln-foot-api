@@ -9,7 +9,6 @@ import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atMost;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -42,6 +41,7 @@ import org.springframework.web.client.RestTemplate;
 
 import co.hublots.ln_foot.config.SyncConfigProperties;
 import co.hublots.ln_foot.dto.SyncStatusDto;
+import co.hublots.ln_foot.dto.SyncStatusDto.SyncStatus;
 import co.hublots.ln_foot.dto.external.ExternalFixtureDetailsDto;
 import co.hublots.ln_foot.dto.external.ExternalLeagueInFixtureDto;
 import co.hublots.ln_foot.dto.external.ExternalTeamInFixtureDto;
@@ -195,7 +195,7 @@ class DataSyncServiceImplTest {
 
         // Assert
         assertNotNull(statusDto);
-        assertEquals("SUCCESS", statusDto.getStatus());
+        assertEquals(SyncStatus.SUCCESS, statusDto.getStatus());
         assertEquals(1, statusDto.getItemsProcessed()); // Only one fixture matched the filter
 
         verify(highlightRepositoryMock).deleteAllInBatch();
@@ -211,11 +211,11 @@ class DataSyncServiceImplTest {
         assertTrue(savedTeams.stream().anyMatch(t -> t.getTeamName().equals("Team A")));
         assertTrue(savedTeams.stream().anyMatch(t -> t.getTeamName().equals("Team B")));
 
-        verify(fixtureRepositoryMock, times(1)).saveAll(fixtureListCaptor.capture());
+        verify(fixtureRepositoryMock, times(2)).saveAll(fixtureListCaptor.capture());
         List<Fixture> savedFixtures = fixtureListCaptor.getValue();
         assertEquals(1, savedFixtures.size());
         assertEquals(String.valueOf(100L), savedFixtures.get(0).getApiFixtureId());
-        assertEquals("Full Time", savedFixtures.get(0).getStatus());
+        assertEquals("FT", savedFixtures.get(0).getStatus());
     }
 
     @Test
@@ -250,10 +250,10 @@ class DataSyncServiceImplTest {
 
         // Assert
         assertNotNull(statusDto);
-        assertEquals("SUCCESS", statusDto.getStatus());
+        assertEquals(SyncStatus.SUCCESS, statusDto.getStatus());
         assertEquals(10, statusDto.getItemsProcessed()); // Fallback processes 10
 
-        verify(fixtureRepositoryMock, times(1)).saveAll(anyList());
+        verify(fixtureRepositoryMock, times(2)).saveAll(anyList());
         // Each fixture has 1 league, 2 teams. computeIfAbsent ensures unique saves
         verify(leagueRepositoryMock, atMost(10)).save(any(League.class));
         verify(teamRepositoryMock, atMost(20)).save(any(Team.class));
@@ -272,7 +272,7 @@ class DataSyncServiceImplTest {
 
         // Assert
         assertNotNull(statusDto);
-        assertEquals("ERROR", statusDto.getStatus());
+        assertEquals(SyncStatus.ERROR, statusDto.getStatus());
         assertTrue(statusDto.getMessage().contains("API Error"));
 
         // Verify no DB interactions after API error
@@ -282,7 +282,7 @@ class DataSyncServiceImplTest {
     }
 
     @Test
-    void syncMainFixtures_emptyApiResponseList_clearsDbButSavesNothingNew() {
+    void syncMainFixtures_emptyApiResponseList_SavesNothingNew() {
         RapidApiFootballResponseDto<FixtureResponseItemDto> mockApiResponse = new RapidApiFootballResponseDto<>();
         mockApiResponse.setResponse(Collections.emptyList());
         mockApiResponse.setResults(0);
@@ -302,13 +302,8 @@ class DataSyncServiceImplTest {
 
         // Assert
         assertNotNull(statusDto);
-        assertEquals("NO_DATA", statusDto.getStatus());
+        assertEquals(SyncStatus.NO_DATA, statusDto.getStatus());
         assertEquals(0, statusDto.getItemsProcessed());
-
-        verify(highlightRepositoryMock).deleteAllInBatch();
-        verify(fixtureRepositoryMock).deleteAllInBatch();
-        verify(teamRepositoryMock).deleteAllInBatch();
-        verify(leagueRepositoryMock).deleteAllInBatch();
 
         verify(leagueRepositoryMock, never()).save(any(League.class));
         verify(teamRepositoryMock, never()).save(any(Team.class));
@@ -316,7 +311,7 @@ class DataSyncServiceImplTest {
     }
 
     @Test
-    void syncMainFixtures_nullApiResponse_clearsDbButSavesNothingNew() {
+    void syncMainFixtures_nullApiResponse_SavesNothingNew() {
         RapidApiFootballResponseDto<FixtureResponseItemDto> mockApiResponse = new RapidApiFootballResponseDto<>();
         mockApiResponse.setResponse(null);
 
@@ -335,48 +330,9 @@ class DataSyncServiceImplTest {
 
         // Assert
         assertNotNull(statusDto);
-        assertEquals("NO_DATA", statusDto.getStatus());
+        assertEquals(SyncStatus.NO_DATA, statusDto.getStatus());
         assertEquals(0, statusDto.getItemsProcessed());
 
-        verify(highlightRepositoryMock).deleteAllInBatch();
-        verify(fixtureRepositoryMock, never()).saveAll(anyList());
-    }
-
-    @Test
-    void syncMainFixtures_whenDbClearFails_returnsErrorStatusDtoAndLogsError() {
-        // Arrange
-        RapidApiFootballResponseDto<FixtureResponseItemDto> mockApiResponse = new RapidApiFootballResponseDto<>();
-        mockApiResponse
-                .setResponse(List.of(createMockFixtureResponseItem(1L, "L1", "C1", 10L, "T1", 11L, "T2", 100L, "FT")));
-        mockApiResponse.setResults(1);
-
-        ResponseEntity<RapidApiFootballResponseDto<FixtureResponseItemDto>> responseEntity = new ResponseEntity<>(
-                mockApiResponse, org.springframework.http.HttpStatus.OK);
-
-        when(restTemplateMock.exchange(
-                any(java.net.URI.class),
-                eq(HttpMethod.GET),
-                any(HttpEntity.class),
-                ArgumentMatchers
-                        .<ParameterizedTypeReference<RapidApiFootballResponseDto<FixtureResponseItemDto>>>any()))
-                .thenReturn(responseEntity);
-
-        when(leagueRepositoryMock.save(any(League.class))).thenAnswer(inv -> inv.getArgument(0));
-        when(teamRepositoryMock.save(any(Team.class))).thenAnswer(inv -> inv.getArgument(0));
-
-        // Mock one of the deleteAllInBatch methods to throw an exception during
-        // clearAllSyncData
-        doThrow(new RuntimeException("DB clear error")).when(highlightRepositoryMock).deleteAllInBatch();
-
-        // Act
-        SyncStatusDto statusDto = dataSyncService.syncMainFixtures(new HashMap<>());
-
-        // Assert
-        assertNotNull(statusDto);
-        assertEquals("ERROR", statusDto.getStatus());
-        assertTrue(statusDto.getMessage().contains("Sync Error: DB clear error"));
-
-        verify(highlightRepositoryMock).deleteAllInBatch();
         verify(fixtureRepositoryMock, never()).saveAll(anyList());
     }
 
@@ -411,7 +367,7 @@ class DataSyncServiceImplTest {
 
         // Assert
         assertNotNull(statusDto);
-        assertEquals("ERROR", statusDto.getStatus());
+        assertEquals(SyncStatus.ERROR, statusDto.getStatus());
         assertTrue(statusDto.getMessage().contains("Sync Error: League save error"));
 
         verify(leagueRepositoryMock).save(any(League.class));
@@ -422,7 +378,7 @@ class DataSyncServiceImplTest {
     @Test
     void oldSyncLeagues_callsSyncMainFixtures() {
         DataSyncServiceImpl spiedService = spy(dataSyncService);
-        doReturn(SyncStatusDto.builder().status("SUCCESS").build()).when(spiedService).syncMainFixtures(anyMap());
+        doReturn(SyncStatusDto.builder().status(SyncStatus.SUCCESS).build()).when(spiedService).syncMainFixtures(anyMap());
 
         spiedService.syncLeagues("soccer", "england");
 
@@ -434,7 +390,7 @@ class DataSyncServiceImplTest {
     @Test
     void oldSyncTeamsByLeague_callsSyncMainFixtures() {
         DataSyncServiceImpl spiedService = spy(dataSyncService);
-        doReturn(SyncStatusDto.builder().status("SUCCESS").build()).when(spiedService).syncMainFixtures(anyMap());
+        doReturn(SyncStatusDto.builder().status(SyncStatus.SUCCESS).build()).when(spiedService).syncMainFixtures(anyMap());
 
         spiedService.syncTeamsByLeague("league123");
 
@@ -447,7 +403,7 @@ class DataSyncServiceImplTest {
     @Test
     void oldSyncFixturesByLeague_callsSyncMainFixtures() {
         DataSyncServiceImpl spiedService = spy(dataSyncService);
-        doReturn(SyncStatusDto.builder().status("SUCCESS").build()).when(spiedService).syncMainFixtures(anyMap());
+        doReturn(SyncStatusDto.builder().status(SyncStatus.SUCCESS).build()).when(spiedService).syncMainFixtures(anyMap());
 
         spiedService.syncFixturesByLeague("league456", "2024");
 

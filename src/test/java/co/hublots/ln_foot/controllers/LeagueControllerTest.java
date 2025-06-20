@@ -108,7 +108,7 @@ class LeagueControllerTest {
     @Test
     @WithMockUser(roles = "ADMIN")
     void createLeague_isCreated_withAdminRole() throws Exception {
-        CreateLeagueDto createDto = CreateLeagueDto.builder().name("New League").id("NL1").build();
+        CreateLeagueDto createDto = CreateLeagueDto.builder().name("New League").apiFootballId("NL1").build();
         LeagueDto returnedDto = createMockLeagueDto("NL1");
         returnedDto.setName("New League");
         when(leagueService.createLeague(any(CreateLeagueDto.class))).thenReturn(returnedDto);

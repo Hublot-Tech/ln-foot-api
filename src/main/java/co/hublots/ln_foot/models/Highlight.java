@@ -13,6 +13,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.Min;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -32,7 +33,7 @@ public class Highlight {
 
     private String title; // Optional title for the highlight
 
-    @Column(name = "video_url", nullable = false)
+    @Column(name = "video_url", nullable = false, length = 2048)
     private String videoUrl;
 
     @Column(name = "thumbnail_url")
@@ -40,8 +41,10 @@ public class Highlight {
 
     private String source; // e.g., "YouTube", "Vimeo", "Internal"
 
-    private Integer duration; // Duration in seconds
-
+    @Column(name = "duration_seconds")
+    @Min(1)
+    private Integer durationSeconds; // Duration in second
+    
     @Lob
     private String description;
 

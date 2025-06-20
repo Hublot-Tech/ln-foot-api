@@ -27,8 +27,6 @@ public class Team {
     @UuidGenerator
     private String id;
 
-    @jakarta.validation.constraints.NotNull
-    @jakarta.validation.constraints.NotBlank
     @Column(name = "team_name", nullable = false)
     private String teamName;
 
@@ -48,12 +46,6 @@ public class Team {
 
     @Column(name = "stadium_name")
     private String stadiumName;
-
-    // Relationships - for now, Team is linked via Fixture
-    // @OneToMany(mappedBy = "team1")
-    // private List<Fixture> homeFixtures;
-    // @OneToMany(mappedBy = "team2")
-    // private List<Fixture> awayFixtures;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false, nullable = false)

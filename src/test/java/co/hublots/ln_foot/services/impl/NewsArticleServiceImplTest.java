@@ -30,6 +30,8 @@ import co.hublots.ln_foot.dto.NewsArticleDto;
 import co.hublots.ln_foot.dto.UpdateNewsArticleDto;
 import co.hublots.ln_foot.models.NewsArticle;
 import co.hublots.ln_foot.models.User;
+import co.hublots.ln_foot.models.NewsArticle.NewsCategory;
+import co.hublots.ln_foot.models.NewsArticle.NewsStatus;
 import co.hublots.ln_foot.repositories.NewsArticleRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -59,8 +61,8 @@ class NewsArticleServiceImplTest {
                 .publicationDate(LocalDateTime.now().minusDays(1))
                 .sourceUrl("http://source.url/" + title.toLowerCase().replace(" ", "-"))
                 .imageUrl("http://image.url/" + title.toLowerCase().replace(" ", "-") + ".jpg")
-                .status("published")
-                .category("General")
+                .status(NewsStatus.PUBLISHED)
+                .category(NewsCategory.GENERAL)
                 .createdAt(LocalDateTime.now().minusDays(2))
                 .updatedAt(LocalDateTime.now().minusHours(12))
                 .build();
@@ -75,7 +77,7 @@ class NewsArticleServiceImplTest {
         when(newsArticleRepository.findAll(defaultSort)).thenReturn(List.of(article1, article2));
 
         // Act
-        List<NewsArticleDto> result = newsArticleService.listNewsArticles(null); // status is null
+        List<NewsArticleDto> result = newsArticleService.listNewsArticles(Optional.empty()); // status is null
 
         // Assert
         assertEquals(2, result.size());
@@ -85,13 +87,13 @@ class NewsArticleServiceImplTest {
     @Test
     void listNewsArticles_withStatus_returnsFilteredAndSorted() {
         // Arrange
-        String status = "published";
+        NewsStatus status = NewsStatus.PUBLISHED;
         NewsArticle article1 = createMockNewsArticle("1", "Published Article", "Pub Author");
         article1.setStatus(status);
         when(newsArticleRepository.findByStatusOrderByPublicationDateDesc(status)).thenReturn(List.of(article1));
 
         // Act
-        List<NewsArticleDto> result = newsArticleService.listNewsArticles(status);
+        List<NewsArticleDto> result = newsArticleService.listNewsArticles(Optional.of(status));
 
         // Assert
         assertEquals(1, result.size());
@@ -145,7 +147,7 @@ class NewsArticleServiceImplTest {
                 .content("Content...")
                 .authorName("Test Author")
                 .publishedAt(OffsetDateTime.now(ZoneOffset.UTC))
-                .status("draft")
+                .status(NewsStatus.DRAFT)
                 .build();
 
         ArgumentCaptor<NewsArticle> articleCaptor = ArgumentCaptor.forClass(NewsArticle.class);
@@ -177,7 +179,7 @@ class NewsArticleServiceImplTest {
                 .title("Article no specific author ID")
                 .content("Content...")
                 .publishedAt(OffsetDateTime.now(ZoneOffset.UTC))
-                .status("draft")
+                .status(NewsStatus.DRAFT)
                 .build();
 
         ArgumentCaptor<NewsArticle> articleCaptor = ArgumentCaptor.forClass(NewsArticle.class);

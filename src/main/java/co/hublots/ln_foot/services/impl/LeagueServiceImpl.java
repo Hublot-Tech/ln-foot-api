@@ -43,7 +43,7 @@ public class LeagueServiceImpl implements LeagueService {
     }
 
     private void mapToEntityForCreate(CreateLeagueDto dto, League entity) {
-        entity.setApiLeagueId(dto.getId());
+        entity.setApiLeagueId(dto.getApiFootballId());
         entity.setLeagueName(dto.getName());
         entity.setCountry(dto.getCountry());
         entity.setLogoUrl(dto.getLogoUrl());
@@ -75,12 +75,6 @@ public class LeagueServiceImpl implements LeagueService {
         }
 
         if (StringUtils.hasText(type)) {
-            spec = spec.and((root, query, cb) -> cb.equal(root.get("sportId"), type));
-        }
-        if (StringUtils.hasText(type)) {
-            spec = spec.and((root, query, cb) -> cb.equal(root.get("leagueTypeField"), type));
-        }
-        if (StringUtils.hasText(type)) {
             log.warn(
                     "Filtering by 'type' ('{}') is not fully implemented as League entity may not have a direct 'type' field. This filter might be ignored or adapted.",
                     type);
@@ -103,8 +97,8 @@ public class LeagueServiceImpl implements LeagueService {
     @Transactional
     public LeagueDto createLeague(CreateLeagueDto createDto) {
 
-        leagueRepository.findByApiLeagueId(createDto.getId()).ifPresent(l -> {
-            throw new IllegalStateException("League with apiLeagueId " + createDto.getId() + " already exists.");
+        leagueRepository.findByApiLeagueId(createDto.getApiFootballId()).ifPresent(l -> {
+            throw new IllegalStateException("League with apiLeagueId " + createDto.getApiFootballId() + " already exists.");
         });
         League league = new League();
         mapToEntityForCreate(createDto, league);

@@ -33,7 +33,7 @@ public class HighlightServiceImpl implements HighlightService {
                 .description(entity.getDescription())
                 .videoUrl(entity.getVideoUrl())
                 .thumbnailUrl(entity.getThumbnailUrl())
-                .durationSeconds(entity.getDuration())
+                .durationSeconds(entity.getDurationSeconds())
                 .type(entity.getType())
                 .createdAt(entity.getCreatedAt() != null ? entity.getCreatedAt().atOffset(ZoneOffset.UTC) : null)
                 .updatedAt(entity.getUpdatedAt() != null ? entity.getUpdatedAt().atOffset(ZoneOffset.UTC) : null)
@@ -44,7 +44,7 @@ public class HighlightServiceImpl implements HighlightService {
         entity.setTitle(dto.getTitle());
         entity.setVideoUrl(dto.getVideoUrl());
         entity.setThumbnailUrl(dto.getThumbnailUrl());
-        entity.setDuration(dto.getDurationSeconds());
+        entity.setDurationSeconds(dto.getDurationSeconds());
         entity.setDescription(dto.getDescription());
         entity.setType(dto.getType());
     }
@@ -60,7 +60,7 @@ public class HighlightServiceImpl implements HighlightService {
             entity.setThumbnailUrl(dto.getThumbnailUrl());
         }
         if (dto.getDurationSeconds() != null) {
-            entity.setDuration(dto.getDurationSeconds());
+            entity.setDurationSeconds(dto.getDurationSeconds());
         }
         if (dto.getDescription() != null) {
             entity.setDescription(dto.getDescription());

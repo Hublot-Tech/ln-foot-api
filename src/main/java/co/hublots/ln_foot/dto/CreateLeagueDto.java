@@ -13,8 +13,8 @@ import jakarta.validation.constraints.Size;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CreateLeagueDto {
-    @NotBlank(message = "League API ID (id) must be provided.")
-    private String id; // apiFootballId
+    @NotBlank(message = "League API ID must be provided.")
+    private String apiFootballId;
 
     @NotBlank(message = "League name must be provided.")
     @Size(max = 100, message = "League name cannot exceed 100 characters.")
@@ -34,5 +34,5 @@ public class CreateLeagueDto {
     private String season; // Optional
 
     @Size(max = 50, message = "League type description is too long.")
-    private String type;   // Optional
+    private String type; // Optional
 }
