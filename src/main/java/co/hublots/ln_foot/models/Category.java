@@ -15,7 +15,7 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 
 @Entity
-@Table(name = "categories")
+@Table(name = "categories", schema = "lnfoot_api")
 @Data
 @Builder
 @AllArgsConstructor

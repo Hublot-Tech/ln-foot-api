@@ -14,12 +14,12 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 
+@RequiredArgsConstructor
 @Entity
-@Table(name = "sizes")
+@Table(name = "sizes", schema = "lnfoot_api")
 @Data
 @Builder
 @AllArgsConstructor
-@RequiredArgsConstructor
 public class Size {
     @Id
     @UuidGenerator
