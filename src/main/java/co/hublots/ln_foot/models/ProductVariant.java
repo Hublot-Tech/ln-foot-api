@@ -21,12 +21,12 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 
+@RequiredArgsConstructor
 @Entity
-@Table(name = "product_variants")
+@Table(name = "product_variants", schema = "lnfoot_api")
 @Data
 @Builder
 @AllArgsConstructor
-@RequiredArgsConstructor
 public class ProductVariant {
 
     @Id

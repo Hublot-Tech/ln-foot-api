@@ -1,15 +1,20 @@
 package co.hublots.ln_foot.controllers;
 
-import java.math.BigDecimal;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.ArgumentMatchers.anyDouble;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-import co.hublots.ln_foot.dto.NotchPayDto;
-import co.hublots.ln_foot.models.Order;
-import co.hublots.ln_foot.models.OrderItem;
-import co.hublots.ln_foot.models.ProductVariant;
-import co.hublots.ln_foot.models.Payment;
-import co.hublots.ln_foot.services.OrderService;
-import co.hublots.ln_foot.services.PaymentService;
-import co.hublots.ln_foot.services.ProductVariantService;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,19 +25,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.ArgumentMatchers.anyList; 
-import static org.mockito.ArgumentMatchers.anyDouble;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import co.hublots.ln_foot.dto.NotchPayDto;
+import co.hublots.ln_foot.models.Order;
+import co.hublots.ln_foot.models.OrderItem;
+import co.hublots.ln_foot.models.Payment;
+import co.hublots.ln_foot.models.ProductVariant;
+import co.hublots.ln_foot.services.OrderService;
+import co.hublots.ln_foot.services.PaymentService;
+import co.hublots.ln_foot.services.ProductVariantService;
 
 @ExtendWith(MockitoExtension.class)
 public class OrderControllerTest {
@@ -87,9 +87,12 @@ public class OrderControllerTest {
             .collect(Collectors.toList());
         when(productVariantService.getProductVariantsByIds(anyList())).thenReturn(productVariantsInOrder);
 
-        Payment mockPayment = new Payment();
-        mockPayment.setId("payment123");
-        mockPayment.setStatus("pending");
+        Payment mockPayment = Payment.builder()
+            .id("payment123")
+            .orderId(sampleOrder.getId())
+            .paymentRef("ref123")
+            .status("pending")
+            .build();
         when(paymentService.confirmOrder(anyString(), anyDouble(), anyString(), anyString(), anyString()))
             .thenReturn(mockPayment);
 

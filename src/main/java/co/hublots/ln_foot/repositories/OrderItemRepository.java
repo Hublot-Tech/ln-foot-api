@@ -10,5 +10,5 @@ import co.hublots.ln_foot.models.OrderItem;
 @Repository
 public interface OrderItemRepository extends JpaRepository<OrderItem, String> {
 
-    List<OrderItem> findAllByOrderId(String orderId);
+    List<OrderItem> findAllByOrder_Id(String orderId);
 }
