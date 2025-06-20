@@ -6,6 +6,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.UuidGenerator;
 
+import co.hublots.ln_foot.annotations.ValidEnum;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -45,7 +46,8 @@ public class User {
     @Column(name = "avatar_url")
     private String avatarUrl;
 
-    private String role; // e.g., "ADMIN", "EDITOR", "USER"
+    @ValidEnum(enumClass = ValidRolesEnum.class, message = "Invalid role specified")
+    private ValidRolesEnum role; // e.g., "ADMIN", "EDITOR", "USER"
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false, nullable = false)

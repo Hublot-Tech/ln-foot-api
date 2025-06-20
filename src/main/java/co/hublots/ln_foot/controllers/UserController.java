@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import co.hublots.ln_foot.dto.UpdateUserRoleDto;
 import co.hublots.ln_foot.dto.UserDto;
+import co.hublots.ln_foot.models.User.ValidRolesEnum;
 import co.hublots.ln_foot.services.UserService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
@@ -44,7 +45,7 @@ public class UserController {
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
     public List<UserDto> listUsers(
-            @RequestParam(required = false) @Pattern(regexp = "^[A-Z_]{3,50}$", message = "Role must be uppercase letters and underscores, between 3 and 50 characters.") String role) {
+            @RequestParam(required = false) @Pattern(regexp = "^[A-Z_]{3,50}$", message = "Role must be uppercase letters and underscores, between 3 and 50 characters.") ValidRolesEnum role) {
         return userService.listUsers(role);
     }
 

@@ -52,9 +52,9 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<UserDto> listUsers(String role) {
+    public List<UserDto> listUsers(ValidRolesEnum role) {
         List<User> users;
-        if (role != null && !role.isEmpty()) {
+        if (role != null) {
             users = userRepository.findByRole(role);
         } else {
             users = userRepository.findAll();
@@ -71,17 +71,14 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public UserDto updateUserRole(String userId, String newRole) { // Signature updated
-        if (newRole == null || newRole.isBlank()) {
+    public UserDto updateUserRole(String userId, ValidRolesEnum newRole) { // Signature updated
+        if (newRole == null) {
             throw new IllegalArgumentException("Role cannot be null or blank.");
         }
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User with ID " + userId + " not found"));
 
-        if (!ValidRolesEnum.isValidRole(newRole)) {
-            throw new IllegalArgumentException("Invalid role: " + newRole);
-        }
 
         user.setRole(newRole);
 
@@ -96,8 +93,8 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new EntityNotFoundException("User with ID " + id + " not found"));
 
         // Check if the user is an admin
-        if ("ADMIN".equalsIgnoreCase(user.getRole())) {
-            long adminCount = userRepository.countByRole("ADMIN");
+        if (ValidRolesEnum.ADMIN.equals(user.getRole())) {
+            long adminCount = userRepository.countByRole(ValidRolesEnum.ADMIN);
             if (adminCount <= 1) {
                 throw new IllegalStateException("Cannot delete the last admin user.");
             }
@@ -136,18 +133,13 @@ public class UserServiceImpl implements UserService {
         @SuppressWarnings("unchecked")
         List<String> rolesFromJwt = realmAccess != null ? (List<String>) realmAccess.get("roles") : Collections.emptyList();
 
-        String determinedRole = "USER"; // Default role
+        ValidRolesEnum determinedRole = ValidRolesEnum.USER; // Default role
         if (rolesFromJwt != null) {
             if (rolesFromJwt.stream().anyMatch(role -> "ADMIN".equalsIgnoreCase(role) || "ROLE_ADMIN".equalsIgnoreCase(role))) {
-                determinedRole = "ADMIN";
+                determinedRole = ValidRolesEnum.ADMIN;
             } else if (rolesFromJwt.stream().anyMatch(role -> "USER".equalsIgnoreCase(role) || "ROLE_USER".equalsIgnoreCase(role))) {
-                determinedRole = "USER";
+                determinedRole = ValidRolesEnum.USER;
             }
-        }
-
-        if (!User.ValidRolesEnum.isValidRole(determinedRole)) {
-            log.warn("Invalid role determined from JWT: '{}'. Defaulting to USER.", determinedRole);
-            determinedRole = "USER";
         }
 
         Optional<User> existingUserOpt = userRepository.findByKeycloakId(keycloakId);

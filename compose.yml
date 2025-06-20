@@ -31,7 +31,7 @@ services:
       - pgdata:/var/lib/postgresql/data
 
   drizzle-studio:
-    image: ghcr.io/drizzle-team/studio:latest
+    image: ghcr.io/marcjazz/drizzle-studio:latest
     container_name: drizzle-studio
     ports:
       - "3000:3000"

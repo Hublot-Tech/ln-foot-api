@@ -32,6 +32,7 @@ import co.hublots.ln_foot.models.NewsArticle;
 import co.hublots.ln_foot.models.User;
 import co.hublots.ln_foot.models.NewsArticle.NewsCategory;
 import co.hublots.ln_foot.models.NewsArticle.NewsStatus;
+import co.hublots.ln_foot.models.User.ValidRolesEnum;
 import co.hublots.ln_foot.repositories.NewsArticleRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -49,7 +50,7 @@ class NewsArticleServiceImplTest {
 
     private User createMockUser(String id, String firstName, String lastName) {
         return User.builder().id(id).firstName(firstName).lastName(lastName).email(firstName + "@test.com")
-                .role("EDITOR").build();
+                .role(ValidRolesEnum.ADMIN).build();
     }
 
     private NewsArticle createMockNewsArticle(String id, String title, String authorName) {

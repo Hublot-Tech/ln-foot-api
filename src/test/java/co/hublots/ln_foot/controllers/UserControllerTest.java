@@ -32,6 +32,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import co.hublots.ln_foot.dto.UpdateUserRoleDto;
 import co.hublots.ln_foot.dto.UserDto;
+import co.hublots.ln_foot.models.User.ValidRolesEnum;
 import co.hublots.ln_foot.services.UserService;
 
 @SpringBootTest
@@ -47,7 +48,7 @@ class UserControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    private UserDto createMockUserDto(String id, String role, String keycloakId) {
+    private UserDto createMockUserDto(String id, ValidRolesEnum role, String keycloakId) {
         return UserDto.builder()
                 .id(id)
                 .keycloakId(keycloakId)
@@ -60,7 +61,7 @@ class UserControllerTest {
     }
 
     private UserDto createMockUserDto(String id) {
-        return createMockUserDto(id, "USER", "kc-" + id);
+        return createMockUserDto(id, ValidRolesEnum.USER, "kc-" + id);
     }
 
     // --- /api/v1/users/me Tests ---
@@ -70,7 +71,7 @@ class UserControllerTest {
         String userId = "currentUserId";
         String keycloakId = "current-user-keycloak-id"; // This would be `authentication.getName()` from
                                                         // @WithMockUser(username="...")
-        UserDto expectedDto = createMockUserDto(userId, "USER", keycloakId);
+        UserDto expectedDto = createMockUserDto(userId, ValidRolesEnum.USER, keycloakId);
         expectedDto.setName("CurrentUser");
 
         when(userService.getCurrentUser()).thenReturn(Optional.of(expectedDto));
@@ -166,11 +167,11 @@ class UserControllerTest {
     @WithMockUser(roles = "ADMIN")
     void updateUserRole_isOk_withAdminRole() throws Exception {
         String userId = "userToUpdate";
-        UpdateUserRoleDto updateDto = UpdateUserRoleDto.builder().role("EDITOR").build();
+        UpdateUserRoleDto updateDto = UpdateUserRoleDto.builder().role(ValidRolesEnum.USER).build();
         UserDto returnedDto = createMockUserDto(userId);
-        returnedDto.setRole("EDITOR");
+        returnedDto.setRole(ValidRolesEnum.EDITOR);
 
-        when(userService.updateUserRole(eq(userId), eq(returnedDto.getRole()))).thenReturn(returnedDto);
+        when(userService.updateUserRole(eq(userId), eq(updateDto.getRole()))).thenReturn(returnedDto);
 
         mockMvc.perform(put("/api/v1/users/{id}/role", userId).with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
@@ -181,7 +182,7 @@ class UserControllerTest {
 
     @Test
     void updateUserRole_isUnauthorized_withoutAuth() throws Exception {
-        UpdateUserRoleDto updateDto = UpdateUserRoleDto.builder().role("EDITOR").build();
+        UpdateUserRoleDto updateDto = UpdateUserRoleDto.builder().role(ValidRolesEnum.EDITOR).build();
         mockMvc.perform(put("/api/v1/users/{id}/role", "anyid").with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(updateDto)))
@@ -191,7 +192,7 @@ class UserControllerTest {
     @Test
     @WithMockUser(roles = "USER")
     void updateUserRole_isForbidden_withUserRole() throws Exception {
-        UpdateUserRoleDto updateDto = UpdateUserRoleDto.builder().role("EDITOR").build();
+        UpdateUserRoleDto updateDto = UpdateUserRoleDto.builder().role(ValidRolesEnum.EDITOR).build();
         mockMvc.perform(put("/api/v1/users/{id}/role", "anyid").with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(updateDto)))
@@ -202,9 +203,9 @@ class UserControllerTest {
     @WithMockUser(username = "admin-kc-id", roles = "ADMIN")
     void deleteUser_isNoContent_withAdminRole_whenDeletingAnotherUser() throws Exception {
         String userIdToDelete = "userToDelete";
-        String userToDeleteKeycloakId = "other-user-kc-id"; // Different from admin-kc-id
+        String userToDeleteKeycloakId = "other-user-kc-id";
 
-        UserDto userToDeleteDto = createMockUserDto(userIdToDelete, "USER", userToDeleteKeycloakId);
+        UserDto userToDeleteDto = createMockUserDto(userIdToDelete, ValidRolesEnum.USER, userToDeleteKeycloakId);
         when(userService.findUserById(userIdToDelete)).thenReturn(Optional.of(userToDeleteDto));
         doNothing().when(userService).deleteUser(userIdToDelete);
 
@@ -221,7 +222,7 @@ class UserControllerTest {
         String adminUserIdInDb = "adminUserInDb"; // This is the DB ID of the admin
         String adminKeycloakId = "admin-kc-id"; // This matches @WithMockUser's username
 
-        UserDto adminDtoToDelete = createMockUserDto(adminUserIdInDb, "ADMIN", adminKeycloakId);
+        UserDto adminDtoToDelete = createMockUserDto(adminUserIdInDb, ValidRolesEnum.ADMIN, adminKeycloakId);
         when(userService.findUserById(adminUserIdInDb)).thenReturn(Optional.of(adminDtoToDelete));
         // deleteUser service method should not be called
 

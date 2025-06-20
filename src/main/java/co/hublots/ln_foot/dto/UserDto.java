@@ -8,6 +8,8 @@ import lombok.AllArgsConstructor;
 import java.time.OffsetDateTime;
 import java.util.List;
 
+import co.hublots.ln_foot.models.User.ValidRolesEnum;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -18,7 +20,7 @@ public class UserDto {
     private String email;
     private String name;
     private String avatarUrl;
-    private String role; // e.g., "admin", "editor", "viewer"
+    private ValidRolesEnum role; // e.g., "admin", "editor", "viewer"
     private List<String> permissions; // More granular permissions
     private OffsetDateTime emailVerified;
     private OffsetDateTime createdAt;
