@@ -14,7 +14,9 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
@@ -205,12 +207,13 @@ class FixtureServiceImplTest {
     @Test
     void getFixturesByDate_noLeagueId_returnsDtos() {
         OffsetDateTime date = OffsetDateTime.now();
+        LocalDate localDate = date.toLocalDate();
         Fixture mockFixture = createMockFixture("dateFix1", null, null, null, date);
-        when(fixtureRepository.findByMatchDatetimeBetween(eq(date.withHour(0).withMinute(0).toLocalDateTime()),
-                eq(date.withHour(0).withMinute(59).toLocalDateTime())))
+        when(fixtureRepository.findByMatchDatetimeBetween(eq(localDate.atStartOfDay()),
+                eq(localDate.atTime(LocalTime.MAX))))
                 .thenReturn(List.of(mockFixture));
 
-        List<FixtureDto> result = fixtureService.getFixturesByDate(date.toLocalDate(), null);
+        List<FixtureDto> result = fixtureService.getFixturesByDate(localDate, null);
         assertEquals(1, result.size());
     }
 

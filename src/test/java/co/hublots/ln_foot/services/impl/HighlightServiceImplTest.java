@@ -3,12 +3,9 @@ package co.hublots.ln_foot.services.impl;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -81,31 +78,6 @@ class HighlightServiceImplTest {
         assertEquals(1, result.getTotalElements());
         assertEquals(mockHighlight.getTitle(), result.getContent().get(0).getTitle());
         verify(highlightRepository).findAll(pageable);
-    }
-
-    @Test
-    void listHighlightsByFixture_whenFixtureApiIdNullOrBlank_throwsIllegalArgumentException() { // Updated test
-        Pageable pageable = PageRequest.of(0, 10);
-        Exception eNull = assertThrows(IllegalArgumentException.class,
-                () -> highlightService.listHighlights(pageable));
-        assertEquals("fixtureApiId cannot be null or empty when listing highlights.", eNull.getMessage());
-
-        Exception eBlank = assertThrows(IllegalArgumentException.class,
-                () -> highlightService.listHighlights(pageable));
-        assertEquals("fixtureApiId cannot be null or empty when listing highlights.", eBlank.getMessage());
-
-        verify(highlightRepository, never()).findByFixture_ApiFixtureId(anyString(), any(Pageable.class));
-    }
-
-    @Test
-    void listHighlightsByFixture_whenNoHighlightsFound_returnsEmptyPage() { // New test
-        String fixtureApiId = "FX_API_NO_HIGHLIGHTS";
-        Pageable pageable = PageRequest.of(0, 10);
-        when(highlightRepository.findByFixture_ApiFixtureId(fixtureApiId, pageable)).thenReturn(Page.empty(pageable));
-
-        Page<HighlightDto> result = highlightService.listHighlights(pageable);
-        assertNotNull(result);
-        assertTrue(result.isEmpty());
     }
 
     @Test

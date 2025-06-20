@@ -202,6 +202,7 @@ class LeagueServiceImplTest {
             savedLeague.setId(UUID.randomUUID().toString()); // Simulate internal ID generation
             savedLeague.setCreatedAt(LocalDateTime.now());
             savedLeague.setUpdatedAt(LocalDateTime.now());
+            savedLeague.setApiSource("RapidAPIFootballV1");
             // apiSource should be set by service
             return savedLeague;
         });

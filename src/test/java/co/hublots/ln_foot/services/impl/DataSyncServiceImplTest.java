@@ -73,8 +73,8 @@ class DataSyncServiceImplTest {
     private HighlightRepository highlightRepositoryMock;
     @Mock
     private SyncConfigProperties syncConfigPropertiesMock;
-
-    private RestTemplate restTemplateMock = new RestTemplate();
+    @Mock
+    private RestTemplate restTemplateMock;
 
     @Captor
     ArgumentCaptor<League> leagueCaptor;

@@ -47,9 +47,9 @@ class TeamControllerTest {
     @WithAnonymousUser // Endpoint is public
     void listTeamsByLeague_isOk() throws Exception {
         TeamDto mockTeam = createMockTeamDto("T1");
-        when(teamService.listTeams(Optional.of("leagueId"))).thenReturn(Collections.singletonList(mockTeam));
+        when(teamService.listTeams(Optional.of("L1"))).thenReturn(Collections.singletonList(mockTeam));
 
-        mockMvc.perform(get("/api/v1/teams").param("leagueId", "L1").param("season", "2023"))
+        mockMvc.perform(get("/api/v1/teams").param("leagueId", "L1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].id", is("T1")));

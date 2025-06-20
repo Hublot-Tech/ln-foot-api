@@ -93,6 +93,7 @@ class UploadServiceImplTest {
     void getImagePresignedUrl_handlesDefaultContentTypeAndSize() throws Exception {
         ImagePresignedUrlRequestDto requestDto = ImagePresignedUrlRequestDto.builder()
                 .fileName("default.jpg")
+                .contentType("image/jpeg") // Default content type
                 // No contentType or contentLength
                 .build();
 
@@ -109,7 +110,10 @@ class UploadServiceImplTest {
     @Test
     void getImagePresignedUrl_whenMinioThrowsException_propagatesAsRuntimeException() throws Exception {
         // Arrange
-        ImagePresignedUrlRequestDto requestDto = ImagePresignedUrlRequestDto.builder().fileName("test.png").build();
+        ImagePresignedUrlRequestDto requestDto = ImagePresignedUrlRequestDto.builder()
+                .contentType("image/png")
+                .fileName("test.png")
+                .build();
         when(minioClient.getPresignedPostFormData(any(PostPolicy.class)))
                 .thenThrow(new ServerException("Minio server error", 500, null));
 

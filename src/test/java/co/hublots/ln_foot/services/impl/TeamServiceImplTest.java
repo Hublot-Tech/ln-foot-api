@@ -28,9 +28,6 @@ class TeamServiceImplTest {
 
     @Mock
     private TeamRepository teamRepository;
-    // FixtureRepository and LeagueRepository mocks are no longer needed for listTeamsByLeague
-    // @Mock private FixtureRepository fixtureRepository;
-    // @Mock private LeagueRepository leagueRepository;
 
     private TeamServiceImpl teamService;
 

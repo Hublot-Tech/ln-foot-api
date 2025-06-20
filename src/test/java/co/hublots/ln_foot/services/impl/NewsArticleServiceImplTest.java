@@ -21,9 +21,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Sort;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import co.hublots.ln_foot.dto.CreateNewsArticleDto;
 import co.hublots.ln_foot.dto.NewsArticleDto;
@@ -35,7 +35,7 @@ import co.hublots.ln_foot.repositories.NewsArticleRepository;
 @ExtendWith(MockitoExtension.class)
 class NewsArticleServiceImplTest {
 
-    @MockitoBean
+    @Mock
     private NewsArticleRepository newsArticleRepository;
 
     private NewsArticleServiceImpl newsArticleService;
@@ -204,19 +204,15 @@ class NewsArticleServiceImplTest {
     void updateNewsArticle_whenFound_updatesAndReturnsDto() {
         // Arrange
         String articleId = UUID.randomUUID().toString();
-        User author = createMockUser(UUID.randomUUID().toString(), "Old", "Author");
+        String authorName = "Old Author";
         NewsArticle existingArticle = createMockNewsArticle(articleId, "Old Title",
-                author.getFirstName() + " " + author.getLastName());
-
-        when(newsArticleRepository.findById(articleId)).thenReturn(Optional.of(existingArticle));
-
-        String newAuthorId = UUID.randomUUID().toString();
-        User newAuthor = createMockUser(newAuthorId, "New", "Scribe");
+                authorName);
 
         when(newsArticleRepository.findById(articleId)).thenReturn(Optional.of(existingArticle));
 
         UpdateNewsArticleDto updateDto = UpdateNewsArticleDto.builder()
                 .title("Updated Title")
+                .content("updated content")
                 .build();
 
         when(newsArticleRepository.save(any(NewsArticle.class))).thenAnswer(inv -> inv.getArgument(0));
@@ -226,21 +222,19 @@ class NewsArticleServiceImplTest {
 
         // Assert
         assertEquals("Updated Title", resultDto.getTitle());
-        assertNotNull(resultDto.getAuthorName());
-        assertEquals("New Scribe", resultDto.getAuthorName());
+        assertEquals("updated content", resultDto.getContent());
+        assertEquals(authorName, resultDto.getAuthorName()); // Author name should remain unchanged
 
         verify(newsArticleRepository).findById(articleId);
         ArgumentCaptor<NewsArticle> captor = ArgumentCaptor.forClass(NewsArticle.class);
         verify(newsArticleRepository).save(captor.capture());
-        assertEquals(newAuthor.getFirstName() + " " + newAuthor.getLastName(), captor.getValue().getAuthorName());
+        assertEquals(authorName, captor.getValue().getAuthorName());
     }
 
     @Test
-    void updateNewsArticle_setAuthorToNull_ifAuthorIdIsBlank() {
+    void updateNewsArticle_setAuthorToNull() {
         String articleId = UUID.randomUUID().toString();
-        User author = createMockUser(UUID.randomUUID().toString(), "Old", "Author");
-        NewsArticle existingArticle = createMockNewsArticle(articleId, "Old Title",
-                author.getFirstName() + " " + author.getLastName());
+        NewsArticle existingArticle = createMockNewsArticle(articleId, "Old Title", null);
 
         when(newsArticleRepository.findById(articleId)).thenReturn(Optional.of(existingArticle));
         when(newsArticleRepository.save(any(NewsArticle.class))).thenAnswer(inv -> inv.getArgument(0));
