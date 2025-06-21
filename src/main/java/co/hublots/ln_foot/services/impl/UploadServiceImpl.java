@@ -19,15 +19,20 @@ import co.hublots.ln_foot.dto.DeleteImageDto;
 import co.hublots.ln_foot.dto.ImagePresignedUrlRequestDto;
 import co.hublots.ln_foot.dto.ImagePresignedUrlResponseDto;
 import co.hublots.ln_foot.services.UploadService;
+import io.minio.BucketExistsArgs;
+import io.minio.GetPresignedObjectUrlArgs;
+import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
 import io.minio.PostPolicy;
 import io.minio.RemoveObjectArgs;
+import io.minio.SetBucketPolicyArgs;
 import io.minio.errors.ErrorResponseException;
 import io.minio.errors.InsufficientDataException;
 import io.minio.errors.InternalException;
 import io.minio.errors.InvalidResponseException;
 import io.minio.errors.ServerException;
 import io.minio.errors.XmlParserException;
+import io.minio.http.Method;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -45,9 +50,6 @@ public class UploadServiceImpl implements UploadService {
             "image/jpeg", List.of(".jpg", ".jpeg"),
             "image/png", List.of(".png"),
             "image/gif", List.of(".gif"));
-
-    @Value("${minio.bucket}")
-    private String bucketName;
 
     @Value("${minio.url}") // This is the Minio API endpoint e.g. http://localhost:9000
     private String minioApiUrl;
@@ -94,6 +96,12 @@ public class UploadServiceImpl implements UploadService {
 
     @Override
     public ImagePresignedUrlResponseDto getImagePresignedUrl(ImagePresignedUrlRequestDto requestDto) {
+        if (requestDto.getEntityType() == null || requestDto.getEntityType().isBlank()) {
+            log.warn("Entity type must be provided for presigned URL generation.");
+            throw new IllegalArgumentException("Entity type must be provided.");
+        }
+        String bucketName = requestDto.getEntityType();
+
         String requestedContentType = requestDto.getContentType();
         if (!StringUtils.hasText(requestedContentType)
                 || !ALLOWED_CONTENT_TYPES.contains(requestedContentType.toLowerCase())) {
@@ -105,15 +113,42 @@ public class UploadServiceImpl implements UploadService {
         String finalFilename = sanitizeAndValidateFilename(requestDto.getFileName(), validatedContentType);
 
         try {
-            String entityTypePath = StringUtils.hasText(requestDto.getEntityType())
-                    ? sanitizePathSegment(requestDto.getEntityType()) + "/"
+            if (minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucketName).build())) {
+                log.info("Bucket {} already exists, proceeding with presigned URL generation.", bucketName);
+            } else {
+                log.info("Bucket {} does not exist, creating it now.", bucketName);
+                minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build());
+            }
+
+            String publicReadPolicy = String.format("""
+                    {
+                      "Version": "2012-10-17",
+                      "Statement": [
+                        {
+                          "Effect": "Allow",
+                          "Principal": "*",
+                          "Action": ["s3:GetObject"],
+                          "Resource": ["arn:aws:s3:::%s/*"]
+                        }
+                      ]
+                    }
+                    """, bucketName);
+
+            minioClient.setBucketPolicy(
+                    SetBucketPolicyArgs.builder()
+                            .bucket(bucketName)
+                            .config(publicReadPolicy)
+                            .build());
+
+            String entityTypePath = StringUtils.hasText(bucketName)
+                    ? sanitizePathSegment(bucketName) + "/"
                     : "";
             String entityIdPath = StringUtils.hasText(requestDto.getEntityId())
                     ? sanitizePathSegment(requestDto.getEntityId()) + "/"
                     : "";
 
-            String objectKey = "uploads/images/" +
-                    entityTypePath +
+            String objectKey = (entityTypePath != "" ? entityTypePath
+                    : "uploads/images/") +
                     entityIdPath +
                     UUID.randomUUID().toString() + "-" + finalFilename;
 
@@ -122,14 +157,18 @@ public class UploadServiceImpl implements UploadService {
             policy.addEqualsCondition("Content-Type", validatedContentType);
             policy.addContentLengthRangeCondition(DEFAULT_MIN_UPLOAD_SIZE, DEFAULT_MAX_UPLOAD_SIZE);
 
-            Map<String, String> formData = minioClient.getPresignedPostFormData(policy);
+            String postUrl = minioClient.getPresignedObjectUrl(
+                    GetPresignedObjectUrlArgs.builder()
+                            .bucket(bucketName)
+                            .object(objectKey)
+                            .method(Method.PUT)
+                            .expiry(15 * 60)
+                            .build());
 
-            String postUrl = minioApiUrl + (minioApiUrl.endsWith("/") ? "" : "/") + bucketName;
-            String finalUrl = postUrl + "/" + objectKey;
+            String finalUrl = minioApiUrl + "/" + objectKey;
 
             return ImagePresignedUrlResponseDto.builder()
                     .uploadUrl(postUrl)
-                    .formData(formData)
                     .key(objectKey)
                     .finalUrl(finalUrl)
                     .build();
@@ -147,6 +186,12 @@ public class UploadServiceImpl implements UploadService {
         if (deleteDto.getKey() == null || deleteDto.getKey().isBlank()) {
             log.warn("Attempted to delete image with null or blank key.");
             throw new IllegalArgumentException("Object key must be provided for deletion.");
+        }
+
+        String bucketName = deleteDto.getBucketName() != null ? deleteDto.getBucketName() : "uploads";
+        if (!StringUtils.hasText(bucketName)) {
+            log.warn("Bucket name must be provided for deletion.");
+            throw new IllegalArgumentException("Bucket name must be provided for deletion.");
         }
 
         log.info("Attempting to delete image with key: {} from bucket: {}", deleteDto.getKey(), bucketName);

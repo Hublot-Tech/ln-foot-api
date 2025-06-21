@@ -3,6 +3,7 @@ package co.hublots.ln_foot.dto;
 import java.time.OffsetDateTime;
 import java.util.List;
 
+import co.hublots.ln_foot.annotations.ValidEnum;
 import co.hublots.ln_foot.models.NewsArticle.NewsStatus;
 import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Pattern;
@@ -37,6 +38,10 @@ public class UpdateNewsArticleDto {
     @Size(max = 10, message = "Cannot have more than 10 tags")
     private List<String> tags;
 
-    @Pattern(regexp = "^(DRAFT|PUBLISHED|ARCHIVED)$", message = "Status must be DRAFT, PUBLISHED, or ARCHIVED")
+    @ValidEnum(enumClass = NewsStatus.class, message = "Invalid status. Allowed values are: "
+            + "DRAFT, PUBLISHED, ARCHIVED")
     private NewsStatus status;
+
+    private String summary; // Optional summary for the article
+    private Boolean isMajorUpdate; // Indicates if this is a significant news update
 }

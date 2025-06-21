@@ -24,7 +24,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "web_highlights", schema = "lnfoot_api")
+@Table(name = "highlights", schema = "lnfoot_web")
 public class Highlight {
 
     @Id
