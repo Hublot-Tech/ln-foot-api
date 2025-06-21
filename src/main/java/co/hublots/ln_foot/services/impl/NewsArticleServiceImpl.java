@@ -53,6 +53,7 @@ public class NewsArticleServiceImpl implements NewsArticleService {
         entity.setAuthorName(dto.getAuthorName());
         entity.setSourceUrl(dto.getSourceUrl());
         entity.setImageUrl(dto.getImageUrl());
+        entity.setSummary(dto.getSummary());
         entity.setPublicationDate(dto.getPublishedAt() != null ? dto.getPublishedAt().toLocalDateTime() : null);
         entity.setStatus(dto.getStatus());
         entity.setCategory(NewsCategory.GENERAL);
@@ -78,6 +79,16 @@ public class NewsArticleServiceImpl implements NewsArticleService {
         }
         if (dto.getStatus() != null) {
             entity.setStatus(dto.getStatus());
+        }
+
+        if (dto.getSummary() != null) {
+            entity.setSummary(dto.getSummary());
+        }
+        if (dto.getTags() != null) {
+            entity.setTags(dto.getTags());
+        }
+        if (dto.getIsMajorUpdate() != null) {
+            entity.setIsMajorUpdate(dto.getIsMajorUpdate());
         }
     }
 

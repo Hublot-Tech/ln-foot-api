@@ -4,20 +4,20 @@ spring:
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/lnfootdb}
     username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:mysecretpassword}
-    schema: lnfoot_api
+    password: ${DB_PASSWORD:O26bQI32vYJlqDNp634lP8ZQ}
   jpa:
     hibernate:
       ddl-auto: update
     properties:
       hibernate:
+        default_schema: lnfoot_api
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
   security:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: ${KC_ISSUER_URI:http://127.0.0.1:8180/realms/ln-foot-01}
+          issuer-uri: ${KC_ISSUER_URI:https://auth.ln-foot.com/realms/lnfoot}
 
   servlet:
     multipart:
@@ -31,8 +31,8 @@ server:
 
 minio:
   url: ${MINIO_API_URL:http://localhost:9000}
-  access-key: ${MINIO_ACCESS_KEY:access-key}
-  secret-key: ${MINIO_SECRET_KEY:secret-key}
+  access-key: ${MINIO_ACCESS_KEY:minioadmin}
+  secret-key: ${MINIO_SECRET_KEY:minioadmin}
   bucket: ${MINIO_BUCKET_NAME:ln-foot-images}
 
 logging:
@@ -51,7 +51,7 @@ notchpay:
 external:
   api:
     sportsUrl: ${EXTERNAL_SPORTS_API_URL:https://api-football-v1.p.rapidapi.com/v3}
-    sportsKey: ${EXTERNAL_SPORTS_API_KEY}
+    sportsKey: ${EXTERNAL_SPORTS_API_KEY:07047667damsh70009995f0bb861p17853ejsn5e9465d1ecb2}
     rapidApiHost: api-football-v1.p.rapidapi.com
     sourceName: RapidAPIFootballV1
 

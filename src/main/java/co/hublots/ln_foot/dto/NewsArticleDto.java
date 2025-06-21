@@ -18,7 +18,9 @@ public class NewsArticleDto {
     private String id;
     private String title;
     private String content; // Can be HTML or markdown
+    private String summary; 
     private String authorName; // e.g., "John Doe" (was 'authorId', now just name for simplicity)
+    private Boolean isMajorUpdate;
     private String sourceUrl; // URL to the original article (was 'url')
     private String imageUrl;
     private OffsetDateTime publishedAt;
