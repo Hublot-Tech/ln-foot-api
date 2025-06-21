@@ -17,7 +17,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "web_news_articles", schema = "lnfoot_api")
+@Table(name = "news_articles", schema = "lnfoot_web")
 public class NewsArticle {
 
     @Id
@@ -26,6 +26,14 @@ public class NewsArticle {
 
     @Column(nullable = false)
     private String title;
+
+    @Lob
+    @Column(name = "summary", nullable = false)
+    private String summary;
+
+    @Builder.Default
+    @Column(name = "is_major_update", nullable = false)
+    private Boolean isMajorUpdate = false; // Indicates if this is a significant news update
 
     @Lob
     @Column(nullable = false)

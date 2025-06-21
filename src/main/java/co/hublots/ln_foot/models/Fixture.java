@@ -29,7 +29,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "fixtures", schema = "lnfoot_api", indexes = {
+@Table(name = "fixtures", schema = "lnfoot_web", indexes = {
         @Index(name = "idx_fixture_api_id", columnList = "api_fixture_id"),
         @Index(name = "idx_fixture_datetime", columnList = "match_datetime")
 })

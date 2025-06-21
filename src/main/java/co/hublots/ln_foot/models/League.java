@@ -17,7 +17,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "web_leagues", schema = "lnfoot_api")
+@Table(name = "leagues", schema = "lnfoot_web")
 public class League {
 
     @Id

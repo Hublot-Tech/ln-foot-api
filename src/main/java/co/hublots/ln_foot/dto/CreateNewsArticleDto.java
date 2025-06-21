@@ -24,6 +24,10 @@ public class CreateNewsArticleDto {
     @NotBlank(message = "Content cannot be blank.")
     private String content;
 
+    @NotBlank(message = "Summary cannot be blank.")
+    @Size(max = 1000, message = "Summary cannot exceed 1000 characters.")
+    private String summary;
+
     private String authorName;
 
     @Size(max = 2048, message = "Source URL is too long.")
@@ -37,4 +41,7 @@ public class CreateNewsArticleDto {
 
     private List<String> tags;
     private NewsStatus status;
+
+    @Builder.Default
+    private Boolean isMajorUpdate = false; // Indicates if this is a significant news update
 }

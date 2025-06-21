@@ -22,8 +22,7 @@ public class DeleteImageDto {
      */
     private String imageUrl;
 
-    // TODO: Implement class-level validation to ensure either 'key' or 'imageUrl' is provided, but not both.
-    // For now, service layer (UploadServiceImpl) should handle this logic.
+    private String bucketName;
 
     private String entityType; // Optional: for logging or specific deletion logic
     private String entityId; // Optional: for logging or specific deletion logic
