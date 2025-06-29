@@ -4,25 +4,21 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.multipart.MultipartFile;
 
 import co.hublots.ln_foot.dto.ProductDto;
+import co.hublots.ln_foot.models.Product;
 import co.hublots.ln_foot.models.ProductVariant;
-import co.hublots.ln_foot.services.MinioService;
 import co.hublots.ln_foot.services.ProductService;
 import co.hublots.ln_foot.services.ProductVariantService;
-import co.hublots.ln_foot.models.Product;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -33,8 +29,6 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @RequestMapping("/api/products")
 public class ProductController {
-    private final String bucketName = "products";
-    private final MinioService minioService;
     private final ProductService productService;
     private final ProductVariantService productVariantService;
 
@@ -58,16 +52,9 @@ public class ProductController {
     }
 
     @ResponseStatus(HttpStatus.CREATED)
-    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ProductDto> createProduct(@Valid @RequestBody ProductDto productDto) {
         Product product = productDto.toEntity();
-        MultipartFile file = productDto.getFile();
-
-        if (file != null && !file.isEmpty()) {
-            String imageUrl = minioService.uploadFile(bucketName, file);
-            product.setImageUrl(imageUrl);
-        }
 
         Product createdProduct = productService.createProduct(product);
 
@@ -93,13 +80,6 @@ public class ProductController {
             @PathVariable String id,
             @Valid @RequestBody ProductDto productDto) {
         Product product = productDto.toEntity();
-        MultipartFile file = productDto.getFile();
-
-        if (file != null && !file.isEmpty()) {
-            log.debug(file.toString());
-            String imageUrl = minioService.uploadFile(bucketName, file);
-            product.setImageUrl(imageUrl);
-        }
 
         Product updatedProduct = productService.updateProduct(id, product);
         return new ResponseEntity<>(
