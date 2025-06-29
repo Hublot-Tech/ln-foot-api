@@ -1,7 +1,5 @@
 package co.hublots.ln_foot.dto;
 
-import org.springframework.web.multipart.MultipartFile;
-
 import co.hublots.ln_foot.models.Heading;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
@@ -18,7 +16,6 @@ public class HeadingDto {
     private String title;
 
     private String imageUrl;
-    private MultipartFile file;
 
     public static HeadingDto fromEntity(Heading heading) {
         return HeadingDto.builder()

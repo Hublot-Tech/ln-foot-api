@@ -15,13 +15,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.multipart.MultipartFile;
 
 import co.hublots.ln_foot.annotations.KeycloakUserId;
 import co.hublots.ln_foot.dto.HeadingDto;
 import co.hublots.ln_foot.models.Heading;
 import co.hublots.ln_foot.repositories.HeadingRepository;
-import co.hublots.ln_foot.services.MinioService;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -30,8 +28,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @RequestMapping("/api/headings")
 public class HeadingController {
-    private final String bucketName = "headings";
-    private final MinioService minioService;
     private final HeadingRepository headingRepository;
 
     @GetMapping
@@ -59,11 +55,6 @@ public class HeadingController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<HeadingDto> createHeading(@KeycloakUserId @Parameter(hidden = true) String userId,
             @Valid @RequestBody HeadingDto headingDto) {
-        MultipartFile file = headingDto.getFile();
-        if (file != null && !file.isEmpty()) {
-            String imageUrl = minioService.uploadFile(bucketName, file);
-            headingDto.setImageUrl(imageUrl);
-        }
         Heading heading = headingRepository.save(headingDto.toEntity());
 
         return new ResponseEntity<>(

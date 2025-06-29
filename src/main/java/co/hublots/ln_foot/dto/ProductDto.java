@@ -4,8 +4,6 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.springframework.web.multipart.MultipartFile;
-
 import co.hublots.ln_foot.models.Category;
 import co.hublots.ln_foot.models.Product;
 import co.hublots.ln_foot.models.Size;
@@ -23,7 +21,6 @@ public class ProductDto {
         private String id;
 
         private String imageUrl;
-        private MultipartFile file;
 
         @NotBlank(message = "Name is required")
         private String name;
