@@ -3,14 +3,11 @@ package co.hublots.ln_foot.services.impl;
 import java.io.IOException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -19,13 +16,9 @@ import co.hublots.ln_foot.dto.DeleteImageDto;
 import co.hublots.ln_foot.dto.ImagePresignedUrlRequestDto;
 import co.hublots.ln_foot.dto.ImagePresignedUrlResponseDto;
 import co.hublots.ln_foot.services.UploadService;
-import io.minio.BucketExistsArgs;
 import io.minio.GetPresignedObjectUrlArgs;
-import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
-import io.minio.PostPolicy;
 import io.minio.RemoveObjectArgs;
-import io.minio.SetBucketPolicyArgs;
 import io.minio.errors.ErrorResponseException;
 import io.minio.errors.InsufficientDataException;
 import io.minio.errors.InternalException;
@@ -34,16 +27,14 @@ import io.minio.errors.ServerException;
 import io.minio.errors.XmlParserException;
 import io.minio.http.Method;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UploadServiceImpl implements UploadService {
-
-    private static final Logger log = LoggerFactory.getLogger(UploadServiceImpl.class);
     private final MinioClient minioClient;
 
-    private static final long DEFAULT_MIN_UPLOAD_SIZE = 1024; // 1KB
-    private static final long DEFAULT_MAX_UPLOAD_SIZE = 10 * 1024 * 1024; // 10MB
     private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of(
             "image/png", "image/jpeg", "image/gif");
     private static final Map<String, List<String>> CONTENT_TYPE_TO_EXTENSIONS_MAP = Map.of(
@@ -113,33 +104,6 @@ public class UploadServiceImpl implements UploadService {
         String finalFilename = sanitizeAndValidateFilename(requestDto.getFileName(), validatedContentType);
 
         try {
-            if (minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucketName).build())) {
-                log.info("Bucket {} already exists, proceeding with presigned URL generation.", bucketName);
-            } else {
-                log.info("Bucket {} does not exist, creating it now.", bucketName);
-                minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build());
-            }
-
-            String publicReadPolicy = String.format("""
-                    {
-                      "Version": "2012-10-17",
-                      "Statement": [
-                        {
-                          "Effect": "Allow",
-                          "Principal": "*",
-                          "Action": ["s3:GetObject"],
-                          "Resource": ["arn:aws:s3:::%s/*"]
-                        }
-                      ]
-                    }
-                    """, bucketName);
-
-            minioClient.setBucketPolicy(
-                    SetBucketPolicyArgs.builder()
-                            .bucket(bucketName)
-                            .config(publicReadPolicy)
-                            .build());
-
             String entityTypePath = StringUtils.hasText(bucketName)
                     ? sanitizePathSegment(bucketName) + "/"
                     : "";
@@ -151,11 +115,6 @@ public class UploadServiceImpl implements UploadService {
                     : "uploads/images/") +
                     entityIdPath +
                     UUID.randomUUID().toString() + "-" + finalFilename;
-
-            PostPolicy policy = new PostPolicy(bucketName, ZonedDateTime.now().plusMinutes(15));
-            policy.addEqualsCondition("key", objectKey);
-            policy.addEqualsCondition("Content-Type", validatedContentType);
-            policy.addContentLengthRangeCondition(DEFAULT_MIN_UPLOAD_SIZE, DEFAULT_MAX_UPLOAD_SIZE);
 
             String postUrl = minioClient.getPresignedObjectUrl(
                     GetPresignedObjectUrlArgs.builder()
