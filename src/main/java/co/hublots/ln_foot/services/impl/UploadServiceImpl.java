@@ -45,8 +45,15 @@ public class UploadServiceImpl implements UploadService {
             "image/png", List.of(".png"),
             "image/gif", List.of(".gif"));
 
-    @Value("${minio.url}")
+    @Value("${minio.url}") // This is the Minio API endpoint e.g. http://localhost:9000
     private String minioApiUrl;
+
+    private String sanitizePathSegment(String segment) {
+        if (!StringUtils.hasText(segment)) {
+            return "";
+        }
+        return segment.replaceAll("[^a-zA-Z0-9-_]", "_");
+    }
 
     private String sanitizeAndValidateFilename(String originalFilename, String validatedContentType) {
         if (!StringUtils.hasText(originalFilename)) {
@@ -99,45 +106,55 @@ public class UploadServiceImpl implements UploadService {
 
         String finalFilename = sanitizeAndValidateFilename(requestDto.getFileName(), validatedContentType);
 
+        String sanitizedBucketName = StringUtils.hasText(bucketName)
+                ? sanitizePathSegment(bucketName)
+                : "uploads";
+
         try {
-            if (minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucketName).build())) {
-                log.info("Bucket {} already exists, proceeding with presigned URL generation.", bucketName);
-            } else {
-                log.info("Bucket {} does not exist, creating it now.", bucketName);
-                minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build());
+            try {
+                if (minioClient.bucketExists(BucketExistsArgs.builder().bucket(sanitizedBucketName).build())) {
+                    log.info("Bucket {} already exists, proceeding with presigned URL generation.",
+                            sanitizedBucketName);
+                } else {
+                    log.info("Bucket {} does not exist, creating it now.", sanitizedBucketName);
+                    minioClient.makeBucket(MakeBucketArgs.builder().bucket(sanitizedBucketName).build());
 
-                String publicReadPolicy = String.format("""
-                        {
-                          "Version": "2012-10-17",
-                          "Statement": [
+                    String publicReadPolicy = String.format("""
                             {
-                              "Effect": "Allow",
-                              "Principal": "*",
-                              "Action": ["s3:GetObject"],
-                              "Resource": ["arn:aws:s3:::%s/*"]
+                              "Version": "2012-10-17",
+                              "Statement": [
+                                {
+                                  "Effect": "Allow",
+                                  "Principal": "*",
+                                  "Action": ["s3:GetObject"],
+                                  "Resource": ["arn:aws:s3:::%s/*"]
+                                }
+                              ]
                             }
-                          ]
-                        }
-                        """, bucketName);
+                            """, sanitizedBucketName);
 
-                minioClient.setBucketPolicy(
-                        SetBucketPolicyArgs.builder()
-                                .bucket(bucketName)
-                                .config(publicReadPolicy)
-                                .build());
+                    minioClient.setBucketPolicy(
+                            SetBucketPolicyArgs.builder()
+                                    .bucket(sanitizedBucketName)
+                                    .config(publicReadPolicy)
+                                    .build());
+                }
+            } catch (Exception e) {
+                log.error("Error verifying bucket existence from Minio: {}", e.getMessage(), e);
+                throw new RuntimeException("Error verifying bucket existence: " + e.getMessage(), e);
             }
 
             String objectKey = UUID.randomUUID().toString() + "-" + finalFilename;
 
             String postUrl = minioClient.getPresignedObjectUrl(
                     GetPresignedObjectUrlArgs.builder()
-                            .bucket(bucketName)
+                            .bucket(sanitizedBucketName)
                             .object(objectKey)
                             .method(Method.PUT)
                             .expiry(15 * 60)
                             .build());
 
-            String finalUrl = minioApiUrl + "/" + objectKey;
+            String finalUrl = minioApiUrl + "/" + sanitizedBucketName + "/" + objectKey;
 
             return ImagePresignedUrlResponseDto.builder()
                     .uploadUrl(postUrl)
