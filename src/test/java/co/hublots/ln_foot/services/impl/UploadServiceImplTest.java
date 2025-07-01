@@ -64,7 +64,7 @@ class UploadServiceImplTest {
                 .contentLength(1024L * 500L) // 500KB
                 .build();
 
-        String mockUploadUrl = MINIO_API_URL + "/test-bucket/team123/some-uuid-test-image.png";
+        String mockUploadUrl = MINIO_API_URL + "/test-bucket/some-uuid-test-image.png";
 
         when(minioClient.getPresignedObjectUrl(any(GetPresignedObjectUrlArgs.class))).thenReturn(mockUploadUrl);
 
@@ -74,7 +74,7 @@ class UploadServiceImplTest {
         // Assert
         assertNotNull(response);
         assertEquals(mockUploadUrl, response.getUploadUrl());
-        assertTrue(response.getKey().startsWith("test-bucket/team123/"));
+        assertTrue(response.getKey().startsWith("test-bucket/"));
         assertTrue(response.getKey().endsWith("-test-image.png"));
 
         verify(minioClient).getPresignedObjectUrl(any(GetPresignedObjectUrlArgs.class));
