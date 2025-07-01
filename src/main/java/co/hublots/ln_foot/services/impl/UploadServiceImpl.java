@@ -137,13 +137,7 @@ public class UploadServiceImpl implements UploadService {
             String entityTypePath = StringUtils.hasText(bucketName)
                     ? sanitizePathSegment(bucketName) + "/"
                     : "";
-            String entityIdPath = StringUtils.hasText(requestDto.getEntityId())
-                    ? sanitizePathSegment(requestDto.getEntityId()) + "/"
-                    : "";
-
-            String objectKey = (entityTypePath != "" ? entityTypePath
-                    : "uploads/images/") +
-                    entityIdPath +
+            String objectKey = entityTypePath +
                     UUID.randomUUID().toString() + "-" + finalFilename;
 
             String postUrl = minioClient.getPresignedObjectUrl(
