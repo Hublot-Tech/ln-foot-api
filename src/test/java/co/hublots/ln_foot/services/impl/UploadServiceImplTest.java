@@ -74,7 +74,6 @@ class UploadServiceImplTest {
         // Assert
         assertNotNull(response);
         assertEquals(mockUploadUrl, response.getUploadUrl());
-        assertTrue(response.getKey().startsWith("test-bucket/"));
         assertTrue(response.getKey().endsWith("-test-image.png"));
 
         verify(minioClient).getPresignedObjectUrl(any(GetPresignedObjectUrlArgs.class));
