@@ -45,15 +45,8 @@ public class UploadServiceImpl implements UploadService {
             "image/png", List.of(".png"),
             "image/gif", List.of(".gif"));
 
-    @Value("${minio.url}") // This is the Minio API endpoint e.g. http://localhost:9000
+    @Value("${minio.url}")
     private String minioApiUrl;
-
-    private String sanitizePathSegment(String segment) {
-        if (!StringUtils.hasText(segment)) {
-            return "";
-        }
-        return segment.replaceAll("[^a-zA-Z0-9-_]", "_");
-    }
 
     private String sanitizeAndValidateFilename(String originalFilename, String validatedContentType) {
         if (!StringUtils.hasText(originalFilename)) {
@@ -134,11 +127,7 @@ public class UploadServiceImpl implements UploadService {
                                 .build());
             }
 
-            String entityTypePath = StringUtils.hasText(bucketName)
-                    ? sanitizePathSegment(bucketName) + "/"
-                    : "";
-            String objectKey = entityTypePath +
-                    UUID.randomUUID().toString() + "-" + finalFilename;
+            String objectKey = UUID.randomUUID().toString() + "-" + finalFilename;
 
             String postUrl = minioClient.getPresignedObjectUrl(
                     GetPresignedObjectUrlArgs.builder()
