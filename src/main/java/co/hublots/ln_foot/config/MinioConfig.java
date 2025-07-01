@@ -22,7 +22,7 @@ public class MinioConfig {
 
     @Bean
     public MinioClient minioClient() {
-        log.debug("Minio Access Key: ", accessKey, " Secret Key:", secretKey);
+        log.debug("Minio Access Key: " + accessKey + " Secret Key:" + secretKey);
 
         MinioClient minioClient = MinioClient.builder()
                 .endpoint(endpoint)
