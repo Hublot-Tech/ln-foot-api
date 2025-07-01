@@ -16,9 +16,12 @@ import co.hublots.ln_foot.dto.DeleteImageDto;
 import co.hublots.ln_foot.dto.ImagePresignedUrlRequestDto;
 import co.hublots.ln_foot.dto.ImagePresignedUrlResponseDto;
 import co.hublots.ln_foot.services.UploadService;
+import io.minio.BucketExistsArgs;
 import io.minio.GetPresignedObjectUrlArgs;
+import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
 import io.minio.RemoveObjectArgs;
+import io.minio.SetBucketPolicyArgs;
 import io.minio.errors.ErrorResponseException;
 import io.minio.errors.InsufficientDataException;
 import io.minio.errors.InternalException;
@@ -104,6 +107,33 @@ public class UploadServiceImpl implements UploadService {
         String finalFilename = sanitizeAndValidateFilename(requestDto.getFileName(), validatedContentType);
 
         try {
+            if (minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucketName).build())) {
+                log.info("Bucket {} already exists, proceeding with presigned URL generation.", bucketName);
+            } else {
+                log.info("Bucket {} does not exist, creating it now.", bucketName);
+                minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build());
+
+                String publicReadPolicy = String.format("""
+                        {
+                          "Version": "2012-10-17",
+                          "Statement": [
+                            {
+                              "Effect": "Allow",
+                              "Principal": "*",
+                              "Action": ["s3:GetObject"],
+                              "Resource": ["arn:aws:s3:::%s/*"]
+                            }
+                          ]
+                        }
+                        """, bucketName);
+
+                minioClient.setBucketPolicy(
+                        SetBucketPolicyArgs.builder()
+                                .bucket(bucketName)
+                                .config(publicReadPolicy)
+                                .build());
+            }
+
             String entityTypePath = StringUtils.hasText(bucketName)
                     ? sanitizePathSegment(bucketName) + "/"
                     : "";
