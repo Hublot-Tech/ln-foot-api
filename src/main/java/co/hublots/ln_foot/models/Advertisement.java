@@ -32,17 +32,20 @@ public class Advertisement {
     @Column(name = "image_url")
     private String imageUrl;
 
+    @Column(name = "video_url")
+    private String videoUrl;
+
     @Column(name = "reference_url")
     private String referenceUrl;
 
     // Fields from AdvertisementDto that might be relevant for an entity
-    // These were not in the direct instructions for Advertisement.java but present in AdvertisementDto
+    // These were not in the direct instructions for Advertisement.java but present
+    // in AdvertisementDto
     // For now, sticking to the explicitly requested fields for Advertisement.java
     // private LocalDateTime startDate; // Or OffsetDateTime if timezone is critical
     // private LocalDateTime endDate;
     // private Integer priority;
     // private String status;
-
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false, nullable = false)

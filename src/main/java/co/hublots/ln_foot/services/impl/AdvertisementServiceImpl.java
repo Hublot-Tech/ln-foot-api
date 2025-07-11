@@ -35,8 +35,9 @@ public class AdvertisementServiceImpl implements AdvertisementService {
                 .id(entity.getId())
                 .title(entity.getTitle())
                 .content(entity.getDescription())
-                .url(entity.getReferenceUrl())
+                .referenceUrl(entity.getReferenceUrl())
                 .imageUrl(entity.getImageUrl())
+                .videoUrl(entity.getVideoUrl())
                 .createdAt(entity.getCreatedAt() != null ? entity.getCreatedAt().atOffset(ZoneOffset.UTC) : null)
                 .updatedAt(entity.getUpdatedAt() != null ? entity.getUpdatedAt().atOffset(ZoneOffset.UTC) : null)
                 .build();
@@ -45,8 +46,9 @@ public class AdvertisementServiceImpl implements AdvertisementService {
     private void mapToEntityForCreate(CreateAdvertisementDto dto, Advertisement entity) {
         entity.setTitle(dto.getTitle());
         entity.setDescription(dto.getContent());
-        entity.setReferenceUrl(dto.getUrl());
+        entity.setReferenceUrl(dto.getReferenceUrl());
         entity.setImageUrl(dto.getImageUrl());
+        entity.setVideoUrl(dto.getVideoUrl());
     }
 
     private void mapToEntityForUpdate(UpdateAdvertisementDto dto, Advertisement entity) {
@@ -66,6 +68,11 @@ public class AdvertisementServiceImpl implements AdvertisementService {
         }
         if (dto.getImageUrl() != null) {
             entity.setImageUrl(dto.getImageUrl());
+            hasUpdates = true;
+        }
+
+        if (dto.getVideoUrl() != null) {
+            entity.setVideoUrl(dto.getVideoUrl());
             hasUpdates = true;
         }
 

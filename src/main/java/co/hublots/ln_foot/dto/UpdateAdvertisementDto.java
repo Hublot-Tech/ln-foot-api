@@ -16,6 +16,7 @@ public class UpdateAdvertisementDto {
     private String content;
     private String url;
     private String imageUrl;
+    private String videoUrl;
     private OffsetDateTime startDate;
     private OffsetDateTime endDate;
     private Integer priority;
