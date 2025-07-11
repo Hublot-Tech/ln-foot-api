@@ -32,8 +32,8 @@ public class ProductDto {
         @Positive(message = "Price must be positive")
         private BigDecimal price;
 
-        @NotBlank(message = "Stock quantity is required")
         @Positive(message = "Stock quantity must be positive")
+        // @NotBlank(message = "Stock quantity is required")
         private int stockQuantity;
 
         @NotBlank(message = "Category IDs are required")
