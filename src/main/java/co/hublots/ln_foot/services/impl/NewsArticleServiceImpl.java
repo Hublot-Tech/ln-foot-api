@@ -38,6 +38,8 @@ public class NewsArticleServiceImpl implements NewsArticleService {
                 .authorName(entity.getAuthorName())
                 .sourceUrl(entity.getSourceUrl())
                 .imageUrl(entity.getImageUrl())
+                .summary(entity.getSummary())
+                .isMajorUpdate(entity.getIsMajorUpdate())
                 .publishedAt(entity.getPublicationDate() != null ? entity.getPublicationDate().atOffset(ZoneOffset.UTC)
                         : null)
                 .status(entity.getStatus())
