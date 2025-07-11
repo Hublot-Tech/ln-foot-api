@@ -15,8 +15,9 @@ public class AdvertisementDto {
     private String id;
     private String title;
     private String content;
-    private String url;
+    private String referenceUrl;
     private String imageUrl;
+    private String videoUrl;
     private OffsetDateTime startDate;
     private OffsetDateTime endDate;
     private Integer priority;

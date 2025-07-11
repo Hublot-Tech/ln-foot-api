@@ -127,7 +127,7 @@ class AdvertisementServiceImplTest {
         assertTrue(result.isPresent());
         assertEquals(mockAd.getTitle(), result.get().getTitle());
         assertEquals(mockAd.getDescription(), result.get().getContent()); // DTO maps description to content
-        assertEquals(mockAd.getReferenceUrl(), result.get().getUrl());   // DTO maps referenceUrl to url
+        assertEquals(mockAd.getReferenceUrl(), result.get().getReferenceUrl());   // DTO maps referenceUrl to url
         verify(advertisementRepository).findById(id);
     }
 
@@ -151,7 +151,7 @@ class AdvertisementServiceImplTest {
         CreateAdvertisementDto createDto = CreateAdvertisementDto.builder()
                 .title("New Ad")
                 .content("New Content") // DTO uses content
-                .url("http://new.example.com") // DTO uses url
+                .referenceUrl("http://new.example.com")
                 .imageUrl("http://new.example.com/new.png")
                 .build();
 
@@ -174,7 +174,7 @@ class AdvertisementServiceImplTest {
         assertNotNull(resultDto.getId());
         assertEquals(createDto.getTitle(), resultDto.getTitle());
         assertEquals(createDto.getContent(), resultDto.getContent());
-        assertEquals(createDto.getUrl(), resultDto.getUrl());
+        assertEquals(createDto.getReferenceUrl(), resultDto.getReferenceUrl());
         assertEquals(createDto.getImageUrl(), resultDto.getImageUrl());
         assertNotNull(resultDto.getCreatedAt());
         assertNotNull(resultDto.getUpdatedAt());
@@ -182,7 +182,7 @@ class AdvertisementServiceImplTest {
         Advertisement capturedAd = advertisementArgumentCaptor.getValue();
         assertEquals(createDto.getTitle(), capturedAd.getTitle());
         assertEquals(createDto.getContent(), capturedAd.getDescription()); // Check mapping
-        assertEquals(createDto.getUrl(), capturedAd.getReferenceUrl());   // Check mapping
+        assertEquals(createDto.getReferenceUrl(), capturedAd.getReferenceUrl());   // Check mapping
 
         verify(advertisementRepository).save(any(Advertisement.class));
     }
@@ -269,7 +269,7 @@ class AdvertisementServiceImplTest {
         assertNotNull(resultDto);
         assertEquals("New Title Only", resultDto.getTitle());
         assertEquals(existingAd.getDescription(), resultDto.getContent()); // Should remain original
-        assertEquals(existingAd.getReferenceUrl(), resultDto.getUrl());   // Should remain original
+        assertEquals(existingAd.getReferenceUrl(), resultDto.getReferenceUrl());   // Should remain original
 
         ArgumentCaptor<Advertisement> adCaptor = ArgumentCaptor.forClass(Advertisement.class);
         verify(advertisementRepository).save(adCaptor.capture());
