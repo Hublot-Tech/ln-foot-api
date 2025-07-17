@@ -22,6 +22,16 @@
       {
         "name": "user",
         "description": "Regular user role with limited access"
+      },
+      {
+        "name": "default-roles-lnfoot",
+        "composite": true,
+        "composites": {
+          "realm": [
+            "user"
+          ]
+        },
+        "description": "Role automatically assigned to all new users"
       }
     ]
   },
