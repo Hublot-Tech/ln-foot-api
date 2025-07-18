@@ -32,7 +32,6 @@ import co.hublots.ln_foot.models.Fixture;
 import co.hublots.ln_foot.models.League;
 import co.hublots.ln_foot.models.Team;
 import co.hublots.ln_foot.repositories.FixtureRepository;
-import co.hublots.ln_foot.repositories.HighlightRepository;
 import co.hublots.ln_foot.repositories.LeagueRepository;
 import co.hublots.ln_foot.repositories.TeamRepository;
 import co.hublots.ln_foot.services.DataSyncService;
@@ -47,7 +46,6 @@ public class DataSyncServiceImpl implements DataSyncService {
     private final LeagueRepository leagueRepository;
     private final TeamRepository teamRepository;
     private final FixtureRepository fixtureRepository;
-    private final HighlightRepository highlightRepository;
     private final SyncConfigProperties syncConfigProperties;
     private final RestTemplate restTemplate;
 
@@ -232,14 +230,16 @@ public class DataSyncServiceImpl implements DataSyncService {
         }
 
         try {
+            List<Team> teams = teamRepository.findAll();
+            List<League> leagues = leagueRepository.findAll();
+            List<Fixture> fixtures = fixtureRepository.findAll();
+
             // Save new fixtures first
             List<Fixture> savedFixtures = fixtureRepository.saveAll(fixturesToSave);
+            log.info("Successfully saved {} fixtures.", savedFixtures.size());
 
             // Only clear old data after successful save
-            clearAllSyncData();
-
-            // Re-save the new fixtures (or use a different strategy)
-            fixtureRepository.saveAll(savedFixtures);
+            clearAllSyncData(fixtures, teams, leagues);
         } catch (Exception e) {
             log.error("Failed to save fixtures: {}", e.getMessage(), e);
             throw e; // Let transaction rollback
@@ -252,10 +252,9 @@ public class DataSyncServiceImpl implements DataSyncService {
                 .build();
     }
 
-    private void clearAllSyncData() {
-        highlightRepository.deleteAllInBatch();
-        fixtureRepository.deleteAllInBatch();
-        teamRepository.deleteAllInBatch();
-        leagueRepository.deleteAllInBatch();
+    private void clearAllSyncData(List<Fixture> fixtures, List<Team> teams, List<League> leagues) {
+        fixtureRepository.deleteAllInBatch(fixtures);
+        leagueRepository.deleteAllInBatch(leagues);
+        teamRepository.deleteAllInBatch(teams);
     }
 }

@@ -56,7 +56,6 @@ import co.hublots.ln_foot.models.Fixture;
 import co.hublots.ln_foot.models.League;
 import co.hublots.ln_foot.models.Team;
 import co.hublots.ln_foot.repositories.FixtureRepository;
-import co.hublots.ln_foot.repositories.HighlightRepository;
 import co.hublots.ln_foot.repositories.LeagueRepository;
 import co.hublots.ln_foot.repositories.TeamRepository;
 
@@ -69,8 +68,6 @@ class DataSyncServiceImplTest {
     private TeamRepository teamRepositoryMock;
     @Mock
     private FixtureRepository fixtureRepositoryMock;
-    @Mock
-    private HighlightRepository highlightRepositoryMock;
     @Mock
     private SyncConfigProperties syncConfigPropertiesMock;
     @Mock
@@ -95,7 +92,6 @@ class DataSyncServiceImplTest {
                 leagueRepositoryMock,
                 teamRepositoryMock,
                 fixtureRepositoryMock,
-                highlightRepositoryMock,
                 syncConfigPropertiesMock,
                 restTemplateMock);
 
@@ -198,10 +194,9 @@ class DataSyncServiceImplTest {
         assertEquals(SyncStatus.SUCCESS, statusDto.getStatus());
         assertEquals(1, statusDto.getItemsProcessed()); // Only one fixture matched the filter
 
-        verify(highlightRepositoryMock).deleteAllInBatch();
-        verify(fixtureRepositoryMock).deleteAllInBatch();
-        verify(teamRepositoryMock).deleteAllInBatch();
-        verify(leagueRepositoryMock).deleteAllInBatch();
+        verify(fixtureRepositoryMock).deleteAllInBatch(any());
+        verify(teamRepositoryMock).deleteAllInBatch(any());
+        verify(leagueRepositoryMock).deleteAllInBatch(any());
 
         verify(leagueRepositoryMock, times(1)).save(leagueCaptor.capture());
         assertEquals("Super League", leagueCaptor.getValue().getLeagueName());
@@ -211,7 +206,7 @@ class DataSyncServiceImplTest {
         assertTrue(savedTeams.stream().anyMatch(t -> t.getTeamName().equals("Team A")));
         assertTrue(savedTeams.stream().anyMatch(t -> t.getTeamName().equals("Team B")));
 
-        verify(fixtureRepositoryMock, times(2)).saveAll(fixtureListCaptor.capture());
+        verify(fixtureRepositoryMock).saveAll(fixtureListCaptor.capture());
         List<Fixture> savedFixtures = fixtureListCaptor.getValue();
         assertEquals(1, savedFixtures.size());
         assertEquals(String.valueOf(100L), savedFixtures.get(0).getApiFixtureId());
@@ -253,7 +248,7 @@ class DataSyncServiceImplTest {
         assertEquals(SyncStatus.SUCCESS, statusDto.getStatus());
         assertEquals(10, statusDto.getItemsProcessed()); // Fallback processes 10
 
-        verify(fixtureRepositoryMock, times(2)).saveAll(anyList());
+        verify(fixtureRepositoryMock).saveAll(anyList());
         // Each fixture has 1 league, 2 teams. computeIfAbsent ensures unique saves
         verify(leagueRepositoryMock, atMost(10)).save(any(League.class));
         verify(teamRepositoryMock, atMost(20)).save(any(Team.class));
@@ -276,7 +271,6 @@ class DataSyncServiceImplTest {
         assertTrue(statusDto.getMessage().contains("API Error"));
 
         // Verify no DB interactions after API error
-        verify(highlightRepositoryMock, never()).deleteAllInBatch();
         verify(fixtureRepositoryMock, never()).deleteAllInBatch();
         verify(leagueRepositoryMock, never()).save(any(League.class));
     }
