@@ -47,7 +47,7 @@ public class ProductVariant {
 
     @ManyToMany
     @Builder.Default
-    @JoinTable(name = "product_variant_sizes", joinColumns = @JoinColumn(name = "product_variant_id"), inverseJoinColumns = @JoinColumn(name = "size_id"))
+    @JoinTable(name = "product_variant_sizes", schema = "lnfoot_api", joinColumns = @JoinColumn(name = "product_variant_id"), inverseJoinColumns = @JoinColumn(name = "size_id"))
     private List<Size> sizes = List.of();
 
     @CreationTimestamp

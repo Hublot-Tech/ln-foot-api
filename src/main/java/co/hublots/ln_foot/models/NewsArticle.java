@@ -58,7 +58,7 @@ public class NewsArticle {
     private NewsStatus status;
 
     @ElementCollection(fetch = FetchType.LAZY)
-    @CollectionTable(name = "news_article_tags", joinColumns = @JoinColumn(name = "news_article_id"))
+    @CollectionTable(name = "news_article_tags", schema = "lnfoot_web", joinColumns = @JoinColumn(name = "news_article_id"))
     @Column(name = "tag")
     private List<String> tags;
 
