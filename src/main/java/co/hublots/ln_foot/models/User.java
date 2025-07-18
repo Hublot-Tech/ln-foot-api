@@ -21,7 +21,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "users", schema = "lnfoot_api")
+@Table(name = "users")
 public class User {
 
     @Id

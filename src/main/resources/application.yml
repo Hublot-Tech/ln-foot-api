@@ -10,8 +10,9 @@ spring:
       ddl-auto: update
     properties:
       hibernate:
-        default_schema: lnfoot_api
         dialect: org.hibernate.dialect.PostgreSQLDialect
+        hbm2ddl:
+          create_namespaces: true
 
   security:
     oauth2:
