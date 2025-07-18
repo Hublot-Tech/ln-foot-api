@@ -169,6 +169,11 @@ public class DataSyncServiceImpl implements DataSyncService {
     }
 
     private SyncStatusDto processAndSaveFixtures(List<FixtureResponseItemDto> fixturesToProcess) {
+        // Fetch old entities BEFORE processing and creating new ones.
+        List<Team> oldTeams = teamRepository.findAll();
+        List<League> oldLeagues = leagueRepository.findAll();
+        List<Fixture> oldFixtures = fixtureRepository.findAll();
+
         Map<Long, League> processedLeagues = new HashMap<>();
         Map<Long, Team> processedTeams = new HashMap<>();
 
@@ -230,16 +235,12 @@ public class DataSyncServiceImpl implements DataSyncService {
         }
 
         try {
-            List<Team> teams = teamRepository.findAll();
-            List<League> leagues = leagueRepository.findAll();
-            List<Fixture> fixtures = fixtureRepository.findAll();
-
             // Save new fixtures first
             List<Fixture> savedFixtures = fixtureRepository.saveAll(fixturesToSave);
             log.info("Successfully saved {} fixtures.", savedFixtures.size());
 
             // Only clear old data after successful save
-            clearAllSyncData(fixtures, teams, leagues);
+            clearAllSyncData(oldFixtures, oldTeams, oldLeagues);
         } catch (Exception e) {
             log.error("Failed to save fixtures: {}", e.getMessage(), e);
             throw e; // Let transaction rollback
@@ -254,7 +255,7 @@ public class DataSyncServiceImpl implements DataSyncService {
 
     private void clearAllSyncData(List<Fixture> fixtures, List<Team> teams, List<League> leagues) {
         fixtureRepository.deleteAllInBatch(fixtures);
-        leagueRepository.deleteAllInBatch(leagues);
         teamRepository.deleteAllInBatch(teams);
+        leagueRepository.deleteAllInBatch(leagues);
     }
 }
