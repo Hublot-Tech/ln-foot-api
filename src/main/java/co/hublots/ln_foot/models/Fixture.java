@@ -84,6 +84,30 @@ public class Fixture {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
+    @Column(name = "score_ht_home")
+    private Integer scoreHtHome;
+    
+    @Column(name = "score_ht_away")
+    private Integer scoreHtAway;
+    
+    @Column(name = "score_ft_home")
+    private Integer scoreFtHome;
+    
+    @Column(name = "score_ft_away")
+    private Integer scoreFtAway;
+
+    @Column(name = "score_et_home")
+    private Integer scoreEtHome;
+    
+    @Column(name = "score_et_away")
+    private Integer scoreEtAway;
+    
+    @Column(name = "score_pt_home")
+    private Integer scorePtHome;
+    
+    @Column(name = "score_pt_away")
+    private Integer scorePtAway;
+
     @JsonIgnore
     @AssertTrue(message = "Home team (team1) and away team (team2) cannot be the same.")
     public boolean isTeam1AndTeam2Different() {
