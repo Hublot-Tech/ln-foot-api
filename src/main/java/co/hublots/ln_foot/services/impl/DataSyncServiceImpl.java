@@ -231,18 +231,30 @@ public class DataSyncServiceImpl implements DataSyncService {
             fixture.setGoalsTeam2(goals.getAway());
 
             ScoreDto scores = item.getScore();
-            ScoreDetailsDto extratime = scores.getExtratime();
-            ScoreDetailsDto fulltime = scores.getFulltime();
+
             ScoreDetailsDto halftime = scores.getHalftime();
+            if (halftime != null) {
+                fixture.setScoreHtAway(halftime.getAway());
+                fixture.setScoreHtHome(halftime.getHome());
+            }
+
+            ScoreDetailsDto fulltime = scores.getFulltime();
+            if (fulltime != null) {
+                fixture.setScoreFtHome(fulltime.getHome());
+                fixture.setScoreFtAway(fulltime.getAway());
+            }
+
+            ScoreDetailsDto extratime = scores.getExtratime();
+            if (fulltime != null) {
+                fixture.setScoreEtAway(extratime.getAway());
+                fixture.setScoreEtHome(extratime.getHome());
+            }
+
             ScoreDetailsDto penalty = scores.getPenalty();
-            fixture.setScoreEtAway(extratime.getAway());
-            fixture.setScoreEtHome(extratime.getHome());
-            fixture.setScoreFtAway(fulltime.getAway());
-            fixture.setScoreFtHome(fulltime.getHome());
-            fixture.setScoreHtAway(halftime.getAway());
-            fixture.setScoreHtHome(halftime.getHome());
-            fixture.setScorePtAway(penalty.getAway());
-            fixture.setScorePtHome(penalty.getHome());
+            if (penalty != null) {
+                fixture.setScorePtAway(penalty.getAway());
+                fixture.setScorePtHome(penalty.getHome());
+            }
 
             fixturesToSave.add(fixture);
             count++;
