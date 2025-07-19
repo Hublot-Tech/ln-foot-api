@@ -27,7 +27,10 @@ import co.hublots.ln_foot.dto.SyncStatusDto.SyncStatus;
 import co.hublots.ln_foot.dto.external.ExternalLeagueInFixtureDto;
 import co.hublots.ln_foot.dto.external.ExternalTeamInFixtureDto;
 import co.hublots.ln_foot.dto.external.FixtureResponseItemDto;
+import co.hublots.ln_foot.dto.external.GoalsDto;
 import co.hublots.ln_foot.dto.external.RapidApiFootballResponseDto;
+import co.hublots.ln_foot.dto.external.ScoreDetailsDto;
+import co.hublots.ln_foot.dto.external.ScoreDto;
 import co.hublots.ln_foot.models.Fixture;
 import co.hublots.ln_foot.models.League;
 import co.hublots.ln_foot.models.Team;
@@ -222,6 +225,24 @@ public class DataSyncServiceImpl implements DataSyncService {
             fixture.setTeam2(awayTeam);
             fixture.setStatus(item.getFixture().getStatus().getShortStatus());
             fixture.setMatchDatetime(item.getFixture().getDate());
+
+            GoalsDto goals = item.getGoals();
+            fixture.setGoalsTeam1(goals.getHome());
+            fixture.setGoalsTeam2(goals.getAway());
+
+            ScoreDto scores = item.getScore();
+            ScoreDetailsDto extratime = scores.getExtratime();
+            ScoreDetailsDto fulltime = scores.getFulltime();
+            ScoreDetailsDto halftime = scores.getHalftime();
+            ScoreDetailsDto penalty = scores.getPenalty();
+            fixture.setScoreEtAway(extratime.getAway());
+            fixture.setScoreEtHome(extratime.getHome());
+            fixture.setScoreFtAway(fulltime.getAway());
+            fixture.setScoreFtHome(fulltime.getHome());
+            fixture.setScoreHtAway(halftime.getAway());
+            fixture.setScoreHtHome(halftime.getHome());
+            fixture.setScorePtAway(penalty.getAway());
+            fixture.setScorePtHome(penalty.getHome());
 
             fixturesToSave.add(fixture);
             count++;
