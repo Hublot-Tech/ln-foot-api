@@ -12,6 +12,7 @@ public class PaymentResponseDto {
     private String id;
     private String orderId;
     private String paymentId;
+    private String paymentPageUrl;
     private String status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -21,6 +22,7 @@ public class PaymentResponseDto {
                 .id(payment.getId().toString())
                 .orderId(payment.getOrderId())
                 .paymentId(payment.getPaymentRef())
+                .paymentPageUrl(payment.getPaymentPageUrl())
                 .status(payment.getStatus())
                 .createdAt(payment.getCreatedAt())
                 .updatedAt(payment.getUpdatedAt())

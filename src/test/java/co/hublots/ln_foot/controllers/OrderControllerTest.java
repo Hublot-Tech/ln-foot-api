@@ -93,18 +93,18 @@ public class OrderControllerTest {
             .paymentRef("ref123")
             .status("pending")
             .build();
-        when(paymentService.confirmOrder(anyString(), anyDouble(), anyString(), anyString(), anyString()))
+        when(paymentService.initiateHostedPayment(anyString(), anyDouble(), anyString(), anyString(), anyString()))
             .thenReturn(mockPayment);
 
         ResponseEntity<?> response = orderController.confirmOrder("orderTest123", customerDto);
 
         ArgumentCaptor<Double> amountCaptor = ArgumentCaptor.forClass(Double.class);
-        verify(paymentService).confirmOrder(
-            anyString(), 
-            amountCaptor.capture(), 
-            anyString(), 
-            anyString(), 
-            anyString()
+        verify(paymentService).initiateHostedPayment(
+                anyString(),
+                amountCaptor.capture(),
+                anyString(),
+                anyString(),
+                anyString()
         );
 
         assertNotNull(response);

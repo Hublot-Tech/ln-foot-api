@@ -175,7 +175,7 @@ public class OrderController {
         }
 
         BigDecimal amount = order.getTotalAmount() != null ? order.getTotalAmount() : BigDecimal.ZERO;
-        Payment payment = paymentService.confirmOrder(
+        Payment payment = paymentService.initiateHostedPayment(
                 id, amount.doubleValue(), customer.getEmail(), customer.getName(), customer.getPhone());
 
         return new ResponseEntity<>(PaymentResponseDto.fromEntity(payment), HttpStatus.ACCEPTED);
