@@ -12,16 +12,18 @@ public interface PaymentService {
     Optional<Payment> findByReference(String reference);
 
     /**
-     * Confirm order payment flow:
-     * 1. Initiate payment
-     * 2. Charge payment immediately if initiation successful
+     * Initiate hosted payment flow:
+     * 1. Create or retrieve existing payment for order
+     * 2. Return payment with hosted URL for external completion
+     * 3. Payment completion handled via webhooks
      *
      * @param orderId       Order identifier
      * @param amount        Amount in minor units (e.g. cents)
      * @param customerEmail Customer email
      * @param customerName  Customer full name
-     * @return Payment entity with updated status
+     * @param customerPhone Customer phone number
+     * @return Payment entity with hosted URL for external payment
      */
     @Transactional
-    Payment confirmOrder(String orderId, double amount, String customerEmail, String customerName, String customerPhone);
+    Payment initiateHostedPayment(String orderId, double amount, String customerEmail, String customerName, String customerPhone);
 }

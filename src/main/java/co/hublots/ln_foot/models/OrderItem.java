@@ -17,6 +17,7 @@ import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 @Entity
@@ -24,6 +25,7 @@ import lombok.ToString;
 @ToString(exclude = "order")
 @Data
 @Builder
+@NoArgsConstructor
 @AllArgsConstructor
 public class OrderItem {
     @Id

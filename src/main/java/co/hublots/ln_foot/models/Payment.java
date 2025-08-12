@@ -27,6 +27,8 @@ public class Payment {
 
     private String paymentRef; // NotchPay payment Ref
 
+    private String paymentPageUrl;
+
     private String status;
 
     @CreationTimestamp
