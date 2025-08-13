@@ -139,10 +139,10 @@ public class OrderController {
         return ResponseEntity.ok(OrderDto.fromEntity(updatedOrder));
     }
 
-    @PutMapping("/{id}/confirm")
+    @PutMapping("/{id}/finalyze")
     @ResponseStatus(HttpStatus.ACCEPTED)
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<PaymentResponseDto> confirmOrder(
+    public ResponseEntity<PaymentResponseDto> finalyzeOrder(
             @PathVariable String id,
             @Valid @RequestBody NotchPayDto.InitiatePaymentRequest.Customer customer) {
 

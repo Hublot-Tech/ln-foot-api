@@ -96,7 +96,7 @@ public class OrderControllerTest {
         when(paymentService.initiateHostedPayment(anyString(), anyDouble(), anyString(), anyString(), anyString()))
             .thenReturn(mockPayment);
 
-        ResponseEntity<?> response = orderController.confirmOrder("orderTest123", customerDto);
+        ResponseEntity<?> response = orderController.finalyzeOrder("orderTest123", customerDto);
 
         ArgumentCaptor<Double> amountCaptor = ArgumentCaptor.forClass(Double.class);
         verify(paymentService).initiateHostedPayment(
