@@ -30,17 +30,6 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
 
-  adminer:
-    image: wfeldt/adminer:latest
-    container_name: adminer
-    ports:
-      - 4100:8080
-    environment:
-      - ADMINER_PLUGINS=tables-filter tinymce edit-calendar login-servers dump-date autoincrement
-    volumes:
-      - ./.docker/adminer/theme/adminer-dark.css:/var/www/html/adminer.css
-    restart: unless-stopped
-
   keycloak:
     image: ghcr.io/marcjazz/keycloak-auth-theme:latest
     env_file:
