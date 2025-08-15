@@ -31,7 +31,7 @@ minio:
 
 logging:
   level:
-    root: DEBUG
+    root: INFO
     com.hublots.ln_foot: DEBUG
 
 springdoc:
