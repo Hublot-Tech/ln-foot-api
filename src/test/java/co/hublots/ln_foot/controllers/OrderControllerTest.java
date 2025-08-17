@@ -2,6 +2,7 @@ package co.hublots.ln_foot.controllers;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -30,6 +31,7 @@ import co.hublots.ln_foot.models.Order;
 import co.hublots.ln_foot.models.OrderItem;
 import co.hublots.ln_foot.models.Payment;
 import co.hublots.ln_foot.models.ProductVariant;
+import co.hublots.ln_foot.models.User.Customer;
 import co.hublots.ln_foot.services.OrderService;
 import co.hublots.ln_foot.services.PaymentService;
 import co.hublots.ln_foot.services.ProductVariantService;
@@ -83,29 +85,24 @@ public class OrderControllerTest {
         when(orderService.getOrderById("orderTest123")).thenReturn(Optional.of(sampleOrder));
 
         List<ProductVariant> productVariantsInOrder = sampleOrder.getOrderItems().stream()
-            .map(OrderItem::getProductVariant)
-            .collect(Collectors.toList());
+                .map(OrderItem::getProductVariant)
+                .collect(Collectors.toList());
         when(productVariantService.getProductVariantsByIds(anyList())).thenReturn(productVariantsInOrder);
 
         Payment mockPayment = Payment.builder()
-            .id("payment123")
-            .orderId(sampleOrder.getId())
-            .paymentRef("ref123")
-            .status("pending")
-            .build();
-        when(paymentService.initiateHostedPayment(anyString(), anyDouble(), anyString(), anyString(), anyString()))
-            .thenReturn(mockPayment);
+                .id("payment123")
+                .orderId(sampleOrder.getId())
+                .paymentRef("ref123")
+                .status("pending")
+                .build();
+        when(paymentService.initiateHostedPayment(anyString(), anyDouble(), any(Customer.class), anyString()))
+                .thenReturn(mockPayment);
 
-        ResponseEntity<?> response = orderController.finalyzeOrder("orderTest123", customerDto);
+        ResponseEntity<?> response = orderController.finalyzeOrder("orderTest123", "com.lnfoot://", customerDto);
 
         ArgumentCaptor<Double> amountCaptor = ArgumentCaptor.forClass(Double.class);
-        verify(paymentService).initiateHostedPayment(
-                anyString(),
-                amountCaptor.capture(),
-                anyString(),
-                anyString(),
-                anyString()
-        );
+        verify(paymentService)
+                .initiateHostedPayment(anyString(), amountCaptor.capture(), any(Customer.class), anyString());
 
         assertNotNull(response);
         assertEquals(HttpStatus.ACCEPTED, response.getStatusCode());

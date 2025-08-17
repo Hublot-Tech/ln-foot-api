@@ -16,6 +16,7 @@ import org.springframework.web.client.RestTemplate;
 import co.hublots.ln_foot.dto.NotchPayDto.InitiatePaymentRequest;
 import co.hublots.ln_foot.dto.NotchPayDto.InitiatePaymentResponse;
 import co.hublots.ln_foot.models.Payment;
+import co.hublots.ln_foot.models.User.Customer;
 import co.hublots.ln_foot.repositories.PaymentRepository;
 import co.hublots.ln_foot.services.PaymentService;
 import lombok.RequiredArgsConstructor;
@@ -41,36 +42,36 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     @Transactional
-    public Payment initiateHostedPayment(String orderId, double amount, String customerEmail, String customerName,
-            String customerPhone) {
+    public Payment initiateHostedPayment(String orderId, double amount, Customer customer, String callbackUrl) {
         Optional<Payment> existing = paymentRepository.findByOrderId(orderId)
-            .filter(p -> {
-                String status = p.getStatus();
-                return !status.equalsIgnoreCase("failed")
-                    && !status.equalsIgnoreCase("expired")
-                    && !status.equalsIgnoreCase("cancelled");
-            });
+                .filter(p -> {
+                    String status = p.getStatus();
+                    return !status.equalsIgnoreCase("failed")
+                            && !status.equalsIgnoreCase("expired")
+                            && !status.equalsIgnoreCase("cancelled");
+                });
         if (existing.isPresent()) {
             return existing.get();
         }
         InitiatePaymentRequest request = InitiatePaymentRequest.builder()
-            .amount(amount)
-            .currency("XAF")
-            .customer(InitiatePaymentRequest.Customer.builder()
-                .name(customerName)
-                .email(customerEmail)
-                .phone(customerPhone)
-                .build())
-            .description("Payment for Order #" + orderId)
-            .reference(orderId)
-            .build();
+                .amount(amount)
+                .currency("XAF")
+                .customer(InitiatePaymentRequest.Customer.builder()
+                        .name(customer.getName())
+                        .email(customer.getEmail())
+                        .phone(customer.getPhone())
+                        .build())
+                .description("Payment for Order #" + orderId)
+                .callbackUrl(callbackUrl)
+                .reference(orderId)
+                .build();
         InitiatePaymentResponse response = initiatePayment(request);
         Payment payment = Payment.builder()
-            .orderId(orderId)
-            .paymentRef(response.getTransaction().getReference())
-            .paymentPageUrl(response.getAuthorizationUrl())
-            .status(response.getTransaction().getStatus())
-            .build();
+                .orderId(orderId)
+                .paymentRef(response.getTransaction().getReference())
+                .paymentPageUrl(response.getAuthorizationUrl())
+                .status(response.getTransaction().getStatus())
+                .build();
         return paymentRepository.save(payment);
     }
 
@@ -80,10 +81,10 @@ public class PaymentServiceImpl implements PaymentService {
         headers.set("Authorization", apiKey);
         HttpEntity<InitiatePaymentRequest> entity = new HttpEntity<>(request, headers);
         ResponseEntity<InitiatePaymentResponse> response = restTemplate.exchange(
-            getInitiateUrl(),
-            HttpMethod.POST,
-            entity,
-            InitiatePaymentResponse.class);
+                getInitiateUrl(),
+                HttpMethod.POST,
+                entity,
+                InitiatePaymentResponse.class);
         if (response.getStatusCode() == HttpStatus.CREATED && response.getBody() != null) {
             return response.getBody();
         }

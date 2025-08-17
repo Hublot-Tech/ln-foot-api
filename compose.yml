@@ -1,23 +1,4 @@
 services:
-  api:
-    image: ghcr.io/hublot-tech/ln-foot-api:latest
-    build:
-      context: .
-      dockerfile: Dockerfile
-    ports:
-      - 8080:8080
-    environment:
-      - DB_URL=jdbc:postgresql://postgres:5432/${DB_NAME}
-      - DB_USERNAME=${DB_USERNAME}
-      - DB_PASSWORD=${DB_PASSWORD}
-      - MINIO_API_URL=http://minio:9000
-      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY}
-      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY}
-      - KC_ISSUER_URI=${KC_ISSUER_URI}
-    depends_on:
-      - postgres
-      - minio
-
   postgres:
     image: postgres:alpine
     restart: unless-stopped
