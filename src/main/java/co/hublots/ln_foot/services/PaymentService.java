@@ -4,6 +4,7 @@ import java.util.Optional;
 
 import org.springframework.transaction.annotation.Transactional;
 import co.hublots.ln_foot.models.Payment;
+import co.hublots.ln_foot.models.User.Customer;
 
 public interface PaymentService {
 
@@ -25,5 +26,5 @@ public interface PaymentService {
      * @return Payment entity with hosted URL for external payment
      */
     @Transactional
-    Payment initiateHostedPayment(String orderId, double amount, String customerEmail, String customerName, String customerPhone);
+    Payment initiateHostedPayment(String orderId, double amount, Customer customer, String callbackUrl);
 }

@@ -69,4 +69,12 @@ public class User {
             return false;
         }
     }
+
+    @Data
+    @Builder
+    public static class Customer {
+        String email;
+        String name;
+        String phone;
+    }
 }

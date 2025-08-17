@@ -22,6 +22,9 @@ public class NotchPayDto {
         private String description;
         private String reference;
 
+        @JsonProperty("callback_url")
+        private String callbackUrl;
+
         @Data
         @Builder
         @NoArgsConstructor

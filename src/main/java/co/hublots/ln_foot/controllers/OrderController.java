@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -27,6 +28,7 @@ import co.hublots.ln_foot.models.Order;
 import co.hublots.ln_foot.models.OrderItem;
 import co.hublots.ln_foot.models.Payment;
 import co.hublots.ln_foot.models.ProductVariant;
+import co.hublots.ln_foot.models.User.Customer;
 import co.hublots.ln_foot.services.OrderService;
 import co.hublots.ln_foot.services.PaymentService;
 import co.hublots.ln_foot.services.ProductVariantService;
@@ -119,7 +121,7 @@ public class OrderController {
             if (variantOptional.isEmpty()) {
                 throw new IllegalArgumentException("Invalid product variant ID: " + item.getProductVariantId());
             }
-            
+
             ProductVariant variant = variantOptional.get();
             if (variant.getStockQuantity() < item.getQuantity()) {
                 throw new IllegalArgumentException(
@@ -144,6 +146,7 @@ public class OrderController {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<PaymentResponseDto> finalyzeOrder(
             @PathVariable String id,
+            @RequestParam("callback_url") String callbackUrl,
             @Valid @RequestBody NotchPayDto.InitiatePaymentRequest.Customer customer) {
 
         Optional<Order> optionalOrder = orderService.getOrderById(id);
@@ -175,8 +178,14 @@ public class OrderController {
         }
 
         BigDecimal amount = order.getTotalAmount() != null ? order.getTotalAmount() : BigDecimal.ZERO;
-        Payment payment = paymentService.initiateHostedPayment(
-                id, amount.doubleValue(), customer.getEmail(), customer.getName(), customer.getPhone());
+
+        Customer customerEntity = Customer.builder()
+                .email(customer.getEmail())
+                .name(customer.getName())
+                .phone(customer.getPhone())
+                .build();
+
+        Payment payment = paymentService.initiateHostedPayment(id, amount.doubleValue(), customerEntity, callbackUrl);
 
         return new ResponseEntity<>(PaymentResponseDto.fromEntity(payment), HttpStatus.ACCEPTED);
     }
